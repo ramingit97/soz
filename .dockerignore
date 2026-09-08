@@ -1,0 +1,32 @@
+# Контекст сборки — корень репозитория (см. шапку apps/api/Dockerfile).
+# Без этого файла в билдер уезжает 661 МБ node_modules: образ ставит
+# зависимости сам, через pnpm install --frozen-lockfile.
+
+node_modules
+**/node_modules
+.pnpm-store
+
+# Сборочные артефакты — образ собирает свои
+dist
+**/dist
+*.tsbuildinfo
+coverage
+
+# Секреты. В образ не должны попасть ни при каких условиях.
+.env
+.env.*
+!.env.example
+
+# К API-образу отношения не имеют
+apps/mobile
+legal-site
+context
+docs
+.git
+.github
+.claude
+.expo
+**/.expo
+
+*.log
+.DS_Store

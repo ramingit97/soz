@@ -11,7 +11,11 @@ app = "soz-api"
 primary_region = "fra"
 
 [build]
-  dockerfile = "apps/api/Dockerfile"
+  # Путь резолвится относительно ЭТОГО файла, а не рабочего каталога.
+  # Контекст сборки при этом — корень репозитория (Dockerfile копирует
+  # pnpm-workspace.yaml и packages/), поэтому деплоить только так:
+  #   flyctl deploy -c apps/api/fly.toml --remote-only   # из корня
+  dockerfile = "Dockerfile"
 
 [env]
   PORT = "3000"
