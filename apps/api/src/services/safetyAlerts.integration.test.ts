@@ -22,7 +22,17 @@ import { eq } from 'drizzle-orm';
 import { closeDb, getDb, isDbAvailable } from '../db/client.js';
 import { children, safetyAlerts, users } from '../db/schema.js';
 
-import { getSafetyAlerts, raiseCrisisAlert } from './safetyAlerts.js';
+// services/email.ts снимает RESEND_API_KEY один раз при загрузке модуля и без
+// него уходит в dev-путь: печатает письмо в stdout и рапортует успех. Именно
+// этот записанный исход здесь и проверяется, поэтому набор не должен зависеть
+// от того, лежит ли у разработчика настоящий ключ в .env — с ключом Resend
+// отвечает 422 на адреса @example.com ниже, и assert'ы переворачиваются.
+// Удаляем ДО загрузки email.ts, а сам модуль тянем динамическим импортом,
+// иначе статический импорт всплыл бы выше этой строки и снимок был бы сделан
+// раньше. Тот же приём, что в spend.test.ts.
+delete process.env.RESEND_API_KEY;
+
+const { getSafetyAlerts, raiseCrisisAlert } = await import('./safetyAlerts.js');
 
 const hasDb = isDbAvailable();
 
@@ -47,9 +57,9 @@ describe('crisis escalation', { skip: hasDb ? false : 'DATABASE_URL not set' }, 
   };
 
   before(async () => {
-    // A registered parent: RESEND_API_KEY is unset in test, so sendEmail takes its
-    // dev path and reports success — which is what we want to assert, that the
-    // send was attempted and its outcome recorded.
+    // A registered parent: RESEND_API_KEY is deleted above, so sendEmail takes
+    // its dev path and reports success — which is what we want to assert, that
+    // the send was attempted and its outcome recorded.
     const parent = await makeFamily(`test-crisis-${stamp}@example.com`, 0);
     parentUserId = parent.userId;
     parentChildId = parent.childId;
