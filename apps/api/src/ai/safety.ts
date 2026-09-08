@@ -8,8 +8,10 @@
  * an immediate parent alert. This is independent of the retrospective memory
  * extraction, so a crisis on turn 1 is caught even if the app is closed right after.
  *
- * SAFETY NOTE: AZ_CRISIS_LINE is intentionally null until a VERIFIED Azerbaijan
- * child-helpline number is set — we must never read a wrong number to a child.
+ * SAFETY NOTE: AZ_CRISIS_LINE is spoken to a child in crisis, so it may only ever
+ * hold a number the founder has personally verified as live. Set to 116 111
+ * (Azerbaijan Child Helpline) on 2026-07-07, re-confirmed 2026-09-08. Do not
+ * change it from a web search alone — a wrong number here is worse than none.
  */
 
 import { generateBoboReply } from './llm.js';
