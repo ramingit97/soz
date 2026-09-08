@@ -1,12 +1,35 @@
 # context/
 
-Session handoff notes for picking work back up in a new chat. Read the newest
-`SESSION-*.md` first.
+Заметки для продолжения работы в новой сессии. **Начинать с `STATUS.md`** —
+это точка входа: где мы, что решено, что дальше.
 
-- **[SESSION-2026-06-30-handoff.md](./SESSION-2026-06-30-handoff.md)** — backend bug-fixes
-  + leveled AI curriculum (done), and the in-progress app-wide UI design polish pass
-  (foundation + unified back button across 29 screens done; tint/type/flagship work TODO).
+- **[STATUS.md](./STATUS.md)** — текущее состояние проекта, принятые решения,
+  критический путь. Обновляется каждую сессию.
+- **[SESSION-2026-09-08-handoff.md](./SESSION-2026-09-08-handoff.md)** — подъём
+  инфраструктуры: Play Console, Fly, Resend, EAS, первый APK. Три латентных бага,
+  вскрывшихся при первом деплое. **Памятка по переезду на другой компьютер**
+  (`apps/api/.env` под gitignore и с репозиторием не едет).
+- **[SESSION-2026-06-30-handoff.md](./SESSION-2026-06-30-handoff.md)** — бэкенд-фиксы
+  + уровневый AI-куррикулум (сделано) и проход по UI всех экранов
+  (фундамент и единая кнопка «назад» на 29 экранах готовы; тинты/типографика/
+  флагманские экраны — TODO).
 
-Deeper, auto-loaded project memory lives in
-`~/.claude/projects/-home-ramin-Desktop-langapp/memory/` (see `MEMORY.md` index,
-esp. `project_phase27.md`).
+Справочники, не привязанные к сессии:
+
+- **[COPPA-LEGAL-CHECKLIST.md](./COPPA-LEGAL-CHECKLIST.md)** — детская приватность
+  перед сабмитом. Часть пунктов закрыта позже (retention 90 дней, safety-алерты),
+  но кнопка удаления данных ребёнка и аудит `analytics.ts` формально не отмечены.
+- **[AZ-SAFETY-CRISIS-LINE.md](./AZ-SAFETY-CRISIS-LINE.md)** — номер детской линии
+  `116 111`. Найден и обоснован, но **не включён**: `AZ_CRISIS_LINE` до сих пор
+  `null`, помечен `TODO(founder)`. Номер зачитывается ребёнку в кризисе, поэтому
+  нужно личное подтверждение владельца, что линия жива.
+- **[DESIGN-MARKET-ANALYSIS-2026-07-03.md](./DESIGN-MARKET-ANALYSIS-2026-07-03.md)** —
+  разбор конкурентов и 13 гэпов по нашим экранам.
+- **[WOW-IDEAS-2026-07-10.md](./WOW-IDEAS-2026-07-10.md)** — пять флагманских идей.
+  Ничего не реализовано, владелец не выбирал.
+- **[CLEANUP-personalize-legacy.md](./CLEANUP-personalize-legacy.md)** — отложенная
+  чистка legacy-пути `personalize` / `child_curricula` (~20 минут, после device QA).
+- **[STORE_METADATA.md](./STORE_METADATA.md)** — черновик от 2026-07-03. Актуальная
+  версия лежит в корне репозитория, а не здесь.
+
+Пошаговый деплой — в `RELEASE.md` в корне. Стек — в `README.md` в корне.
