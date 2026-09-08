@@ -1,6 +1,6 @@
 {
   "cli": {
-    "version": ">= 7.0.0",
+    "version": ">= 23.2.0",
     "appVersionSource": "remote"
   },
   "build": {
@@ -38,11 +38,6 @@
   },
   "submit": {
     "production": {
-      "ios": {
-        "appleId": "ramin.web.97@gmail.com",
-        "ascAppId": "",
-        "appleTeamId": ""
-      },
       "android": {
         "serviceAccountKeyPath": "./google-service-account.json",
         "track": "internal"

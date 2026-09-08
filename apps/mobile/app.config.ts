@@ -103,9 +103,17 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     typedRoutes: true,
   },
 
+  // The Expo account that owns the EAS project. Without it a build run under a
+  // different logged-in account resolves to that account's namespace and fails.
+  owner: 'ramin97leo',
+
   extra: {
     eas: {
-      projectId: process.env.EAS_PROJECT_ID ?? '',
+      // Hardcoded on purpose, not read from .env alone: .env is gitignored, and
+      // EAS Build uploads the project WITHOUT gitignored files — an env-only id
+      // resolves to '' on the build server and the build fails there, not here.
+      // A project id is a public identifier, not a secret. Env still overrides.
+      projectId: process.env.EAS_PROJECT_ID ?? '4fc384df-3cbf-4fa1-a72e-59604dc8c10b',
     },
   },
 });

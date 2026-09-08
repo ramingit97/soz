@@ -164,15 +164,24 @@ domain differs from `YOUR-DOMAIN`.
 
 ## 7. Build — EAS
 
-**You:** Expo account, `npx eas-cli login`.
+**You:** Expo account, then log in.
+
+`eas-cli` is a pinned devDependency of `apps/mobile` — do NOT use `npx eas-cli`.
+npx resolves it into a shared cache that has broken here before
+(`ERR_MODULE_NOT_FOUND` on `is-docker`), and it silently floats the version
+between machines.
+
+```bash
+corepack pnpm --filter @soz/mobile exec eas login
+```
 
 ```bash
 cd apps/mobile
-npx eas-cli init                      # writes EAS_PROJECT_ID → apps/mobile/.env
+corepack pnpm --filter @soz/mobile exec eas init                      # writes EAS_PROJECT_ID → apps/mobile/.env
 
 # First real native build. This is the first time the new plugins
 # (image-picker, notifications) get compiled — expect to fix something here.
-npx eas-cli build --platform android --profile preview
+corepack pnpm --filter @soz/mobile exec eas build --platform android --profile preview
 ```
 
 Install the resulting `.apk` on a real phone (not Expo Go — purchases,
@@ -198,8 +207,8 @@ notifications and the mic mode are native).
 
 ```bash
 cd apps/mobile
-npx eas-cli build  --platform android --profile production   # .aab
-npx eas-cli submit --platform android --profile production   # → internal track
+corepack pnpm --filter @soz/mobile exec eas build  --platform android --profile production   # .aab
+corepack pnpm --filter @soz/mobile exec eas submit --platform android --profile production   # → internal track
 ```
 
 Promote internal → closed testing → production in Play Console. Google's first
