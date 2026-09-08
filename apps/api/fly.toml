@@ -1,0 +1,43 @@
+# Söz API — Fly.io configuration
+# Deploy: fly deploy
+# Set secrets: fly secrets set DATABASE_URL=... JWT_SECRET=... OPENAI_API_KEY=... \
+#   DEEPGRAM_API_KEY=... ELEVENLABS_API_KEY=... RESEND_API_KEY=... \
+#   REVENUECAT_WEBHOOK_SECRET=...
+# (RESEND_API_KEY and REVENUECAT_WEBHOOK_SECRET are required in production —
+#  src/index.ts exits without them. Email silently no-ops and no subscription is
+#  ever recorded otherwise.)
+
+app = "soz-api"
+primary_region = "fra"
+
+[build]
+  dockerfile = "apps/api/Dockerfile"
+
+[env]
+  PORT = "3000"
+  NODE_ENV = "production"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  # Keep one machine warm. Two reasons beyond cold-start latency (which alone is
+  # bad enough for a kid waiting on a spoken reply):
+  #  - the rate limiter and the guest conversation fallback are in-process, so a
+  #    machine that stops resets every quota and drops in-flight conversations;
+  #  - scaling to a SECOND machine would split those counters too — revisit the
+  #    Redis-backed limiter before raising this above 1.
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "30s"
+    method = "GET"
+    path = "/health/ready"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

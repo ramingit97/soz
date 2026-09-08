@@ -1,0 +1,25 @@
+{
+  "name": "soz",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Söz — bilingual AI language tutor for children (English + Russian)",
+  "packageManager": "pnpm@10.9.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=10.0.0"
+  },
+  "scripts": {
+    "api:dev": "pnpm --filter @soz/api dev",
+    "mobile:start": "pnpm --filter @soz/mobile start",
+    "mobile:android": "pnpm --filter @soz/mobile android",
+    "mobile:ios": "pnpm --filter @soz/mobile ios",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint",
+    "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
+    "test": "pnpm -r test"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.3"
+  }
+}

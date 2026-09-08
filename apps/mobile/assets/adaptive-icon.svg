@@ -1,0 +1,8 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='1024' height='1024' viewBox='0 0 1024 1024'>
+<rect width='1024' height='1024' fill='#7C5CFF'/>
+<circle cx='512' cy='512' r='340' fill='#FFCB47'/>
+<circle cx='420' cy='450' r='40' fill='#1A1330'/>
+<circle cx='604' cy='450' r='40' fill='#1A1330'/>
+<path d='M 380 600 Q 512 700 644 600' stroke='#1A1330' stroke-width='24' fill='none' stroke-linecap='round'/>
+<text x='512' y='900' font-family='Arial' font-size='80' font-weight='bold' fill='#FFFAF0' text-anchor='middle'>Söz</text>
+</svg>

@@ -1,0 +1,40 @@
+/**
+ * Level/age-appropriate lesson flow (founder decision 2026-07-04: "у каждого
+ * уровня свой подход" — a B2 learner must never be asked to say a magic word
+ * aloud or assemble a 4-word sentence).
+ *
+ * Kid flow (young/mid, A1-A2):    playful rotation quest/tpr/pretend/world
+ *                                 → word-game → grammar → talk
+ * Mature flow (teen/adult or B1+): text-first — reading (story) → grammar
+ *                                 (level-appropriate via the AI plan) → talk.
+ *                                 No say-the-magic-word, no emoji word-game.
+ */
+
+export const KID_LESSON_MODES = ['quest', 'tpr', 'pretend', 'world'] as const;
+
+export function isMatureLearner(
+  level: string | null | undefined,
+  ageBand: string | null | undefined,
+): boolean {
+  return (
+    ageBand === 'teen' ||
+    ageBand === 'adult' ||
+    level === 'pre_intermediate' ||
+    level === 'intermediate'
+  );
+}
+
+function kidModeRoute(day: number, lang: string): string {
+  const mode = KID_LESSON_MODES[(day - 1) % KID_LESSON_MODES.length]!;
+  return `/lesson/${mode}?lang=${lang}&day=${day}`;
+}
+
+/** Entry route for today's main lesson («Урок дня» / the path node). */
+export function lessonEntryRoute(day: number, lang: string, mature: boolean): string {
+  return mature ? `/read?lang=${lang}&day=${day}` : kidModeRoute(day, lang);
+}
+
+/** Where the reading screen continues after the last story scene. */
+export function afterReadingRoute(day: number, lang: string, mature: boolean): string {
+  return mature ? `/lesson/grammar?lang=${lang}&day=${day}` : kidModeRoute(day, lang);
+}

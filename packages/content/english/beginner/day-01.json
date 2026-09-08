@@ -1,0 +1,83 @@
+{
+  "id": "en-beginner-day-01",
+  "language": "en",
+  "level": "beginner",
+  "day": 1,
+  "theme": "Meeting Bobo",
+  "vocabulary": ["hello", "name", "friend", "house", "robot"],
+  "activities": [
+    {
+      "type": "story",
+      "durationSeconds": 180,
+      "scenes": [
+        {
+          "imageUrl": "/content/images/en/day-01/scene-01.png",
+          "text": "Hi! I'm Bobo. I'm a friendly robot.",
+          "audioUrl": "/content/audio/en/day-01/scene-01.mp3"
+        },
+        {
+          "imageUrl": "/content/images/en/day-01/scene-02.png",
+          "text": "This is my house. It's a robot house!",
+          "audioUrl": "/content/audio/en/day-01/scene-02.mp3"
+        },
+        {
+          "imageUrl": "/content/images/en/day-01/scene-03.png",
+          "text": "I want to be your friend. Let's play!",
+          "audioUrl": "/content/audio/en/day-01/scene-03.mp3"
+        }
+      ]
+    },
+    {
+      "type": "word_game",
+      "durationSeconds": 150,
+      "rounds": [
+        {
+          "imageUrl": "/content/images/en/words/house.png",
+          "correctWord": "house",
+          "options": ["house", "tree", "car", "dog"]
+        },
+        {
+          "imageUrl": "/content/images/en/words/robot.png",
+          "correctWord": "robot",
+          "options": ["cat", "robot", "book", "ball"]
+        },
+        {
+          "imageUrl": "/content/images/en/words/friend.png",
+          "correctWord": "friend",
+          "options": ["friend", "apple", "chair", "phone"]
+        }
+      ]
+    },
+    {
+      "type": "talk_to_bobo",
+      "durationSeconds": 360,
+      "systemPrompt": "You are Bobo, a friendly robot character speaking ONLY in English. The child is a beginner — keep your sentences short (3-7 words), simple, and warm. Use vocabulary from today's lesson: hello, name, friend, house, robot. Today's topic is meeting and introducing yourself. Ask the child their name, where they live, if they have a pet. Always be encouraging. If the child is silent, gently prompt with examples. If the child speaks Russian or Azerbaijani, gently bring them back: 'Cool! How do we say it in English?'. Never lecture about grammar — just have a friendly conversation.",
+      "topics": ["greeting", "asking name", "describing home"],
+      "targetPhrases": ["Hello", "My name is...", "I live in...", "I have a..."]
+    },
+    {
+      "type": "grammar_quest",
+      "durationSeconds": 150,
+      "exercises": [
+        {
+          "kind": "order_words",
+          "prompt": "Build a sentence",
+          "options": ["My", "name", "is", "Bobo"],
+          "correctAnswer": ["My", "name", "is", "Bobo"]
+        },
+        {
+          "kind": "fill_blank",
+          "prompt": "I ___ a robot",
+          "options": ["am", "is", "are", "be"],
+          "correctAnswer": "am"
+        }
+      ]
+    },
+    {
+      "type": "reward",
+      "stars": 12,
+      "collectibleId": "lamp-01",
+      "message": "Awesome! You met Bobo and earned a lamp for his house!"
+    }
+  ]
+}

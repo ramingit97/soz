@@ -1,0 +1,10 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='1242' height='2436' viewBox='0 0 1242 2436'>
+<rect width='1242' height='2436' fill='#FFF8F0'/>
+<circle cx='621' cy='1100' r='280' fill='#7C5CFF'/>
+<circle cx='621' cy='1100' r='220' fill='#FFCB47'/>
+<circle cx='550' cy='1060' r='28' fill='#1A1330'/>
+<circle cx='692' cy='1060' r='28' fill='#1A1330'/>
+<path d='M 520 1180 Q 621 1240 722 1180' stroke='#1A1330' stroke-width='16' fill='none' stroke-linecap='round'/>
+<text x='621' y='1500' font-family='Arial' font-size='80' font-weight='bold' fill='#1A1330' text-anchor='middle'>Söz</text>
+<text x='621' y='1570' font-family='Arial' font-size='32' fill='#7C5CFF' text-anchor='middle'>Learning with Bobo</text>
+</svg>

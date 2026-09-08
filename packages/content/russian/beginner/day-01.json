@@ -1,0 +1,83 @@
+{
+  "id": "ru-beginner-day-01",
+  "language": "ru",
+  "level": "beginner",
+  "day": 1,
+  "theme": "Знакомство с Bobo",
+  "vocabulary": ["привет", "имя", "друг", "дом", "робот"],
+  "activities": [
+    {
+      "type": "story",
+      "durationSeconds": 180,
+      "scenes": [
+        {
+          "imageUrl": "/content/images/ru/day-01/scene-01.png",
+          "text": "Привет! Я Bobo. Я добрый робот.",
+          "audioUrl": "/content/audio/ru/day-01/scene-01.mp3"
+        },
+        {
+          "imageUrl": "/content/images/ru/day-01/scene-02.png",
+          "text": "Это мой дом. Это дом робота!",
+          "audioUrl": "/content/audio/ru/day-01/scene-02.mp3"
+        },
+        {
+          "imageUrl": "/content/images/ru/day-01/scene-03.png",
+          "text": "Я хочу быть твоим другом. Давай играть!",
+          "audioUrl": "/content/audio/ru/day-01/scene-03.mp3"
+        }
+      ]
+    },
+    {
+      "type": "word_game",
+      "durationSeconds": 150,
+      "rounds": [
+        {
+          "imageUrl": "/content/images/ru/words/dom.png",
+          "correctWord": "дом",
+          "options": ["дом", "дерево", "машина", "собака"]
+        },
+        {
+          "imageUrl": "/content/images/ru/words/robot.png",
+          "correctWord": "робот",
+          "options": ["кот", "робот", "книга", "мяч"]
+        },
+        {
+          "imageUrl": "/content/images/ru/words/drug.png",
+          "correctWord": "друг",
+          "options": ["друг", "яблоко", "стул", "телефон"]
+        }
+      ]
+    },
+    {
+      "type": "talk_to_bobo",
+      "durationSeconds": 360,
+      "systemPrompt": "Ты — Bobo, дружелюбный робот, общаешься ТОЛЬКО на русском языке. Ребёнок — начинающий, поэтому говори короткими предложениями (3-7 слов), просто и тепло. Используй слова из сегодняшнего урока: привет, имя, друг, дом, робот. Тема сегодня — знакомство и рассказ о себе. Спроси у ребёнка как его зовут, где он живёт, есть ли у него питомец. Всегда поощряй. Если ребёнок молчит, мягко подскажи примером. Если ребёнок говорит на азербайджанском или английском, мягко возвращай: 'Класс! А как сказать по-русски?'. Никогда не объясняй грамматику — просто веди дружескую беседу.",
+      "topics": ["приветствие", "вопрос об имени", "рассказ о доме"],
+      "targetPhrases": ["Привет", "Меня зовут...", "Я живу в...", "У меня есть..."]
+    },
+    {
+      "type": "grammar_quest",
+      "durationSeconds": 150,
+      "exercises": [
+        {
+          "kind": "order_words",
+          "prompt": "Собери предложение",
+          "options": ["Меня", "зовут", "Bobo"],
+          "correctAnswer": ["Меня", "зовут", "Bobo"]
+        },
+        {
+          "kind": "fill_blank",
+          "prompt": "Это ___ дом",
+          "options": ["мой", "моя", "моё", "мои"],
+          "correctAnswer": "мой"
+        }
+      ]
+    },
+    {
+      "type": "reward",
+      "stars": 12,
+      "collectibleId": "lamp-01",
+      "message": "Отлично! Ты познакомился с Bobo и получил лампу для его дома!"
+    }
+  ]
+}
