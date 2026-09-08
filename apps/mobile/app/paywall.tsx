@@ -4,7 +4,7 @@
  * Хани wears a crown, sparkles around, peach radial halo on cream paper.
  * Features card uses dashed dividers; testimonials in butter-tinted cards
  * with a left berry rule. Plan toggle has the year card painted primary with
- * a "выгоднее на 40%" badge.
+ * a savings badge whose percentage is computed from the real prices.
  */
 
 import * as Haptics from 'expo-haptics';
@@ -247,6 +247,28 @@ export default function PaywallScreen() {
     return `${pkg.product.currencyCode} ${perMonth}/${isAz ? 'ay' : 'мес'}`;
   }
 
+  /**
+   * Скидка годового тарифа, посчитанная из ЦЕН, которые реально пришли из
+   * RevenueCat. Раньше здесь стояло «-40%» текстом в разметке, и это разошлось
+   * с действительностью в тот же день, когда цены поменяли на $13/$99.99
+   * (настоящая скидка — 36%). Завышенная выгода рядом с ценой — это
+   * недостоверное утверждение о цене: и обман родителя, и нарушение правил
+   * Google Play. Считаем, чтобы разойтись было нельзя.
+   *
+   * null — когда одного из тарифов нет или цифры не дают внятной скидки;
+   * тогда бейдж просто не рисуется.
+   */
+  function annualSavingsPercent(
+    annual: PurchasesPackage | null,
+    monthly: PurchasesPackage | null,
+  ): number | null {
+    if (!annual || !monthly) return null;
+    const yearAtMonthlyRate = monthly.product.price * 12;
+    if (yearAtMonthlyRate <= 0) return null;
+    const saved = Math.round((1 - annual.product.price / yearAtMonthlyRate) * 100);
+    return saved >= 5 ? saved : null;
+  }
+
   return (
     <PaperBackground variant="honey">
       <Pressable onPress={() => router.back()} style={[styles.closeBtn, shadow.sm]}>
@@ -380,11 +402,17 @@ export default function PaywallScreen() {
                   bg={selectedPkg === annualPkg ? colors.primary : colors.card}
                   style={styles.packageCard}
                 >
-                  <View style={styles.bestValueBadge}>
-                    <Text style={styles.bestValueText}>
-                      {isAz ? 'ƏN YAXŞI · -40%' : 'ВЫГОДНЕЕ -40%'}
-                    </Text>
-                  </View>
+                  {(() => {
+                    const saved = annualSavingsPercent(annualPkg, monthlyPkg);
+                    if (saved === null) return null;
+                    return (
+                      <View style={styles.bestValueBadge}>
+                        <Text style={styles.bestValueText}>
+                          {isAz ? `ƏN YAXŞI · -${saved}%` : `ВЫГОДНЕЕ -${saved}%`}
+                        </Text>
+                      </View>
+                    );
+                  })()}
                   <View style={styles.packageRow}>
                     <View>
                       <Text style={[styles.packagePeriod, selectedPkg === annualPkg && { color: colors.white }]}>

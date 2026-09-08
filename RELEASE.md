@@ -109,8 +109,15 @@ daily quota shown to parents are in-process.
 
 **You, in Play Console** (needs the developer account from step 6):
 1. Monetize → Subscriptions → create `soz_premium_monthly` and
-   `soz_premium_annual` (prices are yours; `STORE_METADATA.md` assumes
-   $4.99 / $29.99).
+   `soz_premium_annual` — **$13.00/month and $99.99/year** (decided 2026-09-08;
+   the reasoning is in `STORE_METADATA.md`). Set the price PER COUNTRY, not one
+   worldwide: for Azerbaijan price it in manat (~22 AZN).
+
+   Nothing in the app hardcodes a price — `paywall.tsx` renders
+   `product.priceString` from RevenueCat — so changing a price here needs no
+   rebuild. Changing it AFTER people subscribe is a different matter: existing
+   subscribers keep their price and Google requires notifying them, so get it
+   right before the first paying user.
 
 **You, in RevenueCat:**
 1. New project → add Android app, package `az.soz.app`.
