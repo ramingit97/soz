@@ -27,6 +27,8 @@ import {
 } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
+import { useKeyboardVisible } from '@/hooks/useKeyboardVisible';
+
 interface KeyboardAvoiderProps {
   children: ReactNode;
   /** Pinned below the scroll area (e.g. a Continue button). */
@@ -44,6 +46,7 @@ export function KeyboardAvoider({
 }: KeyboardAvoiderProps) {
   const rootRef = useRef<View>(null);
   const overlap = useSharedValue(0);
+  const keyboardUp = useKeyboardVisible();
 
   useEffect(() => {
     if (Platform.OS !== 'ios') return; // Android: windowSoftInputMode adjustResize
@@ -68,6 +71,7 @@ export function KeyboardAvoider({
         contentContainerStyle={[
           styles.content,
           center && styles.centered,
+          Platform.OS === 'android' && keyboardUp && styles.androidKeyboardPad,
           contentContainerStyle,
         ]}
         keyboardShouldPersistTaps="handled"
@@ -85,4 +89,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   content: { flexGrow: 1 },
   centered: { justifyContent: 'center' },
+  // Запас под фокусное поле — см. шапку. 96 dp примерно равны панели инструментов
+  // клавиатуры Samsung плюс комфортный отступ.
+  androidKeyboardPad: { paddingBottom: 96 },
 });

@@ -60,13 +60,13 @@ const az: Strings = {
   },
   welcome: {
     title: 'Övladınız oyun zamanı\niki dil öyrənir',
-    subtitle: 'AI-dostu Bobo ilə ingilis və rus dilləri.\nGündə 15 dəqiqə. Repetitordan 5 dəfə ucuz.',
+    subtitle: 'AI-dostu Hani ilə ingilis və rus dilləri.\nGündə 15 dəqiqə. Repetitordan 5 dəfə ucuz.',
     cta: 'Başlayaq',
     haveAccount: 'Artıq hesabım var',
   },
   tour: {
-    slide1Title: 'Bobo — dost,\nmüəllim deyil',
-    slide1Body: 'Övladınız robot Bobo ilə həqiqi söhbət edir. Sıxıcı dərslər yox, real ünsiyyət.',
+    slide1Title: 'Hani — dost,\nmüəllim deyil',
+    slide1Body: 'Övladınız Hani ilə həqiqi söhbət edir. Sıxıcı dərslər yox, real ünsiyyət.',
     slide2Title: 'Hər iki dildə\nirəliləyiş',
     slide2Body: 'İngilis və rus dillərində nailiyyətləri ayrıca görəcəksiniz.',
     slide3Title: '7 gün pulsuz.\nKart lazım deyil.',
@@ -103,13 +103,13 @@ const ru: Strings = {
   },
   welcome: {
     title: 'Ваш ребёнок учит\nдва языка в игре',
-    subtitle: 'Английский и русский с AI-другом Bobo.\n15 минут в день. В 5 раз дешевле репетитора.',
+    subtitle: 'Английский и русский с AI-другом Хани.\n15 минут в день. В 5 раз дешевле репетитора.',
     cta: 'Начнём',
     haveAccount: 'У меня уже есть аккаунт',
   },
   tour: {
-    slide1Title: 'Bobo — друг,\nа не учитель',
-    slide1Body: 'Ребёнок ведёт настоящий диалог с роботом Bobo. Никаких скучных уроков, только живое общение.',
+    slide1Title: 'Хани — друг,\nа не учитель',
+    slide1Body: 'Ребёнок ведёт настоящий диалог с Хани. Никаких скучных уроков, только живое общение.',
     slide2Title: 'Прогресс по\nдвум языкам',
     slide2Body: 'Видите успехи отдельно по английскому и русскому. Каждое выученное слово — на видном месте.',
     slide3Title: '7 дней бесплатно.\nКарта не нужна.',

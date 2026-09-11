@@ -15,6 +15,7 @@ import { Button } from '@/components/Button';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
 import { getStrings } from '@/i18n/strings';
+import { useCompanionName, withCompanionName } from '@/utils/companion';
 import { useSettings } from '@/store/settings';
 import { colors, radius, shadow, spacing } from '@/theme';
 
@@ -34,10 +35,14 @@ export default function TourScreen() {
   const listRef = useRef<FlatList<Slide>>(null);
   const [index, setIndex] = useState(0);
 
+  // Тур идёт ДО того, как ребёнок назовёт питомца, поэтому обычно здесь стоит
+  // имя бренда. Подстановку всё равно применяем: если человек вернётся к туру
+  // после переименования, персонаж не должен менять имя на глазах.
+  const pet = useCompanionName();
   const slides: Slide[] = [
-    { key: '1', title: t.tour.slide1Title, body: t.tour.slide1Body, illustration: 'bobo-talk' },
-    { key: '2', title: t.tour.slide2Title, body: t.tour.slide2Body, illustration: 'progress' },
-    { key: '3', title: t.tour.slide3Title, body: t.tour.slide3Body, illustration: 'gift' },
+    { key: '1', title: withCompanionName(t.tour.slide1Title, pet), body: withCompanionName(t.tour.slide1Body, pet), illustration: 'bobo-talk' },
+    { key: '2', title: withCompanionName(t.tour.slide2Title, pet), body: withCompanionName(t.tour.slide2Body, pet), illustration: 'progress' },
+    { key: '3', title: withCompanionName(t.tour.slide3Title, pet), body: withCompanionName(t.tour.slide3Body, pet), illustration: 'gift' },
   ];
 
   const onMomentumEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {

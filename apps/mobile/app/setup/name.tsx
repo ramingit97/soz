@@ -14,8 +14,10 @@ import { HBPet } from '@/components/HBPet';
 import { KeyboardAvoider } from '@/components/KeyboardAvoider';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
+import { useCompactScreen } from '@/hooks/useCompactScreen';
+import { useKeyboardVisible } from '@/hooks/useKeyboardVisible';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, radius, shadow, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
 
 export default function SetupNameScreen() {
   const router = useRouter();
@@ -25,7 +27,20 @@ export default function SetupNameScreen() {
   const setChildProfile = useSettings((s) => s.setChildProfile);
 
   const [name, setName] = useState('');
+  const [focused, setFocused] = useState(false);
   const inputRef = useRef<TextInput>(null);
+  const keyboardUp = useKeyboardVisible();
+  const { short } = useCompactScreen();
+
+  // Маскот ужимается, когда открыта клавиатура или экран короткий. Без этого на
+  // 320 × 712 dp поле ввода уезжало за нижний край: с клавиатурой остаётся ~400
+  // dp, а содержимое (маскот 160 + заголовок 36 px в три строки + подзаголовок +
+  // поле) занимает ~540. KeyboardAvoider здесь не спасал — он НИЧЕГО не делает
+  // на Android (второй строкой `if (Platform.OS !== 'ios') return`) и полагается
+  // на системный adjustResize: окно сжимается, прокрутка появляется, но к полю
+  // никто не подкручивает, и человек видит пустоту. Пока печатаешь, большой
+  // маскот и не нужен.
+  const petSize = keyboardUp ? 72 : short ? 120 : 160;
 
   const isAz = lang === 'az';
   const canContinue = name.trim().length >= 2;
@@ -57,7 +72,7 @@ export default function SetupNameScreen() {
 
         <View style={styles.center}>
           <Animated.View entering={FadeInDown.duration(600).delay(100)}>
-            <HBPet size={160} mood="curious" />
+            <HBPet size={petSize} mood="curious" />
           </Animated.View>
 
           <Animated.View entering={FadeInUp.duration(600).delay(280)} style={styles.textBlock}>
@@ -71,14 +86,28 @@ export default function SetupNameScreen() {
             </Text>
           </Animated.View>
 
+          {/* Подпись + выравнивание по левому краю + обычное начертание — это
+              исправление, а не украшение. Поле было набрано ExtraBold'ом 22 px
+              по ЦЕНТРУ в белой таблетке с тенью, то есть выглядело ровно как
+              кнопка. Под ним стояла настоящая кнопка «Продолжить» той же
+              ширины и формы. Владелец на device QA не понял, куда нажимать, —
+              на своём же продукте. */}
           <Animated.View entering={FadeInUp.duration(500).delay(420)} style={styles.inputWrap}>
-            <Pressable onPress={() => inputRef.current?.focus()} style={[styles.inputBox, shadow.md]}>
+            <Text variant="label" tone="secondary" style={styles.inputLabel}>
+              {isAz ? 'Ad' : 'Имя'}
+            </Text>
+            <Pressable
+              onPress={() => inputRef.current?.focus()}
+              style={[styles.inputBox, focused && styles.inputBoxFocused, shadow.sm]}
+            >
               <TextInput
                 ref={inputRef}
                 value={name}
                 onChangeText={setName}
+                onFocus={() => setFocused(true)}
+                onBlur={() => setFocused(false)}
                 placeholder={isAz ? 'Məsələn: Əli' : 'Например: Алия'}
-                placeholderTextColor={colors.inkSoft}
+                placeholderTextColor={colors.textMuted}
                 style={styles.input}
                 autoCapitalize="words"
                 autoCorrect={false}
@@ -132,20 +161,25 @@ const styles = StyleSheet.create({
     gap: spacing[6],
   },
   textBlock: { paddingHorizontal: spacing[4] },
-  inputWrap: { width: '100%' },
+  inputWrap: { width: '100%', gap: spacing[2] },
+  inputLabel: { marginLeft: spacing[2] },
   inputBox: {
     backgroundColor: colors.white,
-    borderRadius: radius.xl,
-    paddingHorizontal: spacing[5],
+    // md → lg: форма поля должна отличаться от формы кнопки, а не повторять её.
+    borderRadius: radius.md,
+    paddingHorizontal: spacing[4],
     paddingVertical: spacing[4],
     borderWidth: 2,
     borderColor: colors.border,
   },
+  inputBoxFocused: { borderColor: colors.primary },
   input: {
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: 22,
+    fontFamily: fontFamily.bodyMedium,
+    fontSize: fontSize.xl,
     color: colors.ink,
-    textAlign: 'center',
+    textAlign: 'left',
+    // Android иначе режет высокие буквы и подчёркивает поле своим стилем.
+    padding: 0,
   },
   cta: { paddingBottom: spacing[6] },
   btn: {

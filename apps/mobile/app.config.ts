@@ -23,7 +23,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     buildNumber: '1',
     infoPlist: {
       NSMicrophoneUsageDescription:
-        'Söz needs the microphone so your child can talk with Bobo, the AI language friend.',
+        'Söz needs the microphone so your child can talk with Хани, the AI language friend.',
       // photo-learn.tsx calls launchCameraAsync / launchImageLibraryAsync. iOS
       // terminates the app on the spot when a usage description is missing, and
       // App Review rejects the binary before that — so these are not optional
@@ -59,7 +59,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'expo-av',
       {
         microphonePermission:
-          'Söz needs the microphone so your child can talk with Bobo, the AI language friend.',
+          'Söz needs the microphone so your child can talk with Хани, the AI language friend.',
       },
     ],
     'expo-audio',
