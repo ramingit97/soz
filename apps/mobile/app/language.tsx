@@ -15,6 +15,7 @@ import Animated, {
 
 import { Bobo } from '@/components/Bobo';
 import { Screen } from '@/components/Screen';
+import { useCompactScreen } from '@/hooks/useCompactScreen';
 import { Text } from '@/components/Text';
 import { useSettings } from '@/store/settings';
 import { colors, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
@@ -37,17 +38,22 @@ export default function LanguagePickerScreen() {
     transform: [{ translateY: -float.value * 8 }],
   }));
 
+  const { short } = useCompactScreen();
+
   const choose = (lang: 'az' | 'ru') => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     setParentUILanguage(lang);
     router.replace('/welcome');
   };
 
+  // Первый экран продукта: маскот 200 dp + заголовок + двуязычный подзаголовок +
+  // две карточки языка + сноска. На 320 × 712 dp это влезает без запаса, а любая
+  // системная надбавка к размеру шрифта его выносит. scroll — страховка.
   return (
-    <Screen gradient decoration="bobo">
+    <Screen gradient decoration="bobo" scroll>
       <View style={styles.center}>
         <Animated.View style={floatStyle} entering={FadeInDown.duration(600).delay(100)}>
-          <Bobo size={200} mood="curious" />
+          <Bobo size={short ? 140 : 200} mood="curious" />
         </Animated.View>
 
         <Animated.View entering={FadeInUp.duration(600).delay(300)} style={styles.headerWrap}>
