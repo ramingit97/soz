@@ -16,7 +16,7 @@ import { KeyboardAvoider } from '@/components/KeyboardAvoider';
 import { Text } from '@/components/Text';
 import { sendVerification, verifyEmail } from '@/services/api';
 import { useSettings } from '@/store/settings';
-import { colors, gradients, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, gradients, radius, shadow, spacing } from '@/theme';
 
 export default function VerifyEmailScreen() {
   const router = useRouter();
@@ -136,7 +136,7 @@ export default function VerifyEmailScreen() {
               </LinearGradient>
             </Pressable>
             <Pressable onPress={handleResend} style={{ paddingVertical: spacing[3], alignItems: 'center' }}>
-              <Text style={{ color: colors.primary, fontFamily: fontFamily.bodyBold, fontSize: 14 }}>
+              <Text style={{ color: colors.primary, fontFamily: fontFamily.bodyBold, fontSize: fontSize.sm }}>
                 {isAz ? 'Kodu yenidən göndər' : 'Отправить код снова'}
               </Text>
             </Pressable>

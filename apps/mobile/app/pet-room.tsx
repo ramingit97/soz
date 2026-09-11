@@ -28,7 +28,7 @@ import { Text } from '@/components/Text';
 import { DEFAULT_STATS, loadPetStats, savePetStats } from '@/services/petCare';
 import { playSfx } from '@/services/sfx';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, shadow, spacing, tints } from '@/theme';
+import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing, tints } from '@/theme';
 
 type RoomTab = 'room' | 'feed' | 'play' | 'care';
 type PetMoodType = 'happy' | 'curious' | 'sleepy' | 'sad';
@@ -78,7 +78,7 @@ const bar = StyleSheet.create({
   emoji: { fontSize: 20, width: 28 },
   labelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   label: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.xs, color: colors.ink },
-  pct: { fontFamily: fontFamily.bodyBlack, fontSize: 11 },
+  pct: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize['2xs'] },
   track: {
     height: 10,
     borderRadius: 5,
@@ -138,7 +138,7 @@ function FloatingHeart({ emoji }: { emoji: string }) {
   }, []);
   const style = useAnimatedStyle(() => ({ transform: [{ translateY: y.value }], opacity: op.value }));
   return (
-    <Animated.Text style={[{ fontSize: 28, position: 'absolute', top: 0 }, style]}>
+    <Animated.Text style={[{ fontSize: scaleFont(28), position: 'absolute', top: 0 }, style]}>
       {emoji}
     </Animated.Text>
   );
@@ -452,7 +452,7 @@ const room = StyleSheet.create({
     borderBottomColor: 'rgba(125,90,42,0.08)',
   },
   emoji: { fontSize: 28 },
-  label: { fontFamily: fontFamily.bodyMedium, fontSize: 10, color: colors.inkSoft, textAlign: 'center' },
+  label: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize['3xs'], color: colors.inkSoft, textAlign: 'center' },
 });
 
 const styles = StyleSheet.create({
@@ -556,7 +556,7 @@ const styles = StyleSheet.create({
   tabEmoji: { fontSize: 16 },
   tabLabel: {
     fontFamily: fontFamily.bodyBold,
-    fontSize: 10,
+    fontSize: fontSize['3xs'],
     color: colors.inkSoft,
     letterSpacing: 0.2,
   },
@@ -565,7 +565,7 @@ const styles = StyleSheet.create({
   tabContent: { gap: spacing[3] },
   sectionLabel: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 13,
+    fontSize: fontSize.caption,
     color: colors.inkSoft,
     letterSpacing: 0.5,
   },
@@ -604,7 +604,7 @@ const styles = StyleSheet.create({
   actionEmoji: { fontSize: 28 },
   actionLabel: {
     fontFamily: fontFamily.bodyBold,
-    fontSize: 13,
+    fontSize: fontSize.caption,
     color: colors.ink,
   },
   gainText: {

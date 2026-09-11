@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   backKey: { backgroundColor: 'transparent' },
-  backText2: { fontFamily: fontFamily.bodyBlack, fontSize: 24, color: colors.inkSoft },
+  backText2: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize['2xl'], color: colors.inkSoft },
 
   consentList: { gap: spacing[3], marginBottom: spacing[5] },
   checkRow: {
@@ -361,7 +361,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     borderColor: colors.primary,
   },
-  checkmark: { color: colors.white, fontFamily: fontFamily.bodyBlack, fontSize: 14 },
+  checkmark: { color: colors.white, fontFamily: fontFamily.bodyBlack, fontSize: fontSize.sm },
   checkLabel: {
     flex: 1,
     fontFamily: fontFamily.bodyMedium,

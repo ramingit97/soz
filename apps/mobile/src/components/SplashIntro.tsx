@@ -24,7 +24,7 @@ import { PaperBackground } from '@/components/PaperBackground';
 import { Text } from '@/components/Text';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily } from '@/theme';
+import { colors, fontFamily, fontSize, scaleFont } from '@/theme';
 
 export function SplashIntro({ onDone }: { onDone: () => void }) {
   const reduced = useReducedMotion();
@@ -87,6 +87,6 @@ const styles = StyleSheet.create({
   abs: { zIndex: 100, elevation: 100 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   wordWrap: { position: 'absolute', bottom: 96, left: 0, right: 0, alignItems: 'center' },
-  word: { fontFamily: fontFamily.display, fontSize: 56, color: colors.primary, letterSpacing: -1 },
-  tag: { fontFamily: fontFamily.bodyMedium, fontSize: 14, color: colors.inkSoft, marginTop: 4 },
+  word: { fontFamily: fontFamily.display, fontSize: scaleFont(56), color: colors.primary, letterSpacing: -1 },
+  tag: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize.sm, color: colors.inkSoft, marginTop: 4 },
 });

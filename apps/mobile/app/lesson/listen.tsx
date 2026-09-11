@@ -18,7 +18,7 @@ import { Bobo } from '@/components/Bobo';
 import { Text } from '@/components/Text';
 import { getLesson } from '@/data/lessons';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
 
 const CHAR_DELAY = 35; // ms per character for typewriter
 
@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
   },
   storyText: {
     fontFamily: fontFamily.display,
-    fontSize: 26,
+    fontSize: scaleFont(26),
     color: colors.cream,
     lineHeight: 38,
     letterSpacing: -0.3,

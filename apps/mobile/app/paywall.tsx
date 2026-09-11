@@ -46,7 +46,7 @@ import {
 } from '@/services/subscriptions';
 import { getBillingStatus } from '@/services/api';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, shadow, spacing, tints } from '@/theme';
+import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing, tints } from '@/theme';
 import { useCompanionName, withCompanionName } from '@/utils/companion';
 
 const PREMIUM_DAYS = 30 - FREE_DAYS;
@@ -513,7 +513,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  closeText: { color: colors.ink, fontSize: 14, fontFamily: fontFamily.bodyBlack },
+  closeText: { color: colors.ink, fontSize: fontSize.sm, fontFamily: fontFamily.bodyBlack },
 
   scroll: {
     paddingHorizontal: spacing[5],
@@ -551,7 +551,7 @@ const styles = StyleSheet.create({
   premiumBadgeText: {
     color: colors.white,
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 11,
+    fontSize: fontSize['2xs'],
     letterSpacing: 1.5,
   },
   heroTitle: {
@@ -597,7 +597,7 @@ const styles = StyleSheet.create({
   },
   featureSub: {
     fontFamily: fontFamily.bodyMedium,
-    fontSize: 11,
+    fontSize: fontSize['2xs'],
     color: colors.inkSoft,
     marginTop: 2,
     lineHeight: 15,
@@ -606,7 +606,7 @@ const styles = StyleSheet.create({
   testimonialsBlock: { gap: spacing[2] },
   testimonialsLabel: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 10,
+    fontSize: fontSize['3xs'],
     color: colors.inkSoft,
     letterSpacing: 1.8,
     marginBottom: spacing[1],
@@ -647,7 +647,7 @@ const styles = StyleSheet.create({
     width: 72,
     textAlign: 'center',
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 10,
+    fontSize: fontSize['3xs'],
     letterSpacing: 0.8,
     color: colors.inkSoft,
   },
@@ -691,7 +691,7 @@ const styles = StyleSheet.create({
   },
   bestValueText: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 9,
+    fontSize: scaleFont(9),
     color: colors.white,
     letterSpacing: 0.5,
   },
@@ -707,7 +707,7 @@ const styles = StyleSheet.create({
   },
   packageMonthly: {
     fontFamily: fontFamily.bodyMedium,
-    fontSize: 11,
+    fontSize: fontSize['2xs'],
     color: colors.inkSoft,
     marginTop: 2,
   },
@@ -744,7 +744,7 @@ const styles = StyleSheet.create({
   },
   legalText: {
     fontFamily: fontFamily.body,
-    fontSize: 10,
+    fontSize: fontSize['3xs'],
     color: colors.inkSoft,
     textAlign: 'center',
     lineHeight: 14,

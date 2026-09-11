@@ -25,7 +25,7 @@ import Animated, {
 import { Bobo } from '@/components/Bobo';
 import { Text } from '@/components/Text';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
 import { withCompanionName } from '@/utils/companion';
 
 const { width: SW, height: SH } = Dimensions.get('window');
@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
   streakLabelText: {
     color: colors.white,
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 11,
+    fontSize: fontSize['2xs'],
     letterSpacing: 2,
   },
 
@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
   bigNumber: {
     color: colors.white,
     fontFamily: fontFamily.display,
-    fontSize: 160,
+    fontSize: scaleFont(160),
     lineHeight: 180,
     letterSpacing: -6,
   },
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
     right: '20%',
   },
   bigEmoji: {
-    fontSize: 64,
+    fontSize: scaleFont(64),
   },
 
   titleArea: {

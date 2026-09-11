@@ -45,7 +45,7 @@ import { scheduleFriendCallbacks, scheduleStreakRiskReminder } from '@/services/
 import { FREE_DAYS } from '@/services/subscriptions';
 import { localDateISO, localOffsetMinutes, localYesterdayISO } from '@soz/shared-types';
 import { useSettings, todayISO } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
 import { useAccent } from '@/hooks/useAccent';
 import { useCompanionName, withCompanionName } from '@/utils/companion';
 import { isMatureLearner, lessonEntryRoute } from '@/utils/lessonFlow';
@@ -116,7 +116,7 @@ function ZigzagNode({
   const emojiStyle = [
     pathStyles.nodeEmoji,
     isDone && { color: colors.white },
-    isCurrent && { color: colors.white, fontSize: 20 },
+    isCurrent && { color: colors.white, fontSize: fontSize.xl },
     isLockedByOrder && themeEmoji ? { opacity: 0.45 } : null,
   ];
 
@@ -142,7 +142,7 @@ function ZigzagNode({
           {isAz ? `G${day}` : `Д${day}`}
         </Text>
         {isCurrent && startLabel ? (
-          <Text style={{ fontFamily: fontFamily.bodyBlack, fontSize: 11, color: worldColor, marginTop: 2 }}>
+          <Text style={{ fontFamily: fontFamily.bodyBlack, fontSize: fontSize['2xs'], color: worldColor, marginTop: 2 }}>
             ▶ {startLabel}
           </Text>
         ) : null}
@@ -551,7 +551,7 @@ export default function HomeScreen() {
                   }}
                   style={[styles.langPill, active && styles.langPillActive]}
                 >
-                  <Text style={{ fontSize: 14 }}>{l === 'en' ? '🇬🇧' : '🇷🇺'}</Text>
+                  <Text style={{ fontSize: fontSize.sm }}>{l === 'en' ? '🇬🇧' : '🇷🇺'}</Text>
                   <Text style={[styles.langPillText, active && { color: colors.white }]}>
                     {l.toUpperCase()}
                   </Text>
@@ -766,7 +766,7 @@ export default function HomeScreen() {
                 {isAz ? 'Daha nə edə bilərsən?' : 'Что ещё можно сделать?'}
               </Text>
               <View style={styles.doneStars}>
-                <Text style={{ fontSize: 18 }}>⭐</Text>
+                <Text style={{ fontSize: fontSize.lg }}>⭐</Text>
                 <Text style={styles.doneStarsText}>
                   {isAz ? `${totalStars} ulduz cəm` : `${totalStars} звёзд всего`}
                 </Text>
@@ -882,7 +882,7 @@ export default function HomeScreen() {
                 </View>
                 <View style={styles.flagsRow}>
                   {learningLanguages.map((l) => (
-                    <Text key={l} style={{ fontSize: 18 }}>{l === 'en' ? '🇬🇧' : '🇷🇺'}</Text>
+                    <Text key={l} style={{ fontSize: fontSize.lg }}>{l === 'en' ? '🇬🇧' : '🇷🇺'}</Text>
                   ))}
                 </View>
               </View>
@@ -1015,7 +1015,7 @@ export default function HomeScreen() {
                     {isAz ? 'Hani ilə sakit oxu' : 'Тихое чтение с Хани'}
                   </Text>
                 </View>
-                <Text style={{ fontSize: 24, color: '#6B54E0', fontFamily: fontFamily.bodyBlack }}>›</Text>
+                <Text style={{ fontSize: fontSize['2xl'], color: '#6B54E0', fontFamily: fontFamily.bodyBlack }}>›</Text>
               </HBCard>
             </Pressable>
           </Animated.View>
@@ -1155,13 +1155,13 @@ const styles = StyleSheet.create({
   },
   tbGreeting: {
     fontFamily: fontFamily.display,
-    fontSize: 16,
+    fontSize: fontSize.base,
     color: colors.ink,
     letterSpacing: -0.2,
   },
   tbSubtitle: {
     fontFamily: fontFamily.bodyMedium,
-    fontSize: 11,
+    fontSize: fontSize['2xs'],
     color: colors.inkSoft,
     marginTop: 1,
   },
@@ -1189,7 +1189,7 @@ const styles = StyleSheet.create({
   },
   langPillText: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 11,
+    fontSize: fontSize['2xs'],
     color: colors.inkSoft,
     letterSpacing: 0.5,
   },
@@ -1248,7 +1248,7 @@ const styles = StyleSheet.create({
   goalDoneText: {
     color: colors.white,
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 9,
+    fontSize: scaleFont(9),
     letterSpacing: 0.8,
   },
   goalProgress: {
@@ -1391,7 +1391,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   ctaArrow: {
-    fontSize: 22,
+    fontSize: scaleFont(22),
     color: colors.inkSoft,
     fontFamily: fontFamily.bodyBold,
   },
@@ -1413,7 +1413,7 @@ const styles = StyleSheet.create({
   },
   chapterLabel: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 10,
+    fontSize: fontSize['3xs'],
     color: colors.inkSoft,
     letterSpacing: 2.5,
   },
@@ -1433,7 +1433,7 @@ const styles = StyleSheet.create({
   themeEmoji: { fontSize: 36 },
   themeMeta: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 10,
+    fontSize: fontSize['3xs'],
     color: colors.inkSoft,
     letterSpacing: 1,
     textTransform: 'uppercase',
@@ -1447,7 +1447,7 @@ const styles = StyleSheet.create({
   },
   themeMetaSub: {
     fontFamily: fontFamily.bodyMedium,
-    fontSize: 11,
+    fontSize: fontSize['2xs'],
     color: colors.inkSoft,
     marginTop: 2,
   },
@@ -1516,7 +1516,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   planLinkArrow: {
-    fontSize: 20,
+    fontSize: fontSize.xl,
     color: colors.inkSoft,
     fontFamily: fontFamily.bodyBold,
   },
@@ -1667,7 +1667,7 @@ const styles = StyleSheet.create({
   },
   worldStatus: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 22,
+    fontSize: scaleFont(22),
   },
   zigzagTrack: {
     backgroundColor: colors.card,
@@ -1705,7 +1705,7 @@ const pathStyles = StyleSheet.create({
     ...shadow.sm,
   },
   nodeEmoji: {
-    fontSize: 18,
+    fontSize: fontSize.lg,
     color: colors.inkSoft,
     fontFamily: fontFamily.bodyBlack,
   },

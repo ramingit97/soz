@@ -14,7 +14,7 @@ import { fetchFullCurriculum } from '@/services/curriculum';
 import { cancelAllReminders } from '@/services/notifications';
 import { useEffect, useState } from 'react';
 import { useSettings, todayISO } from '@/store/settings';
-import { colors, gradients, fontFamily, fontSize, radius, shadow, spacing, tints } from '@/theme';
+import { colors, fontFamily, fontSize, gradients, radius, scaleFont, shadow, spacing, tints } from '@/theme';
 import { useCompanionName } from '@/utils/companion';
 
 const DAY_LABELS_RU = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
@@ -233,7 +233,7 @@ export default function ParentScreen() {
                     : 'Чтобы можно было восстановить пароль'}
                 </Text>
               </View>
-              <Text style={{ fontSize: 18, color: '#D4A017' }}>→</Text>
+              <Text style={{ fontSize: fontSize.lg, color: '#D4A017' }}>→</Text>
             </Pressable>
           </Animated.View>
         )}
@@ -370,7 +370,7 @@ export default function ParentScreen() {
                   {day.completed
                     ? <Text style={{ fontSize: fontSize.xs }}>✓</Text>
                     : day.isToday
-                    ? <Text style={{ fontSize: 10, color: colors.primary }}>·</Text>
+                    ? <Text style={{ fontSize: fontSize['3xs'], color: colors.primary }}>·</Text>
                     : null
                   }
                 </View>
@@ -597,7 +597,7 @@ const styles = StyleSheet.create({
   aiReportBtnText: {
     color: colors.card,
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 20,
+    fontSize: fontSize.xl,
   },
   statCard: {
     flex: 1,
@@ -623,7 +623,7 @@ const styles = StyleSheet.create({
   calDay: { alignItems: 'center', gap: spacing[2] },
   calDayLabel: {
     fontFamily: fontFamily.bodyBold,
-    fontSize: 11,
+    fontSize: fontSize['2xs'],
     color: colors.inkSoft,
   },
   calDayLabelToday: { color: colors.primary },
@@ -798,12 +798,12 @@ const styles = StyleSheet.create({
     fontSize: fontSize.base,
     color: colors.ink,
   },
-  achArrow: { fontSize: 22, color: colors.inkSoft, fontFamily: fontFamily.bodyBold },
+  achArrow: { fontSize: scaleFont(22), color: colors.inkSoft, fontFamily: fontFamily.bodyBold },
 
   childrenSection: { gap: spacing[2] },
   childrenLabel: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 11,
+    fontSize: fontSize['2xs'],
     color: colors.inkSoft,
     letterSpacing: 1,
   },
@@ -853,7 +853,7 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
   },
   childAddPlus: {
-    fontSize: 22,
+    fontSize: scaleFont(22),
     fontFamily: fontFamily.bodyBlack,
     color: colors.primary,
   },

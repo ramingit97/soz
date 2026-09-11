@@ -284,14 +284,14 @@ const styles = StyleSheet.create({
   },
   premiumText: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 11,
+    fontSize: fontSize['2xs'],
     color: colors.primary,
   },
 
   section: { gap: spacing[2] },
   sectionLabel: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 10,
+    fontSize: fontSize['3xs'],
     color: colors.inkSoft,
     letterSpacing: 1.4,
     paddingLeft: spacing[2],
@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
   },
   rowSub: {
     fontFamily: fontFamily.bodyMedium,
-    fontSize: 11,
+    fontSize: fontSize['2xs'],
     color: colors.inkSoft,
     marginTop: 1,
   },
@@ -354,7 +354,7 @@ const styles = StyleSheet.create({
   },
   sliderEndText: {
     fontFamily: fontFamily.bodyMedium,
-    fontSize: 10,
+    fontSize: fontSize['3xs'],
     color: colors.inkSoft,
   },
 
@@ -391,7 +391,7 @@ const styles = StyleSheet.create({
   },
   valueChipText: {
     fontFamily: fontFamily.bodyBold,
-    fontSize: 11,
+    fontSize: fontSize['2xs'],
     color: colors.ink,
   },
 
@@ -412,7 +412,7 @@ const styles = StyleSheet.create({
 
   versionLabel: {
     fontFamily: fontFamily.bodyMedium,
-    fontSize: 11,
+    fontSize: fontSize['2xs'],
     color: colors.inkSoft,
     textAlign: 'center',
     marginTop: spacing[3],

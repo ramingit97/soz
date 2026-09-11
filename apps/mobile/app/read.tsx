@@ -33,7 +33,7 @@ import { Text } from '@/components/Text';
 import { getLesson } from '@/data/lessons';
 import { useSettings } from '@/store/settings';
 import { afterReadingRoute, isMatureLearner } from '@/utils/lessonFlow';
-import { colors, fontFamily, fontSize, radius, shadow, spacing, tints } from '@/theme';
+import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing, tints } from '@/theme';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
   },
   sceneChipText: {
     fontFamily: fontFamily.bodyBold,
-    fontSize: 11,
+    fontSize: fontSize['2xs'],
     color: colors.inkSoft,
     letterSpacing: 0.5,
   },
@@ -397,7 +397,7 @@ const styles = StyleSheet.create({
   navBtnDisabled: { opacity: 0.4 },
   navBtnText: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 22,
+    fontSize: scaleFont(22),
     color: colors.ink,
     lineHeight: 26,
   },
@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
   },
   nextBtnArrow: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 20,
+    fontSize: fontSize.xl,
     color: colors.inkSoft,
   },
 

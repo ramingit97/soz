@@ -32,7 +32,7 @@ import { Text } from '@/components/Text';
 import { getLesson } from '@/data/lessons';
 import { playSfx } from '@/services/sfx';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, shadow, spacing, tints } from '@/theme';
+import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing, tints } from '@/theme';
 
 interface QuizRound {
   emoji: string;
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
   },
   iconBtnText: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 16,
+    fontSize: fontSize.base,
     color: colors.ink,
   },
   testChip: {
@@ -399,13 +399,13 @@ const styles = StyleSheet.create({
   },
   kicker: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 11,
+    fontSize: fontSize['2xs'],
     color: colors.inkSoft,
     letterSpacing: 1.6,
   },
   word: {
     fontFamily: fontFamily.display,
-    fontSize: 36,
+    fontSize: fontSize['4xl'],
     color: colors.ink,
     letterSpacing: -0.5,
   },
@@ -492,7 +492,7 @@ const styles = StyleSheet.create({
   },
   encourageSub: {
     fontFamily: fontFamily.bodyMedium,
-    fontSize: 11,
+    fontSize: fontSize['2xs'],
     color: colors.inkSoft,
   },
 
@@ -504,7 +504,7 @@ const styles = StyleSheet.create({
   },
   scoreText: {
     fontFamily: fontFamily.display,
-    fontSize: 72,
+    fontSize: scaleFont(72),
     color: colors.primary,
   },
   completeTitle: {

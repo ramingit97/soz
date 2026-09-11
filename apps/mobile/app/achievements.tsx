@@ -24,7 +24,7 @@ import { Text } from '@/components/Text';
 import { useAccent } from '@/hooks/useAccent';
 import { playSfx } from '@/services/sfx';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, shadow, spacing, tints } from '@/theme';
+import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing, tints } from '@/theme';
 
 type Filter = 'all' | 'earned' | 'locked';
 
@@ -144,7 +144,7 @@ export default function AchievementsScreen() {
           <Pressable onPress={() => setSelected(recent)}>
             <HBCard style={styles.heroCard} depth="deep" bg={tints.butter}>
               <DieCutBadge size={64} tilt={-6} edge={3.5} bg={recent.earned ? colors.card : colors.bgDeep}>
-                <Text style={{ fontSize: 32, opacity: recent.earned ? 1 : 0.5 }}>
+                <Text style={{ fontSize: scaleFont(32), opacity: recent.earned ? 1 : 0.5 }}>
                   {recent.earned ? recent.emoji : '🔒'}
                 </Text>
               </DieCutBadge>
@@ -284,7 +284,7 @@ function BadgeModal({ badge, isAz, onClose }: {
               </View>
             ) : null}
             <DieCutBadge size={96} tilt={-4} edge={4} bg={badge.earned ? badge.color : colors.bgDeep}>
-              <Text style={{ fontSize: 52, opacity: badge.earned ? 1 : 0.5 }}>
+              <Text style={{ fontSize: scaleFont(52), opacity: badge.earned ? 1 : 0.5 }}>
                 {badge.earned ? badge.emoji : '🔒'}
               </Text>
             </DieCutBadge>
@@ -388,7 +388,7 @@ const styles = StyleSheet.create({
   },
   countText: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 11,
+    fontSize: fontSize['2xs'],
     color: colors.inkSoft,
   },
 
@@ -409,7 +409,7 @@ const styles = StyleSheet.create({
   },
   heroKicker: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 10,
+    fontSize: fontSize['3xs'],
     color: colors.inkSoft,
     letterSpacing: 0.8,
   },
@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
   },
   heroHint: {
     fontFamily: fontFamily.bodyMedium,
-    fontSize: 11,
+    fontSize: fontSize['2xs'],
     color: colors.inkSoft,
   },
   deltaBadge: {
@@ -433,7 +433,7 @@ const styles = StyleSheet.create({
   deltaText: {
     color: colors.white,
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 11,
+    fontSize: fontSize['2xs'],
   },
 
   filterRow: { flexDirection: 'row', gap: 6 },
@@ -458,7 +458,7 @@ const styles = StyleSheet.create({
   },
   filterCount: {
     fontFamily: fontFamily.bodyBold,
-    fontSize: 10,
+    fontSize: fontSize['3xs'],
     color: colors.inkSoft,
   },
 
@@ -501,7 +501,7 @@ const styles = StyleSheet.create({
   },
   tileHint: {
     fontFamily: fontFamily.bodyMedium,
-    fontSize: 9,
+    fontSize: scaleFont(9),
     color: colors.inkSoft,
   },
 

@@ -16,7 +16,7 @@ import { Text } from '@/components/Text';
 import { useAccent } from '@/hooks/useAccent';
 import { getProgress } from '@/services/api';
 import { todayISO, useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
 
 const MONTH_NAMES_RU = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 const MONTH_NAMES_AZ = ['Yanvar','Fevral','Mart','Aprel','May','İyun','İyul','Avqust','Sentyabr','Oktyabr','Noyabr','Dekabr'];
@@ -259,7 +259,7 @@ export default function StreakScreen() {
         {/* Motivation */}
         <Animated.View entering={FadeInUp.duration(400).delay(260)}>
           <HBCard depth="sm" style={styles.motivCard}>
-            <Text style={{ fontSize: 28 }}>
+            <Text style={{ fontSize: scaleFont(28) }}>
               {streak >= 30 ? '🏅' : streak >= 14 ? '🥇' : streak >= 7 ? '🥈' : streak >= 3 ? '🥉' : '🌱'}
             </Text>
             <View style={{ flex: 1 }}>
@@ -311,7 +311,7 @@ function LegendItem({ color, label, border, textColor }: {
 const legend = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   dot: { width: 12, height: 12, borderRadius: 6 },
-  label: { fontFamily: fontFamily.bodyMedium, fontSize: 10, color: colors.white },
+  label: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize['3xs'], color: colors.white },
 });
 
 const CELL_SIZE = 38;
@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
   heroPetWrap: { marginBottom: spacing[1] },
   streakNumber: {
     fontFamily: fontFamily.display,
-    fontSize: 72,
+    fontSize: scaleFont(72),
     color: colors.ink,
     lineHeight: 76,
     letterSpacing: -2,
@@ -345,18 +345,18 @@ const styles = StyleSheet.create({
   statCard: { flex: 1, alignItems: 'center', gap: spacing[1], paddingVertical: spacing[4] },
   statEmoji: { fontSize: 24 },
   statValue: { fontFamily: fontFamily.display, fontSize: fontSize['2xl'], color: colors.ink },
-  statLabel: { fontFamily: fontFamily.bodyMedium, fontSize: 10, color: colors.inkSoft, textAlign: 'center' },
+  statLabel: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize['3xs'], color: colors.inkSoft, textAlign: 'center' },
 
   calCard: { gap: spacing[4] },
   monthNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   navBtn: { padding: spacing[2] },
-  navArrow: { fontFamily: fontFamily.bodyBlack, fontSize: 22, color: colors.ink },
+  navArrow: { fontFamily: fontFamily.bodyBlack, fontSize: scaleFont(22), color: colors.ink },
   monthTitle: { fontFamily: fontFamily.display, fontSize: fontSize.lg, color: colors.ink },
 
   weekRow: { flexDirection: 'row', justifyContent: 'space-between' },
   dayHeader: {
     width: CELL_SIZE, textAlign: 'center',
-    fontFamily: fontFamily.bodyBold, fontSize: 10, color: colors.inkSoft,
+    fontFamily: fontFamily.bodyBold, fontSize: fontSize['3xs'], color: colors.inkSoft,
   },
 
   grid: {

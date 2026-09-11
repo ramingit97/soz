@@ -24,7 +24,7 @@ import { HBPet } from '@/components/HBPet';
 import { PaperBackground } from '@/components/PaperBackground';
 import { Text } from '@/components/Text';
 import { useSettings, type ChildLevel, type LearningFocus } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
 
 interface Goal {
   key: string;
@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 13,
+    fontSize: fontSize.caption,
     color: colors.inkSoft,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.border,
   },
-  input: { fontFamily: fontFamily.bodyBlack, fontSize: 20, color: colors.ink, textAlign: 'center' },
+  input: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize.xl, color: colors.ink, textAlign: 'center' },
 
   goalGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] },
   goalChip: {
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   goalChipOn: { backgroundColor: colors.primary, borderColor: colors.primary },
-  goalText: { fontFamily: fontFamily.bodyBold, fontSize: 13, color: colors.ink },
+  goalText: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.caption, color: colors.ink },
 
   levelRow: { flexDirection: 'row', gap: spacing[2] },
   levelCard: {
@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   levelCardOn: { backgroundColor: colors.accent, borderColor: colors.accent },
-  levelText: { fontFamily: fontFamily.bodyBold, fontSize: 11, color: colors.ink, textAlign: 'center' },
+  levelText: { fontFamily: fontFamily.bodyBold, fontSize: fontSize['2xs'], color: colors.ink, textAlign: 'center' },
 
   toggleRow: {
     flexDirection: 'row',
@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.border,
   },
-  toggleTitle: { fontFamily: fontFamily.bodyBlack, fontSize: 15, color: colors.ink },
+  toggleTitle: { fontFamily: fontFamily.bodyBlack, fontSize: scaleFont(15), color: colors.ink },
   toggleSub: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize.xs, color: colors.inkSoft, marginTop: 4, lineHeight: 17 },
   switch: { width: 48, height: 28, borderRadius: 14, backgroundColor: colors.border, padding: 3, justifyContent: 'center' },
   switchOn: { backgroundColor: colors.accent },

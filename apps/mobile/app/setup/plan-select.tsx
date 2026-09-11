@@ -16,7 +16,7 @@ import { PaperBackground } from '@/components/PaperBackground';
 import { Text } from '@/components/Text';
 import { FREE_DAYS } from '@/services/subscriptions';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
 
 export default function PlanSelectScreen() {
   const router = useRouter();
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: radius.full,
   },
-  badgeText: { fontFamily: fontFamily.bodyBlack, fontSize: 10, color: colors.white, letterSpacing: 1 },
+  badgeText: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize['3xs'], color: colors.white, letterSpacing: 1 },
   heroEmoji: { fontSize: 40, marginTop: spacing[2] },
   heroTitle: { fontFamily: fontFamily.display, fontSize: fontSize['2xl'], color: colors.primaryDeep },
   heroSub: {
@@ -145,8 +145,8 @@ const styles = StyleSheet.create({
   },
   cardEmoji: { fontSize: 28 },
   cardTitle: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize.base, color: colors.ink },
-  cardSub: { fontFamily: fontFamily.bodyMedium, fontSize: 13, color: colors.inkSoft, marginTop: 2 },
-  chevron: { fontFamily: fontFamily.bodyBlack, fontSize: 26, color: colors.inkSoft },
+  cardSub: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize.caption, color: colors.inkSoft, marginTop: 2 },
+  chevron: { fontFamily: fontFamily.bodyBlack, fontSize: scaleFont(26), color: colors.inkSoft },
 
   skip: { alignSelf: 'center', paddingVertical: spacing[4] },
   skipText: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.sm, color: colors.inkSoft },

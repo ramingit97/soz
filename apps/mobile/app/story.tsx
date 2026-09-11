@@ -645,7 +645,7 @@ const styles = StyleSheet.create({
     gap: spacing[2],
     marginBottom: spacing[1],
   },
-  starBurstStar: { fontSize: 30 },
+  starBurstStar: { fontSize: fontSize['3xl'] },
 
   // Choice cards
   choicesRow: {

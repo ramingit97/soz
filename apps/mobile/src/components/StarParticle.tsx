@@ -9,6 +9,7 @@ import Animated, {
 
 import { Text } from '@/components/Text';
 
+import { fontSize } from '@/theme';
 /** A single celebratory star that pops in, floats up and fades out.
  * Extracted from talk.tsx so lesson screens can reuse it. */
 export function StarParticle({ x, y, delay }: { x: number; y: number; delay: number }) {
@@ -37,7 +38,7 @@ export function StarParticle({ x, y, delay }: { x: number; y: number; delay: num
 
   return (
     <Animated.View style={[{ position: 'absolute', left: x, top: y }, style]}>
-      <Text style={{ fontSize: 20 }}>{star}</Text>
+      <Text style={{ fontSize: fontSize.xl }}>{star}</Text>
     </Animated.View>
   );
 }

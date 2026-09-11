@@ -47,7 +47,7 @@ import { enqueueProgress } from '@/services/progressQueue';
 import { useSettings } from '@/store/settings';
 import { isMatureLearner } from '@/utils/lessonFlow';
 import { useCompanionName } from '@/utils/companion';
-import { colors, fontFamily, fontSize, radius, shadow, spacing, tints } from '@/theme';
+import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing, tints } from '@/theme';
 
 const { width: SW, height: SH } = Dimensions.get('window');
 const CONFETTI_COLORS = ['#E8945A', '#7AC9B5', '#F5D466', '#E55C73'];
@@ -407,13 +407,13 @@ const styles = StyleSheet.create({
   },
   plusText: {
     fontFamily: fontFamily.display,
-    fontSize: 36,
+    fontSize: fontSize['4xl'],
     color: colors.primaryDeep,
     lineHeight: 48,
   },
   counterText: {
     fontFamily: fontFamily.display,
-    fontSize: 64,
+    fontSize: scaleFont(64),
     color: colors.primary,
     lineHeight: 72,
   },
@@ -422,7 +422,7 @@ const styles = StyleSheet.create({
   titleArea: { alignItems: 'center', gap: spacing[1] },
   kicker: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 11,
+    fontSize: fontSize['2xs'],
     color: colors.primaryDeep,
     letterSpacing: 1.6,
   },
@@ -453,7 +453,7 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontFamily: fontFamily.bodyBold,
-    fontSize: 10,
+    fontSize: fontSize['3xs'],
     color: colors.inkSoft,
     letterSpacing: 0.6,
     textTransform: 'uppercase',
@@ -498,7 +498,7 @@ const styles = StyleSheet.create({
   },
   tomorrowLabel: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 10,
+    fontSize: fontSize['3xs'],
     color: colors.inkSoft,
     letterSpacing: 1.5,
   },

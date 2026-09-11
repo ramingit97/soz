@@ -39,7 +39,7 @@ import { Text } from '@/components/Text';
 import { getLesson } from '@/data/lessons';
 import { postTalk } from '@/services/api';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
 
 type Mood = 'idle' | 'recording' | 'thinking' | 'playing';
 
@@ -424,13 +424,13 @@ const styles = StyleSheet.create({
     gap: spacing[2],
   },
   promptEmoji: {
-    fontSize: 40,
+    fontSize: scaleFont(40),
     lineHeight: 50,
   },
   promptText: {
     color: colors.cream,
     fontFamily: fontFamily.display,
-    fontSize: 20,
+    fontSize: fontSize.xl,
     textAlign: 'center',
     lineHeight: 28,
   },
@@ -446,7 +446,7 @@ const styles = StyleSheet.create({
   wordTagText: {
     color: 'rgba(52, 211, 153, 0.95)',
     fontFamily: fontFamily.display,
-    fontSize: 22,
+    fontSize: scaleFont(22),
     letterSpacing: 4,
   },
 

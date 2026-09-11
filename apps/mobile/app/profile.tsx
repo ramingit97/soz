@@ -16,7 +16,7 @@ import { Text } from '@/components/Text';
 import { deleteAccount } from '@/services/api';
 import { cancelAllReminders } from '@/services/notifications';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
 import { useCompanionName } from '@/utils/companion';
 
 const AVATAR_COLORS = ['#7C3AED', '#059669', '#DC2626', '#D97706', '#2563EB', '#DB2777'];
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
   avatarText: {
     color: colors.white,
     fontFamily: fontFamily.display,
-    fontSize: 40,
+    fontSize: scaleFont(40),
   },
   name: {
     fontFamily: fontFamily.display,
@@ -312,7 +312,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   rowArrow: {
-    fontSize: 24,
+    fontSize: fontSize['2xl'],
     color: colors.inkSoft,
     fontFamily: fontFamily.bodyBold,
   },
@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
   },
   legalDot: {
     color: colors.inkSoft,
-    fontSize: 16,
+    fontSize: fontSize.base,
   },
   coppaNote: {
     textAlign: 'center',

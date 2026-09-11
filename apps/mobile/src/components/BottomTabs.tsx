@@ -18,7 +18,7 @@ import Svg, { Circle, Path } from 'react-native-svg';
 
 import { Text } from '@/components/Text';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
 
 type TabKey = 'home' | 'talk' | 'progress' | 'profile';
 
@@ -222,16 +222,16 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primarySoft,
   },
   icon: {
-    fontSize: 20,
+    fontSize: fontSize.xl,
     opacity: 0.5,
   },
   iconActive: {
-    fontSize: 22,
+    fontSize: scaleFont(22),
     opacity: 1,
   },
   label: {
     fontFamily: fontFamily.bodyMedium,
-    fontSize: 10,
+    fontSize: fontSize['3xs'],
     color: colors.inkSoft,
     letterSpacing: 0.2,
   },

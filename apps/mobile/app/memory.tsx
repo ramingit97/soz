@@ -19,7 +19,7 @@ import { CardSkeleton, Skeleton } from '@/components/Skeleton';
 import { Text } from '@/components/Text';
 import { forgetFact, getBoboMemory, type BoboMemory, type ChildFact } from '@/services/api';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
 import { useCompanionName } from '@/utils/companion';
 
 const CATEGORIES: Record<ChildFact['category'], { emoji: string; ru: string; az: string }> = {
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
   },
   bannerNumber: {
     fontFamily: fontFamily.display,
-    fontSize: 44,
+    fontSize: scaleFont(44),
     color: colors.primary,
     letterSpacing: -1,
   },
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
   },
   factDate: {
     fontFamily: fontFamily.bodyMedium,
-    fontSize: 10,
+    fontSize: fontSize['3xs'],
     color: colors.inkSoft,
     opacity: 0.7,
     marginTop: 2,
@@ -357,7 +357,7 @@ const styles = StyleSheet.create({
   },
   factForgetText: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 11,
+    fontSize: fontSize['2xs'],
     color: colors.inkSoft,
   },
 
@@ -372,7 +372,7 @@ const styles = StyleSheet.create({
   },
   askLabel: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 10,
+    fontSize: fontSize['3xs'],
     color: '#92400E',
     letterSpacing: 1.5,
   },

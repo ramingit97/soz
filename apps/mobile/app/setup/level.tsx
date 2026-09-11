@@ -7,7 +7,7 @@ import Animated, { FadeInDown, FadeInUp, useAnimatedStyle, useSharedValue, withS
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
 import { useSettings, type AgeRange, type ChildLevel } from '@/store/settings';
-import { colors, fontFamily, radius, shadow, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
 import { HBButton } from '@/components/HBButton';
 import { StepIndicator } from './name';
 
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
   placementLink: { alignSelf: 'center', paddingVertical: spacing[2], marginBottom: spacing[2] },
   placementLinkText: {
     fontFamily: fontFamily.bodyBold,
-    fontSize: 14,
+    fontSize: fontSize.sm,
     color: colors.inkSoft,
     textDecorationLine: 'underline',
   },
@@ -233,17 +233,17 @@ const styles = StyleSheet.create({
   codeBadgeText: {
     color: colors.white,
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 16,
+    fontSize: fontSize.base,
     letterSpacing: 0.5,
   },
   cardTitle: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 16,
+    fontSize: fontSize.base,
     color: colors.ink,
   },
   cardDesc: {
     fontFamily: fontFamily.body,
-    fontSize: 13,
+    fontSize: fontSize.caption,
     color: colors.inkSoft,
     marginTop: 2,
     lineHeight: 18,
@@ -267,5 +267,5 @@ const styles = StyleSheet.create({
     ...shadow.glow,
   },
   btnDisabled: { backgroundColor: colors.border, shadowOpacity: 0, elevation: 0 },
-  btnText: { color: colors.white, fontFamily: fontFamily.bodyBlack, fontSize: 17 },
+  btnText: { color: colors.white, fontFamily: fontFamily.bodyBlack, fontSize: fontSize.button },
 });

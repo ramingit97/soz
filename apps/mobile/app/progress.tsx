@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
   statEmoji: { fontSize: 28, marginBottom: 2 },
   statValue: {
     fontFamily: fontFamily.display,
-    fontSize: 36,
+    fontSize: fontSize['4xl'],
     color: colors.ink,
     letterSpacing: -1,
     lineHeight: 40,
@@ -353,7 +353,7 @@ const styles = StyleSheet.create({
   },
   quickArrow: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 20,
+    fontSize: fontSize.xl,
     color: colors.inkSoft,
     alignSelf: 'flex-end',
   },

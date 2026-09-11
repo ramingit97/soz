@@ -29,7 +29,7 @@ import { PaperBackground } from '@/components/PaperBackground';
 import { Text } from '@/components/Text';
 import { analyzeInterests } from '@/services/api';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, shadow, spacing, tints } from '@/theme';
+import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing, tints } from '@/theme';
 import { StepIndicator } from './name';
 
 // ── Known interests with display metadata ─────────────────────────────────────
@@ -562,7 +562,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checkText: { color: colors.white, fontSize: 9, fontFamily: fontFamily.bodyBlack },
+  checkText: { color: colors.white, fontSize: scaleFont(9), fontFamily: fontFamily.bodyBlack },
 
   // Analyzing phase
   analyzingBlock: {
@@ -609,7 +609,7 @@ const styles = StyleSheet.create({
   },
   chipEmoji: { fontSize: 16 },
   chipLabel: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.sm },
-  chipRemove: { fontFamily: fontFamily.bodyBlack, fontSize: 16, lineHeight: 18 },
+  chipRemove: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize.base, lineHeight: 18 },
 
   emptyTagsHint: {
     fontFamily: fontFamily.bodyMedium,

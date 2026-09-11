@@ -20,7 +20,7 @@ import { createChild, registerUser } from '@/services/api';
 import { clearGuestSession } from '@/services/guestSession';
 import { fetchFullCurriculum } from '@/services/curriculum';
 import { focusToLessonPrefs, useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -464,7 +464,7 @@ const styles = StyleSheet.create({
   },
   socialIcon: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 16,
+    fontSize: fontSize.base,
     color: colors.ink,
   },
   socialLabel: {
@@ -483,7 +483,7 @@ const styles = StyleSheet.create({
   },
   soonText: {
     fontFamily: fontFamily.bodyBold,
-    fontSize: 9,
+    fontSize: scaleFont(9),
     color: colors.ink,
     letterSpacing: 0.2,
   },

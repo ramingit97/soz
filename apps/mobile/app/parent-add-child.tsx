@@ -17,7 +17,7 @@ import { Text } from '@/components/Text';
 import { createChild } from '@/services/api';
 import { fetchFullCurriculum } from '@/services/curriculum';
 import { useSettings, type ChildLevel } from '@/store/settings';
-import { colors, gradients, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, gradients, radius, shadow, spacing } from '@/theme';
 import { useCompanionName } from '@/utils/companion';
 
 const LEVELS: ChildLevel[] = ['beginner', 'elementary', 'pre_intermediate', 'intermediate'];
@@ -174,7 +174,7 @@ export default function AddChildScreen() {
                       onPress={() => toggleLang(l)}
                       style={[styles.langChip, on && styles.langChipActive]}
                     >
-                      <Text style={{ fontSize: 24 }}>{l === 'en' ? '🇬🇧' : '🇷🇺'}</Text>
+                      <Text style={{ fontSize: fontSize['2xl'] }}>{l === 'en' ? '🇬🇧' : '🇷🇺'}</Text>
                       <Text style={[styles.langText, on && styles.langTextActive]}>
                         {l === 'en' ? 'English' : 'Русский'}
                       </Text>

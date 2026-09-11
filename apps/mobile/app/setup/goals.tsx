@@ -16,7 +16,7 @@ import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
 import { useSettings, type LearningFocus } from '@/store/settings';
-import { colors, fontFamily, radius, shadow, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
 import { HBButton } from '@/components/HBButton';
 import { StepIndicator } from './name';
 
@@ -160,10 +160,10 @@ const styles = StyleSheet.create({
     borderRadius: radius.xl,
     borderWidth: 2,
   },
-  goalText: { flex: 1, fontFamily: fontFamily.bodyBlack, fontSize: 15, color: colors.ink },
+  goalText: { flex: 1, fontFamily: fontFamily.bodyBlack, fontSize: scaleFont(15), color: colors.ink },
   primaryTag: {
     fontFamily: fontFamily.bodyBold,
-    fontSize: 10,
+    fontSize: fontSize['3xs'],
     color: colors.primaryDeep,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
 
   sectionLabel: {
     fontFamily: fontFamily.bodyBold,
-    fontSize: 13,
+    fontSize: fontSize.caption,
     color: colors.inkSoft,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
     ...shadow.sm,
   },
   chipSel: { backgroundColor: colors.accent, borderColor: colors.accent },
-  chipText: { fontFamily: fontFamily.bodyBold, fontSize: 14, color: colors.ink },
+  chipText: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.sm, color: colors.ink },
 
   cta: { paddingBottom: spacing[6] },
   btn: {
@@ -218,5 +218,5 @@ const styles = StyleSheet.create({
     ...shadow.glow,
   },
   btnDisabled: { backgroundColor: colors.border, shadowOpacity: 0, elevation: 0 },
-  btnText: { color: colors.white, fontFamily: fontFamily.bodyBlack, fontSize: 17 },
+  btnText: { color: colors.white, fontFamily: fontFamily.bodyBlack, fontSize: fontSize.button },
 });

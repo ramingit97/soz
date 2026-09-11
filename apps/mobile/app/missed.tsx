@@ -17,7 +17,7 @@ import { PaperBackground } from '@/components/PaperBackground';
 import { Text } from '@/components/Text';
 import { useSettings, todayISO } from '@/store/settings';
 import { useCompanionName } from '@/utils/companion';
-import { colors, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
 
 export default function MissedScreen() {
   const router = useRouter();
@@ -64,7 +64,7 @@ export default function MissedScreen() {
             <View style={{ opacity: 0.75 }}>
               <HBPet size={150} mood="sad" />
             </View>
-            <Text style={styles.zzz}>z<Text style={{ fontSize: 14 }}>z</Text><Text style={{ fontSize: 11 }}>z</Text></Text>
+            <Text style={styles.zzz}>z<Text style={{ fontSize: fontSize.sm }}>z</Text><Text style={{ fontSize: fontSize['2xs'] }}>z</Text></Text>
             <View style={styles.tear} />
           </View>
         </Animated.View>
@@ -152,9 +152,9 @@ const styles = StyleSheet.create({
     gap: spacing[3],
   },
 
-  starTl: { position: 'absolute', top: 84, left: 24, fontSize: 16 },
+  starTl: { position: 'absolute', top: 84, left: 24, fontSize: fontSize.base },
   starTr: { position: 'absolute', top: 110, right: 30, fontSize: fontSize.xs },
-  moon: { position: 'absolute', top: 60, right: 60, fontSize: 22 },
+  moon: { position: 'absolute', top: 60, right: 60, fontSize: scaleFont(22) },
 
   header: { alignItems: 'center', gap: spacing[1] },
   kicker: {
@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
   },
   kickerText: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 11,
+    fontSize: fontSize['2xs'],
     color: colors.inkSoft,
     letterSpacing: 1.2,
   },
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 18,
     right: 18,
-    fontSize: 22,
+    fontSize: scaleFont(22),
     color: '#7A5CD9',
     fontFamily: fontFamily.display,
   },
@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
   },
   shieldSub: {
     fontFamily: fontFamily.bodyMedium,
-    fontSize: 11,
+    fontSize: fontSize['2xs'],
     color: colors.inkSoft,
     marginTop: 2,
   },
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
   },
   giftsKicker: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 10,
+    fontSize: fontSize['3xs'],
     color: colors.inkSoft,
     letterSpacing: 1.2,
   },
@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
   },
   giftLabel: {
     fontFamily: fontFamily.bodyBold,
-    fontSize: 10,
+    fontSize: fontSize['3xs'],
     color: colors.inkSoft,
   },
 
@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
   },
   easySub: {
     fontFamily: fontFamily.bodyMedium,
-    fontSize: 10,
+    fontSize: fontSize['3xs'],
     color: colors.inkSoft,
     marginTop: 1,
   },

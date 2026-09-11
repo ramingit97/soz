@@ -11,7 +11,7 @@ import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { Text } from '@/components/Text';
-import { colors, radius, shadow, spacing } from '@/theme';
+import { colors, fontSize, radius, shadow, spacing } from '@/theme';
 
 interface Props {
   /** Defaults to router.back(). */
@@ -68,5 +68,5 @@ const styles = StyleSheet.create({
   },
   pressed: { transform: [{ scale: 0.92 }], opacity: 0.9 },
   chevronNudge: { marginTop: -2, marginLeft: -2 },
-  glyph: { fontFamily: 'Nunito_800ExtraBold', fontSize: 24, color: colors.ink },
+  glyph: { fontFamily: 'Nunito_800ExtraBold', fontSize: fontSize['2xl'], color: colors.ink },
 });

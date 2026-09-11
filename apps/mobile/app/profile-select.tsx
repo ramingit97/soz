@@ -34,7 +34,7 @@ import { ParentalGateModal, useParentalGate } from '@/components/ParentalGate';
 import { Text } from '@/components/Text';
 import { getChildren, type ChildProfile } from '@/services/api';
 import { todayISO, useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, shadow, spacing, tints } from '@/theme';
+import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing, tints } from '@/theme';
 
 const PET_HUES = [55, 175, 300, 90] as const;
 
@@ -409,7 +409,7 @@ const styles = StyleSheet.create({
   heading: {
     color: colors.ink,
     fontFamily: fontFamily.display,
-    fontSize: 34,
+    fontSize: scaleFont(34),
     letterSpacing: -0.5,
   },
   subheading: {
@@ -452,7 +452,7 @@ const styles = StyleSheet.create({
   childName: {
     color: colors.ink,
     fontFamily: fontFamily.display,
-    fontSize: 16,
+    fontSize: fontSize.base,
     textAlign: 'center',
     letterSpacing: -0.2,
   },
@@ -471,7 +471,7 @@ const styles = StyleSheet.create({
   chipText: {
     color: colors.inkSoft,
     fontFamily: fontFamily.bodyMedium,
-    fontSize: 11,
+    fontSize: fontSize['2xs'],
   },
   dayChip: {
     backgroundColor: colors.primarySoft,
@@ -485,7 +485,7 @@ const styles = StyleSheet.create({
   dayChipText: {
     color: colors.primary,
     fontFamily: fontFamily.bodyBold,
-    fontSize: 10,
+    fontSize: fontSize['3xs'],
     letterSpacing: 0.3,
   },
   dayChipTextDone: {
@@ -515,7 +515,7 @@ const styles = StyleSheet.create({
   addPlus: {
     color: colors.primary,
     fontFamily: fontFamily.display,
-    fontSize: 30,
+    fontSize: fontSize['3xl'],
     lineHeight: 34,
   },
   addLabel: {
@@ -591,7 +591,7 @@ const styles = StyleSheet.create({
   },
   parentArrow: {
     color: colors.inkSoft,
-    fontSize: 22,
+    fontSize: scaleFont(22),
     fontFamily: fontFamily.bodyBold,
   },
 });

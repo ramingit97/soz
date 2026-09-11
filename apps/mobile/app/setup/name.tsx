@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
   btnText: {
     color: colors.white,
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 17,
+    fontSize: fontSize.button,
     letterSpacing: 0.3,
   },
 });

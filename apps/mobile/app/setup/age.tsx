@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
   },
   stage: {
     fontFamily: fontFamily.bodyMedium,
-    fontSize: 13,
+    fontSize: fontSize.caption,
     color: colors.inkSoft,
     marginTop: 2,
   },

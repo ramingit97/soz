@@ -18,7 +18,7 @@ import { Text } from '@/components/Text';
 import { getLesson } from '@/data/lessons';
 import { getReviewItems, type ReviewItem } from '@/services/api';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
 
 interface Question {
   prompt: string;
@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
   },
   scoreText: {
     fontFamily: fontFamily.display,
-    fontSize: 48,
+    fontSize: fontSize['5xl'],
     color: colors.primary,
     marginVertical: spacing[1],
   },
@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
     ...shadow.sm,
   },
   closeText: {
-    fontSize: 16,
+    fontSize: fontSize.base,
     color: colors.inkSoft,
   },
 
@@ -354,13 +354,13 @@ const styles = StyleSheet.create({
   },
   questionLabel: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 11,
+    fontSize: fontSize['2xs'],
     color: colors.inkSoft,
     letterSpacing: 1.5,
   },
   prompt: {
     fontFamily: fontFamily.display,
-    fontSize: 32,
+    fontSize: scaleFont(32),
     color: colors.ink,
     textAlign: 'center',
     letterSpacing: -0.5,

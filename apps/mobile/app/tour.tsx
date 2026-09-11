@@ -17,7 +17,7 @@ import { Text } from '@/components/Text';
 import { getStrings } from '@/i18n/strings';
 import { useCompanionName, withCompanionName } from '@/utils/companion';
 import { useSettings } from '@/store/settings';
-import { colors, radius, shadow, spacing } from '@/theme';
+import { colors, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -137,7 +137,7 @@ function BoboTalking() {
     <View style={styles.illustrationCenter}>
       <Bobo size={200} mood="curious" />
       <View style={[styles.speechBubble, shadow.md]}>
-        <Text style={{ fontSize: 14, fontWeight: '700' }}>Hi friend!{'\n'}What's your name?</Text>
+        <Text style={{ fontSize: fontSize.sm, fontWeight: '700' }}>Hi friend!{'\n'}What's your name?</Text>
         <View style={styles.bubbleTail} />
       </View>
     </View>
@@ -150,7 +150,7 @@ function ProgressArt() {
       <View style={[styles.statCard, shadow.lg]}>
         <View style={styles.statRow}>
           <View style={styles.statBadge}>
-            <Text style={{ fontSize: 22 }}>🇬🇧</Text>
+            <Text style={{ fontSize: scaleFont(22) }}>🇬🇧</Text>
           </View>
           <View style={{ flex: 1 }}>
             <Text variant="bodyBold">English</Text>
@@ -164,7 +164,7 @@ function ProgressArt() {
         </View>
         <View style={[styles.statRow, { marginTop: spacing[4] }]}>
           <View style={[styles.statBadge, { backgroundColor: colors.russianLight }]}>
-            <Text style={{ fontSize: 22 }}>🇷🇺</Text>
+            <Text style={{ fontSize: scaleFont(22) }}>🇷🇺</Text>
           </View>
           <View style={{ flex: 1 }}>
             <Text variant="bodyBold">Русский</Text>
@@ -179,11 +179,11 @@ function ProgressArt() {
         <View style={styles.streakRow}>
           <View style={styles.streakBadge}>
             <Text style={{ fontSize: 16 }}>🔥</Text>
-            <Text style={{ color: colors.accentCoral, fontWeight: '900', fontSize: 14 }}>7 days</Text>
+            <Text style={{ color: colors.accentCoral, fontWeight: '900', fontSize: fontSize.sm }}>7 days</Text>
           </View>
           <View style={[styles.streakBadge, { backgroundColor: colors.primarySoft }]}>
-            <Text style={{ fontSize: 16 }}>⭐</Text>
-            <Text style={{ color: colors.primary, fontWeight: '900', fontSize: 14 }}>84 stars</Text>
+            <Text style={{ fontSize: fontSize.base }}>⭐</Text>
+            <Text style={{ color: colors.primary, fontWeight: '900', fontSize: fontSize.sm }}>84 stars</Text>
           </View>
         </View>
       </View>
@@ -202,7 +202,7 @@ function GiftArt() {
         </View>
       </View>
       <View style={[styles.daysBadge, shadow.md]}>
-        <Text style={{ color: colors.white, fontSize: 14, fontWeight: '900', letterSpacing: 1 }}>
+        <Text style={{ color: colors.white, fontSize: fontSize.sm, fontWeight: '900', letterSpacing: 1 }}>
           7 DAYS FREE
         </Text>
       </View>

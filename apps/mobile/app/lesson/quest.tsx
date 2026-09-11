@@ -38,7 +38,7 @@ import { getLesson } from '@/data/lessons';
 import { postWordCheck } from '@/services/api';
 import { playSfx } from '@/services/sfx';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
 import { useCompanionName } from '@/utils/companion';
 
 type Status = 'idle' | 'recording' | 'thinking' | 'success' | 'fail' | 'skipped';
@@ -278,7 +278,7 @@ export default function QuestScreen() {
           style={styles.cardArea}
         >
           <View style={[styles.storyCard, shadow.lg]}>
-            <Text style={{ fontSize: 34, marginBottom: spacing[3] }}>
+            <Text style={{ fontSize: scaleFont(34), marginBottom: spacing[3] }}>
               {currentScene?.emoji ?? '📖'}
             </Text>
             <Text style={styles.storyText}>
@@ -440,7 +440,7 @@ const styles = StyleSheet.create({
   },
   storyText: {
     fontFamily: fontFamily.display,
-    fontSize: 22,
+    fontSize: scaleFont(22),
     color: colors.cream,
     lineHeight: 32,
     letterSpacing: -0.2,
@@ -468,7 +468,7 @@ const styles = StyleSheet.create({
   keywordWord: {
     color: colors.white,
     fontFamily: fontFamily.display,
-    fontSize: 34,
+    fontSize: scaleFont(34),
     letterSpacing: 4,
   },
 

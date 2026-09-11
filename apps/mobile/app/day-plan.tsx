@@ -488,7 +488,7 @@ const styles = StyleSheet.create({
   },
   worldBadgeText: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 13,
+    fontSize: fontSize.caption,
     letterSpacing: 0.2,
   },
   statsRow: {
@@ -540,7 +540,7 @@ const styles = StyleSheet.create({
   },
   stateBadgeText: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 10,
+    fontSize: fontSize['3xs'],
     letterSpacing: 0.3,
   },
 
@@ -553,11 +553,11 @@ const styles = StyleSheet.create({
   taskMeta: { marginTop: spacing[2] },
   durationText: {
     fontFamily: fontFamily.bodyMedium,
-    fontSize: 11,
+    fontSize: fontSize['2xs'],
     color: colors.inkSoft,
   },
   arrow: {
-    fontSize: 24,
+    fontSize: fontSize['2xl'],
     fontFamily: fontFamily.bodyBlack,
     marginLeft: spacing[1],
   },

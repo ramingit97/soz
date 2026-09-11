@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   backKey: { backgroundColor: 'transparent' },
-  backText: { fontFamily: fontFamily.bodyBlack, fontSize: 24, color: colors.inkSoft },
+  backText: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize['2xl'], color: colors.inkSoft },
 
   pwInput: {
     width: '100%',

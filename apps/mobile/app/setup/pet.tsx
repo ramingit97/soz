@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
 
   label: {
     fontFamily: fontFamily.bodyBold,
-    fontSize: 13,
+    fontSize: fontSize.caption,
     color: colors.inkSoft,
     textTransform: 'uppercase',
     letterSpacing: 1,

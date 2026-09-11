@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
   label: {
     flex: 1,
     fontFamily: fontFamily.bodyBold,
-    fontSize: 11,
+    fontSize: fontSize['2xs'],
     color: colors.inkSoft,
   },
   labelDone: { color: colors.ink },

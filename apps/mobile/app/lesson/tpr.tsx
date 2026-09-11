@@ -339,13 +339,13 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   actionEmoji: {
-    fontSize: 48,
+    fontSize: fontSize['5xl'],
     lineHeight: 60,
   },
   actionText: {
     color: colors.white,
     fontFamily: fontFamily.display,
-    fontSize: 24,
+    fontSize: fontSize['2xl'],
     textAlign: 'center',
     lineHeight: 32,
   },
@@ -361,7 +361,7 @@ const styles = StyleSheet.create({
   wordText: {
     color: colors.white,
     fontFamily: fontFamily.display,
-    fontSize: 36,
+    fontSize: fontSize['4xl'],
     letterSpacing: 5,
     textAlign: 'center',
   },

@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
     marginTop: spacing[4],
   },
   codeBadge: { width: 76, height: 76, borderRadius: 38, alignItems: 'center', justifyContent: 'center', ...shadow.md },
-  codeBadgeText: { fontFamily: fontFamily.bodyBlack, fontSize: 30, color: colors.white },
+  codeBadgeText: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize['3xl'], color: colors.white },
   resultName: { fontFamily: fontFamily.display, fontSize: fontSize['2xl'], color: colors.ink },
   resultSub: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize.sm, color: colors.inkSoft, textAlign: 'center' },
   resultCta: { alignSelf: 'stretch', marginTop: spacing[6] },

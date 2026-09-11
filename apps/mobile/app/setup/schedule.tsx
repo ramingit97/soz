@@ -10,7 +10,7 @@ import { HBButton } from '@/components/HBButton';
 import { scheduleLessonReminders } from '@/services/notifications';
 import { useSettings, type ScheduleDay, type ScheduleMinutes } from '@/store/settings';
 import { useCompanionName } from '@/utils/companion';
-import { colors, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
 import { StepIndicator } from './name';
 
 const DAYS: { key: ScheduleDay; labelRu: string; labelAz: string }[] = [
@@ -81,7 +81,7 @@ export default function SetupScheduleScreen() {
       <StepIndicator current={7} total={7} />
 
       <Animated.View entering={FadeInDown.duration(600).delay(100)} style={styles.header}>
-        <Text style={{ fontSize: 52, textAlign: 'center' }}>⏰</Text>
+        <Text style={{ fontSize: scaleFont(52), textAlign: 'center' }}>⏰</Text>
         <Text variant="title" align="center" style={{ marginTop: spacing[4] }}>
           {isAz
             ? `${childName} nə vaxt oxuyacaq?`
@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
   header: { marginTop: spacing[2], marginBottom: spacing[6], paddingHorizontal: spacing[2] },
   sectionLabel: {
     fontFamily: fontFamily.bodyBold,
-    fontSize: 13,
+    fontSize: fontSize.caption,
     color: colors.inkSoft,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   dayBtnActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  dayText: { fontFamily: fontFamily.bodyBold, fontSize: 11, color: colors.inkSoft },
+  dayText: { fontFamily: fontFamily.bodyBold, fontSize: fontSize['2xs'], color: colors.inkSoft },
   dayTextActive: { color: colors.white },
 
   durationRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] },
@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   hourBtnActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  hourText: { fontFamily: fontFamily.bodyBold, fontSize: 14, color: colors.ink },
+  hourText: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.sm, color: colors.ink },
 
   toggleRow: {
     flexDirection: 'row',
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.border,
   },
-  toggleTitle: { fontFamily: fontFamily.bodyBlack, fontSize: 15, color: colors.ink },
+  toggleTitle: { fontFamily: fontFamily.bodyBlack, fontSize: scaleFont(15), color: colors.ink },
   toggleSub: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.xs,
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
     marginTop: spacing[6],
     marginBottom: spacing[4],
   },
-  summaryText: { fontFamily: fontFamily.bodyBold, fontSize: 15, color: colors.ink },
+  summaryText: { fontFamily: fontFamily.bodyBold, fontSize: scaleFont(15), color: colors.ink },
 
   btn: {
     backgroundColor: colors.primary,
@@ -340,5 +340,5 @@ const styles = StyleSheet.create({
     ...shadow.glow,
   },
   btnDisabled: { backgroundColor: colors.border, shadowOpacity: 0, elevation: 0 },
-  btnText: { color: colors.white, fontFamily: fontFamily.bodyBlack, fontSize: 17 },
+  btnText: { color: colors.white, fontFamily: fontFamily.bodyBlack, fontSize: fontSize.button },
 });

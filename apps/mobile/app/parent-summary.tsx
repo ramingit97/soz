@@ -684,7 +684,7 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontFamily: fontFamily.bodyBold,
-    fontSize: 10,
+    fontSize: fontSize['3xs'],
     color: colors.inkSoft,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -710,7 +710,7 @@ const styles = StyleSheet.create({
   },
   lessonBadgeText: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 10,
+    fontSize: fontSize['3xs'],
     color: colors.primary,
     letterSpacing: 0.3,
     textAlign: 'center',
@@ -757,7 +757,7 @@ const styles = StyleSheet.create({
   memKnobOn: { alignSelf: 'flex-end' },
   memListLabel: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 10,
+    fontSize: fontSize['3xs'],
     color: colors.inkSoft,
     letterSpacing: 1,
   },
@@ -808,7 +808,7 @@ const styles = StyleSheet.create({
   bulletCheck: {
     color: colors.white,
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 11,
+    fontSize: fontSize['2xs'],
   },
   bulletTopic: {
     fontFamily: fontFamily.bodyBold,
@@ -832,7 +832,7 @@ const styles = StyleSheet.create({
   },
   mistakeChipText: {
     fontFamily: fontFamily.bodyBold,
-    fontSize: 11,
+    fontSize: fontSize['2xs'],
     color: '#C76A1A',
   },
   interestChip: {
@@ -866,7 +866,7 @@ const styles = StyleSheet.create({
   },
   rationaleLabel: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 10,
+    fontSize: fontSize['3xs'],
     color: colors.primary,
     letterSpacing: 1,
   },
@@ -894,7 +894,7 @@ const styles = StyleSheet.create({
   },
   dayBadgeText: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 10,
+    fontSize: fontSize['3xs'],
     color: colors.primary,
     letterSpacing: 0.3,
     textAlign: 'center',

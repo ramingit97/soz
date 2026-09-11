@@ -16,7 +16,7 @@ import { KeyboardAvoider } from '@/components/KeyboardAvoider';
 import { Text } from '@/components/Text';
 import { forgotPassword, resetPassword } from '@/services/api';
 import { useSettings } from '@/store/settings';
-import { colors, gradients, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, gradients, radius, shadow, spacing } from '@/theme';
 
 type Step = 'email' | 'reset';
 
@@ -193,7 +193,7 @@ export default function ForgotPasswordScreen() {
               </LinearGradient>
             </Pressable>
             <Pressable onPress={() => setStep('email')} style={{ paddingVertical: spacing[2], alignItems: 'center' }}>
-              <Text style={{ color: colors.inkSoft, fontFamily: fontFamily.bodyMedium, fontSize: 14 }}>
+              <Text style={{ color: colors.inkSoft, fontFamily: fontFamily.bodyMedium, fontSize: fontSize.sm }}>
                 {isAz ? 'Email-i dəyişdir' : 'Изменить email'}
               </Text>
             </Pressable>

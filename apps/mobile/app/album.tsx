@@ -25,7 +25,7 @@ import { Text } from '@/components/Text';
 import { getLesson } from '@/data/lessons';
 import { getProgress } from '@/services/api';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, shadow, spacing, tints } from '@/theme';
+import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing, tints } from '@/theme';
 
 // ─── Word card color palette (cycles through themes) ─────────────────────────
 
@@ -414,7 +414,7 @@ const styles = StyleSheet.create({
   },
   heroCount: {
     fontFamily: fontFamily.display,
-    fontSize: 52,
+    fontSize: scaleFont(52),
     color: colors.ink,
     lineHeight: 56,
     letterSpacing: -1,
@@ -470,7 +470,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  clearBtnText: { fontFamily: fontFamily.bodyBold, fontSize: 10, color: colors.inkSoft },
+  clearBtnText: { fontFamily: fontFamily.bodyBold, fontSize: fontSize['3xs'], color: colors.inkSoft },
 
   // Toggle
   toggle: {},
@@ -571,7 +571,7 @@ const styles = StyleSheet.create({
   },
   chipMeta: {
     fontFamily: fontFamily.bodyMedium,
-    fontSize: 10,
+    fontSize: fontSize['3xs'],
     color: colors.inkSoft,
   },
 

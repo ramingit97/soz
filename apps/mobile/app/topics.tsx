@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  customBtnText: { fontFamily: fontFamily.bodyBlack, fontSize: 24, color: colors.white },
+  customBtnText: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize['2xl'], color: colors.white },
 
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
   gridItem: { width: '48%', marginBottom: spacing[3] },

@@ -20,7 +20,7 @@ import { analyzeInterests, updatePreferences, type LessonPrefs } from '@/service
 import { fetchFullCurriculum } from '@/services/curriculum';
 import { useSettings } from '@/store/settings';
 import { useCompanionName } from '@/utils/companion';
-import { colors, fontFamily, fontSize, radius, shadow, spacing, tints } from '@/theme';
+import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing, tints } from '@/theme';
 
 // ── Known-interest display metadata (compact; mirrors setup/interests) ─────────
 
@@ -557,7 +557,7 @@ const styles = StyleSheet.create({
   },
   chipEmoji: { fontSize: 15 },
   chipLabel: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.sm },
-  chipRemove: { fontFamily: fontFamily.bodyBlack, fontSize: 15, lineHeight: 17 },
+  chipRemove: { fontFamily: fontFamily.bodyBlack, fontSize: scaleFont(15), lineHeight: 17 },
   emptyHint: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.sm,
@@ -590,7 +590,7 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
   },
   addBtnOff: { opacity: 0.4 },
-  addBtnText: { fontSize: 20 },
+  addBtnText: { fontSize: fontSize.xl },
 
   suggRow: { gap: spacing[2], paddingTop: spacing[1], paddingBottom: spacing[1] },
   suggPill: {

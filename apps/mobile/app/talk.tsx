@@ -55,7 +55,7 @@ import { notifyParentSensitive } from '@/services/notifications';
 import { playSfx } from '@/services/sfx';
 import { loadTalkHistory, saveTalkHistory, type StoredTurn } from '@/services/talkHistory';
 import { useSettings, todayISO } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
 import { useCompanionName } from '@/utils/companion';
 import type { LanguageCode } from '@soz/shared-types';
 
@@ -727,7 +727,7 @@ export default function TalkScreen() {
               disabled={!canSwitchLang}
               style={[styles.langPill, !canSwitchLang && { opacity: 0.7 }, shadow.sm]}
             >
-              <Text style={{ fontSize: 14 }}>{langConfig.flag}</Text>
+              <Text style={{ fontSize: fontSize.sm }}>{langConfig.flag}</Text>
               <Text style={styles.langLabel}>{language.toUpperCase()}</Text>
             </Pressable>
           </View>
@@ -1036,7 +1036,7 @@ const styles = StyleSheet.create({
   statusDot: { width: 6, height: 6, borderRadius: 3 },
   statusText: {
     fontFamily: fontFamily.bodyBold,
-    fontSize: 11,
+    fontSize: fontSize['2xs'],
     color: colors.inkSoft,
   },
   langPill: {
@@ -1050,7 +1050,7 @@ const styles = StyleSheet.create({
   },
   langLabel: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 11,
+    fontSize: fontSize['2xs'],
     color: colors.ink,
     letterSpacing: 0.5,
   },
@@ -1110,7 +1110,7 @@ const styles = StyleSheet.create({
   bubbleText: {
     color: colors.ink,
     fontFamily: fontFamily.bodyBold,
-    fontSize: 15,
+    fontSize: scaleFont(15),
     lineHeight: 21,
   },
   unclearWord: {
@@ -1132,7 +1132,7 @@ const styles = StyleSheet.create({
   },
   pronChipText: {
     fontFamily: fontFamily.bodyBold,
-    fontSize: 11,
+    fontSize: fontSize['2xs'],
     color: '#B73E55',
   },
   bubbleTailBobo: {
@@ -1173,7 +1173,7 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   reportIcon: {
-    fontSize: 13,
+    fontSize: fontSize.caption,
     color: colors.inkSoft,
     opacity: 0.45,
   },
@@ -1193,7 +1193,7 @@ const styles = StyleSheet.create({
   },
   pastLabel: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 10,
+    fontSize: fontSize['3xs'],
     color: colors.inkSoft,
     letterSpacing: 0.6,
   },
@@ -1278,7 +1278,7 @@ const styles = StyleSheet.create({
   },
   convoProgressText: {
     fontFamily: fontFamily.bodyBold,
-    fontSize: 11,
+    fontSize: fontSize['2xs'],
     color: colors.inkSoft,
     marginLeft: spacing[1],
   },
@@ -1298,7 +1298,7 @@ const styles = StyleSheet.create({
   hintBtnText: {
     color: colors.ink,
     fontFamily: fontFamily.bodyBold,
-    fontSize: 13,
+    fontSize: fontSize.caption,
   },
   hintBubble: {
     flexDirection: 'row',
@@ -1310,17 +1310,17 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     maxWidth: '90%',
   },
-  hintLabelText: { fontSize: 16 },
+  hintLabelText: { fontSize: fontSize.base },
   hintText: {
     flex: 1,
     color: colors.ink,
     fontFamily: fontFamily.bodyBold,
-    fontSize: 13,
+    fontSize: fontSize.caption,
   },
   hintClose: {
     color: colors.ink,
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 14,
+    fontSize: fontSize.sm,
     paddingHorizontal: 4,
   },
 });

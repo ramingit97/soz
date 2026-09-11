@@ -18,7 +18,7 @@ import { Screen } from '@/components/Screen';
 import { useCompactScreen } from '@/hooks/useCompactScreen';
 import { Text } from '@/components/Text';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
 
 export default function LanguagePickerScreen() {
   const router = useRouter();
@@ -127,7 +127,7 @@ function LanguageCard({ flag, title, subtitle, onPress }: LanguageCardProps) {
         style={styles.card}
       >
         <View style={styles.flagBubble}>
-          <Text style={{ fontSize: 38 }}>{flag}</Text>
+          <Text style={{ fontSize: scaleFont(38) }}>{flag}</Text>
         </View>
         <View style={{ flex: 1 }}>
           <Text style={{ fontFamily: fontFamily.bodyBlack, fontSize: fontSize.xl }}>{title}</Text>
@@ -136,7 +136,7 @@ function LanguageCard({ flag, title, subtitle, onPress }: LanguageCardProps) {
           </Text>
         </View>
         <View style={styles.arrowDot}>
-          <Text style={{ color: colors.primary, fontSize: 22 }}>›</Text>
+          <Text style={{ color: colors.primary, fontSize: scaleFont(22) }}>›</Text>
         </View>
       </Pressable>
     </Animated.View>

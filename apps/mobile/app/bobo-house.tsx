@@ -8,7 +8,7 @@ import { HBBackButton } from '@/components/HBBackButton';
 import { Text } from '@/components/Text';
 import { HOUSE_ITEMS, getNextItem, getUnlockedItems } from '@/services/boboHouse';
 import { useSettings } from '@/store/settings';
-import { colors, gradients, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, gradients, radius, scaleFont, shadow, spacing } from '@/theme';
 import { useCompanionName } from '@/utils/companion';
 
 export default function BoboHouseScreen() {
@@ -42,7 +42,7 @@ export default function BoboHouseScreen() {
               top: 40 + i * 60,
               left: i % 2 === 0 ? 20 + i * 10 : undefined,
               right: i % 2 !== 0 ? 30 + i * 12 : undefined,
-              fontSize: 14 + (i % 3) * 6,
+              fontSize: fontSize.sm + (i % 3) * 6,
             },
           ]}
         >
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
   },
   nextLabel: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 10,
+    fontSize: fontSize['3xs'],
     color: colors.accentYellow,
     letterSpacing: 1,
   },
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 3,
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 9,
+    fontSize: scaleFont(9),
     color: colors.accentYellow,
   },
   footer: {

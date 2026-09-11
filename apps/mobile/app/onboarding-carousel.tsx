@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
   },
   growthArrow: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 24,
+    fontSize: fontSize['2xl'],
     color: colors.inkSoft,
     marginHorizontal: -2,
   },
@@ -394,13 +394,13 @@ const styles = StyleSheet.create({
   },
   miniDashLabel: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 10,
+    fontSize: fontSize['3xs'],
     color: colors.inkSoft,
     letterSpacing: 0.5,
   },
   miniDashDelta: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 11,
+    fontSize: fontSize['2xs'],
     color: colors.accent,
   },
   miniDashValue: {

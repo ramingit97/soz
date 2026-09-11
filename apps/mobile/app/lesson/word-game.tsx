@@ -18,7 +18,7 @@ import { Text } from '@/components/Text';
 import { getLesson } from '@/data/lessons';
 import { buildWordGameWithReviews, pickReviewRounds } from '@/services/spacedRepetition';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
 
 const OPTION_COLORS = [
   { bg: '#EEF4FF', border: '#4A8AFF', text: '#4A8AFF' },
@@ -135,7 +135,7 @@ export default function WordGameScreen() {
           ))}
         </View>
         <View style={[styles.scorePill, shadow.sm]}>
-          <Text style={{ fontSize: 16 }}>⭐</Text>
+          <Text style={{ fontSize: fontSize.base }}>⭐</Text>
           <Text style={styles.scoreText}>{correctCount * 4}</Text>
         </View>
       </Animated.View>
@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   hintEmoji: {
-    fontSize: 64,
+    fontSize: scaleFont(64),
     lineHeight: 80,
   },
   correctBadge: {

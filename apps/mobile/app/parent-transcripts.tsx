@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
   },
   dayBadgeText: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 11,
+    fontSize: fontSize['2xs'],
     color: colors.primary,
     letterSpacing: 0.5,
   },
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   expandArrow: {
-    fontSize: 20,
+    fontSize: fontSize.xl,
     color: colors.inkSoft,
     fontFamily: fontFamily.bodyBold,
   },

@@ -34,7 +34,7 @@ import {
 import { savePhrases } from '@/services/srs';
 import { useSettings } from '@/store/settings';
 import { useCompanionName } from '@/utils/companion';
-import { colors, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
 
 interface LocalStory {
   id: string;
@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     paddingVertical: spacing[3],
   },
-  playBtnText: { fontSize: 18 },
+  playBtnText: { fontSize: fontSize.lg },
   playBtnLabel: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize.base, color: colors.primaryDeep },
   textToggle: {
     flex: 1,
@@ -399,7 +399,7 @@ const styles = StyleSheet.create({
   qBlock: { marginTop: spacing[4], gap: spacing[3] },
   qHeader: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 13,
+    fontSize: fontSize.caption,
     color: colors.inkSoft,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
 
   phraseCard: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing[3] },
   phraseText: { flex: 1, fontFamily: fontFamily.bodyBlack, fontSize: fontSize.base, color: colors.ink },
-  phraseTr: { fontFamily: fontFamily.bodyMedium, fontSize: 13, color: colors.inkSoft, textAlign: 'right', flexShrink: 1 },
+  phraseTr: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize.caption, color: colors.inkSoft, textAlign: 'right', flexShrink: 1 },
 
   notice: {
     marginTop: spacing[4],
@@ -424,7 +424,7 @@ const styles = StyleSheet.create({
 
   libHeader: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: 13,
+    fontSize: fontSize.caption,
     color: colors.inkSoft,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -432,5 +432,5 @@ const styles = StyleSheet.create({
   },
   libItem: { flexDirection: 'row', alignItems: 'center', gap: spacing[3], marginBottom: spacing[2] },
   libItemTitle: { flex: 1, fontFamily: fontFamily.bodyBold, fontSize: fontSize.base, color: colors.ink },
-  libItemArrow: { fontFamily: fontFamily.bodyBlack, fontSize: 22, color: colors.inkSoft },
+  libItemArrow: { fontFamily: fontFamily.bodyBlack, fontSize: scaleFont(22), color: colors.inkSoft },
 });

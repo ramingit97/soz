@@ -10,7 +10,7 @@ import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
 import { getStrings } from '@/i18n/strings';
 import { useSettings } from '@/store/settings';
-import { colors, gradients, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, gradients, radius, scaleFont, shadow, spacing } from '@/theme';
 import type { LanguageCode } from '@soz/shared-types';
 
 type Choice = 'en_only' | 'ru_only' | 'both';
@@ -132,11 +132,11 @@ function RecommendedCard({ selected, badge, title, description, onPress }: Recom
           </View>
           <View style={styles.flagsRow}>
             <View style={styles.bigFlag}>
-              <Text style={{ fontSize: 38 }}>🇬🇧</Text>
+              <Text style={{ fontSize: scaleFont(38) }}>🇬🇧</Text>
             </View>
-            <Text style={{ color: colors.white, fontSize: 28, fontFamily: fontFamily.bodyBlack }}>+</Text>
+            <Text style={{ color: colors.white, fontSize: scaleFont(28), fontFamily: fontFamily.bodyBlack }}>+</Text>
             <View style={styles.bigFlag}>
-              <Text style={{ fontSize: 38 }}>🇷🇺</Text>
+              <Text style={{ fontSize: scaleFont(38) }}>🇷🇺</Text>
             </View>
           </View>
           <Text
@@ -203,7 +203,7 @@ function SimpleCard({ selected, flag, title, description, tone, tint, onPress }:
         ]}
       >
         <View style={[styles.smallFlag, { backgroundColor: tint }]}>
-          <Text style={{ fontSize: 30 }}>{flag}</Text>
+          <Text style={{ fontSize: fontSize['3xl'] }}>{flag}</Text>
         </View>
         <View style={{ flex: 1 }}>
           <Text style={{ fontFamily: fontFamily.bodyBlack, fontSize: fontSize.lg }}>{title}</Text>
