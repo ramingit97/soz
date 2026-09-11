@@ -13,7 +13,7 @@
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, {
   FadeInDown,
   FadeInUp,
@@ -110,7 +110,15 @@ export default function SetupAgeScreen() {
 
   return (
     <PaperBackground>
-      <View style={styles.container}>
+      {/* ScrollView, а не View: вариантов возраста ЧЕТЫРЕ, и на 320 × 712 dp
+          четвёртая карточка («14–16») не влезала — она оказывалась под панелью
+          навигации, а прокрутки не было. Подростка выбрать было физически
+          невозможно, при том что для него есть отдельный режим движка
+          (conversation-first, см. шапку файла). */}
+      <ScrollView
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+      >
         {/* top row: back + step + spacer */}
         <View style={styles.topBar}>
           <HBBackButton inline />
@@ -154,7 +162,7 @@ export default function SetupAgeScreen() {
             onPress={handleContinue}
           />
         </View>
-      </View>
+      </ScrollView>
     </PaperBackground>
   );
 }
@@ -209,7 +217,10 @@ function RangeCard({
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    // flexGrow вместо flex внутри ScrollView: когда содержимое короче экрана,
+    // распорка ниже прижимает кнопку к низу как раньше; когда длиннее —
+    // распорка сжимается в ноль и экран просто прокручивается.
+    flexGrow: 1,
     paddingHorizontal: spacing[6],
     paddingTop: 50,
     paddingBottom: spacing[6],

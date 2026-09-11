@@ -6,6 +6,7 @@ import { Button } from '@/components/Button';
 import { HBPet } from '@/components/HBPet';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
+import { useCompactScreen } from '@/hooks/useCompactScreen';
 import { getStrings } from '@/i18n/strings';
 import { useSettings } from '@/store/settings';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -16,12 +17,19 @@ export default function WelcomeScreen() {
   const router = useRouter();
   const lang = useSettings((s) => s.parentUILanguage) ?? 'ru';
   const t = getStrings(lang);
+  const { short } = useCompactScreen();
 
+  // scroll обязателен, а не для красоты. Содержимое этого экрана на 320 × 712 dp
+  // занимает ~730 dp: маскот 170 + заголовок 36 px в четыре строки + подзаголовок
+  // + две кнопки. Без прокрутки герой переполнял контейнер и РИСОВАЛСЯ ПОВЕРХ
+  // кнопки «Начнём» — она накрывала строку абзаца. Это был самый первый экран
+  // продукта. Прокрутка гарантирует, что до кнопки можно дойти на любом экране;
+  // уменьшенный маскот на коротких экранах убирает необходимость прокручивать.
   return (
-    <Screen gradient decoration="bobo">
+    <Screen gradient decoration="bobo" scroll>
       <View style={styles.heroSection}>
         <Animated.View entering={FadeInDown.duration(700).delay(100)}>
-          <HBPet size={170} mood="happy" />
+          <HBPet size={short ? 120 : 170} mood="happy" />
         </Animated.View>
 
         <Animated.View entering={FadeInUp.duration(600).delay(280)}>
@@ -77,7 +85,10 @@ export default function WelcomeScreen() {
 
 const styles = StyleSheet.create({
   heroSection: {
-    flex: 1,
+    // Не flex:1 — внутри ScrollView это распирало бы блок и возвращало ту же
+    // поломку. flexGrow отдаёт герою лишнее место, когда оно есть, и не мешает
+    // прокрутке, когда его нет.
+    flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'flex-start',
     paddingTop: spacing[6],
@@ -104,7 +115,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[2],
   },
   ctaSection: {
-    paddingBottom: spacing[10],
+    paddingBottom: spacing[6],
     gap: spacing[3],
   },
   ribbonRow: {

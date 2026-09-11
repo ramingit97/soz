@@ -11,7 +11,7 @@
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 import { HBButton } from '@/components/HBButton';
@@ -69,7 +69,14 @@ export default function ProfileTypeScreen() {
 
   return (
     <PaperBackground>
-      <View style={styles.container}>
+      {/* ScrollView: содержимое (маскот 92 + заголовок + две карточки, текст в
+          которых переносится на вторую строку) на 320 × 712 dp не оставляло
+          места кнопке. Вместе с нижним инсетом из PaperBackground это и давало
+          обрезанную наполовину «Продолжить». */}
+      <ScrollView
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+      >
         <Animated.View entering={FadeInDown.duration(600)} style={styles.header}>
           <View style={styles.petHalo}>
             <HBPet size={64} hue={who === 'adult' ? 175 : 55} mood="happy" />
@@ -125,13 +132,15 @@ export default function ProfileTypeScreen() {
             onPress={handleContinue}
           />
         </Animated.View>
-      </View>
+      </ScrollView>
     </PaperBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingHorizontal: spacing[6], paddingTop: 80 },
+  // flexGrow вместо flex — см. age.tsx. paddingTop 80 был жёстким числом,
+  // рассчитанным на широкий экран; на коротком он один съедал 11% высоты.
+  container: { flexGrow: 1, paddingHorizontal: spacing[6], paddingTop: spacing[10] },
   header: { alignItems: 'center', gap: spacing[2], marginBottom: spacing[8] },
   petHalo: {
     width: 92,

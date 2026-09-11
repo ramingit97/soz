@@ -6,10 +6,24 @@
  *
  * Kept as `PaperBackground` for callsite compatibility; renamed semantically
  * to "cream/honey" canvas.
+ *
+ * САМ ГРАДИЕНТ рисуется во весь экран, включая зону под системной панелью
+ * навигации — так и должно быть. А вот СОДЕРЖИМОЕ обёрнуто в SafeAreaView по
+ * нижнему краю, и это исправление конкретного дефекта: до 2026-09-11 ни один
+ * файл приложения не использовал безопасные зоны, кроме Screen.tsx. В итоге все
+ * 36 экранов на этом фоне рисовали нижние элементы ПОД панелью навигации — на
+ * Galaxy A21s это 48 dp, и кнопка «Продолжить» на setup/profile-type была
+ * обрезана наполовину.
+ *
+ * Только нижний край намеренно. Верх сейчас держат жёсткие `paddingTop` в самих
+ * экранах (например 80 на profile-type); добавить сюда ещё и верхний инсет
+ * означало бы сдвинуть содержимое вниз на всех 36 экранах и усугубить
+ * переполнение. Привести верхние отступы к инсетам — работа этапа типографики.
  */
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, View } from 'react-native';
+import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
 import { colors } from '@/theme';
 
@@ -18,6 +32,11 @@ type Variant = 'cream' | 'parchment' | 'honey' | 'sage' | 'night';
 interface Props {
   variant?: Variant;
   children?: React.ReactNode;
+  /**
+   * Какие края уважать. По умолчанию только низ — там и была поломка.
+   * Передать `[]`, если экрану нужен полноэкранный контент вплотную к краям.
+   */
+  edges?: readonly Edge[];
 }
 
 const GRADIENTS: Record<Variant, [string, string, string?]> = {
@@ -29,7 +48,7 @@ const GRADIENTS: Record<Variant, [string, string, string?]> = {
   night: ['#E0D6E8', colors.bg],
 };
 
-export function PaperBackground({ variant = 'cream', children }: Props) {
+export function PaperBackground({ variant = 'cream', children, edges = ['bottom'] }: Props) {
   const g = GRADIENTS[variant];
   const grad: [string, string, ...string[]] = g[2] ? [g[0], g[1], g[2]] : [g[0], g[1]];
   return (
@@ -41,13 +60,16 @@ export function PaperBackground({ variant = 'cream', children }: Props) {
     >
       {/* Subtle warm vignette at the top */}
       <View style={styles.vignetteTop} pointerEvents="none" />
-      {children}
+      <SafeAreaView style={styles.safe} edges={edges}>
+        {children}
+      </SafeAreaView>
     </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, position: 'relative' },
+  safe: { flex: 1 },
   vignetteTop: {
     position: 'absolute',
     top: 0,
