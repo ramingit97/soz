@@ -49,6 +49,11 @@ export function deriveHomeState(i: HomeStateInput): HomeState {
 
 export type PlanStep = 'words' | 'reading' | 'grammar' | 'listening' | 'talk' | 'quiz';
 
+/** Первый непройденный шаг урока; null — пройдены все. */
+export function resumeStep(steps: PlanStep[], done: readonly string[]): PlanStep | null {
+  return steps.find((s) => !done.includes(s)) ?? null;
+}
+
 export type LessonFocusKind = 'story_listen' | 'conversation' | 'vocab_grammar' | 'review';
 
 /**

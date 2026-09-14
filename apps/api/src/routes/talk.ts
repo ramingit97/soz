@@ -353,13 +353,68 @@ talkRoute.post(
     });
   }
 
-  // 1c. Real-time safety screen — runs BEFORE Bobo replies, independent of the
-  // retrospective memory extraction. A crisis on turn 1 is caught even if the app
-  // closes right after. On crisis: calm safe reply + immediate sensitive thread.
-  const [safety, personaInfo] = await Promise.all([
-    screenChildMessage(stt.transcript, body.language),
+  // 1c. Real-time safety screen — independent of the retrospective memory
+  // extraction, so a crisis on turn 1 is caught even if the app closes right
+  // after. On crisis: calm safe reply + immediate sensitive thread.
+  //
+  // Latency: the screen (an LLM call) used to run first and everything else
+  // waited behind it — then memory, interests and history were read one by one
+  // (~100 ms each: Neon is in us-east, Fly in fra), then Bobo's reply. Now the
+  // screen, the reads and Bobo's reply run together. The reply is still only
+  // USED after the screen clears the message: on a crisis it is discarded and
+  // the child hears the safe reply, exactly as before.
+  const safetyP = screenChildMessage(stt.transcript, body.language);
+  const [personaInfo, memory, interests, history] = await Promise.all([
     getChildPersonaInfo(body.childId),
+    getChildMemory(body.childId, body.language),
+    // Adult learners don't get the kid interest-hooks (they drive their own topics)
+    body.ageBand === 'adult' ? Promise.resolve<string[]>([]) : getChildInterests(body.childId),
+    getHistory(body.conversationId, body.childId),
   ]);
+  const memoryString = buildMemoryString(memory, body.childName ?? 'friend', body.language);
+  const timeContext = buildTimeContext(memory, body.language);
+
+  const systemPrompt = buildSystemPrompt({
+    language: body.language,
+    childName: body.childName ?? undefined,
+    level: body.level,
+    ageBand: body.ageBand ?? undefined,
+    theme: lessonCtx.theme,
+    vocabulary: lessonCtx.vocabulary,
+    targetPhrases: lessonCtx.targetPhrases,
+    interests,
+    memory: memoryString || undefined,
+    timeContext,
+    scenario: body.scenario ?? undefined,
+    objectives: body.objectives ?? undefined,
+    companionName: body.companionName ?? personaInfo.petName,
+    childAge: personaInfo.age,
+    nativeLanguage: body.nativeLanguage ?? undefined,
+    sessionElapsedSec: body.sessionElapsedSec ?? undefined,
+    sessionTargetSec: body.sessionTargetSec ?? undefined,
+  });
+
+  // Time's up on a conversation lesson → a must-obey instruction placed AFTER
+  // the child's message (recency wins with gpt-4o-mini; the same rule inside the
+  // long system prompt gets ignored in favor of "always end with a question").
+  const timeIsUp =
+    body.sessionTargetSec != null && (body.sessionElapsedSec ?? 0) >= body.sessionTargetSec;
+  const wrapCommand = timeIsUp
+    ? body.language === 'en'
+      ? 'TIME IS UP for this session. In this reply: react warmly to what they just said, praise something SPECIFIC they did well today, and say this is a perfect stopping point for today. End with a warm goodbye — NOT a question. Then append the marker [[wrap]] as the very last characters.'
+      : 'ВРЕМЯ СЕССИИ ВЫШЛО. В этом ответе: тепло отреагируй на сказанное, похвали что-то КОНКРЕТНОЕ из сегодняшнего разговора и скажи, что на сегодня отличная остановка. Закончи тёплым прощанием — БЕЗ вопроса. Then append the marker [[wrap]] as the very last characters.'
+    : undefined;
+
+  // 2. LLM — what does Bobo say back? Started before the safety verdict (see 1c).
+  const llmP = generateBoboReply({
+    systemPrompt,
+    history,
+    childMessage: stt.transcript,
+    postInstruction: wrapCommand,
+  });
+  llmP.catch(() => {}); // the crisis branch never awaits it — no unhandled rejection
+
+  const safety = await safetyP;
   if (safety.crisis) {
     const meta = { childId: body.childId, language: body.language, day: body.day };
     await appendTurn(body.conversationId, { role: 'child', text: stt.transcript }, meta);
@@ -397,55 +452,13 @@ talkRoute.post(
     });
   }
 
-  // 2. LLM — what does Bobo say back?
-  // Load Bobo's memory of this child (non-blocking — returns empty if DB unavailable)
-  const memory = await getChildMemory(body.childId, body.language);
-  const memoryString = buildMemoryString(memory, body.childName ?? 'friend', body.language);
-  const timeContext = buildTimeContext(memory, body.language);
-  // Adult learners don't get the kid interest-hooks (they drive their own topics)
-  const interests = body.ageBand === 'adult' ? [] : await getChildInterests(body.childId);
-
-  const systemPrompt = buildSystemPrompt({
-    language: body.language,
-    childName: body.childName ?? undefined,
-    level: body.level,
-    ageBand: body.ageBand ?? undefined,
-    theme: lessonCtx.theme,
-    vocabulary: lessonCtx.vocabulary,
-    targetPhrases: lessonCtx.targetPhrases,
-    interests,
-    memory: memoryString || undefined,
-    timeContext,
-    scenario: body.scenario ?? undefined,
-    objectives: body.objectives ?? undefined,
-    companionName: body.companionName ?? personaInfo.petName,
-    childAge: personaInfo.age,
-    nativeLanguage: body.nativeLanguage ?? undefined,
-    sessionElapsedSec: body.sessionElapsedSec ?? undefined,
-    sessionTargetSec: body.sessionTargetSec ?? undefined,
-  });
-
   const conversationMeta = { childId: body.childId, language: body.language, day: body.day };
-  const history = await getHistory(body.conversationId, body.childId);
-  await appendTurn(body.conversationId, { role: 'child', text: stt.transcript }, conversationMeta);
-
-  // Time's up on a conversation lesson → a must-obey instruction placed AFTER
-  // the child's message (recency wins with gpt-4o-mini; the same rule inside the
-  // long system prompt gets ignored in favor of "always end with a question").
-  const timeIsUp =
-    body.sessionTargetSec != null && (body.sessionElapsedSec ?? 0) >= body.sessionTargetSec;
-  const wrapCommand = timeIsUp
-    ? body.language === 'en'
-      ? 'TIME IS UP for this session. In this reply: react warmly to what they just said, praise something SPECIFIC they did well today, and say this is a perfect stopping point for today. End with a warm goodbye — NOT a question. Then append the marker [[wrap]] as the very last characters.'
-      : 'ВРЕМЯ СЕССИИ ВЫШЛО. В этом ответе: тепло отреагируй на сказанное, похвали что-то КОНКРЕТНОЕ из сегодняшнего разговора и скажи, что на сегодня отличная остановка. Закончи тёплым прощанием — БЕЗ вопроса. Then append the marker [[wrap]] as the very last characters.'
-    : undefined;
-
-  const llm = await generateBoboReply({
-    systemPrompt,
-    history,
-    childMessage: stt.transcript,
-    postInstruction: wrapCommand,
-  });
+  // The child's turn is written while the reply is still being generated; the
+  // reply already has `history` read above, so it can't see this turn twice.
+  const [llm] = await Promise.all([
+    llmP,
+    appendTurn(body.conversationId, { role: 'child', text: stt.transcript }, conversationMeta),
+  ]);
 
   // Strip the objective-completion marker BEFORE the reply reaches history, TTS
   // or the client — a marker left in history teaches the model to echo it, and
@@ -475,10 +488,16 @@ talkRoute.post(
     }
   }
 
-  await appendTurn(body.conversationId, { role: 'bobo', text: replyText }, conversationMeta);
+  // 3. TTS — Bobo's voice, in parallel with saving the reply and re-reading the
+  // history for the memory cadence below.
+  const ttsP = synthesizeBobo({
+    text: replyText,
+    language: body.language,
+  });
+  const allTurns = await appendTurn(body.conversationId, { role: 'bobo', text: replyText }, conversationMeta)
+    .then(() => getHistory(body.conversationId, body.childId));
 
   // After every 4th child turn, extract and persist memory (fire-and-forget, non-blocking)
-  const allTurns = await getHistory(body.conversationId, body.childId);
   const childTurnCount = allTurns.filter((t) => t.role === 'child').length;
   if (childTurnCount > 0 && childTurnCount % 4 === 0) {
     updateChildMemory(
@@ -490,16 +509,14 @@ talkRoute.post(
     ).catch(() => {});
   }
 
-  // 3. TTS — Bobo's voice
-  const tts = await synthesizeBobo({
-    text: replyText,
-    language: body.language,
-  });
+  const tts = await ttsP;
 
   // Audio length estimate: assume the recording is ~mid-range short clip.
   // Real STT durationMs measures API call time, not audio length, so we
-  // approximate audio length from buffer size (rough: 16KB/sec for m4a).
-  const approxAudioMs = Math.max(1000, Math.round((audioBuffer.byteLength / 16_000) * 1000));
+  // approximate audio length from buffer size (rough: 16KB/sec for m4a; the web
+  // client sends WAV 16 kHz mono = 32KB/sec).
+  const bytesPerSec = body.audioMimeType.includes('wav') ? 32_000 : 16_000;
+  const approxAudioMs = Math.max(1000, Math.round((audioBuffer.byteLength / bytesPerSec) * 1000));
 
   const costStt = sttCost(approxAudioMs);
   const costLlm = llm.usd; // recorded inside generateBoboReply

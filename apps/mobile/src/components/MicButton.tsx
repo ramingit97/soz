@@ -15,12 +15,16 @@ import { colors, radius, shadow } from '@/theme';
 
 interface MicButtonProps {
   state: 'idle' | 'recording' | 'thinking' | 'playing';
-  onPressIn: () => void;
-  onPressOut: () => void;
+  /**
+   * Нажатие, а не удержание: первое начинает запись, запись сама останавливается,
+   * когда ребёнок замолчал; второе нажатие останавливает раньше. Держать палец
+   * на кнопке маленькому ребёнку трудно, а в Safari удержание ещё и выделяет текст.
+   */
+  onPress: () => void;
   disabled?: boolean;
 }
 
-export function MicButton({ state, onPressIn, onPressOut, disabled }: MicButtonProps) {
+export function MicButton({ state, onPress, disabled }: MicButtonProps) {
   const scale = useSharedValue(1);
   const pulse = useSharedValue(0);
 
@@ -82,17 +86,16 @@ export function MicButton({ state, onPressIn, onPressOut, disabled }: MicButtonP
           { backgroundColor: buttonColor, opacity: 0.25 },
         ]}
       />
-      <Animated.View style={[aStyle, shadow.glow]}>
+      {/* Скругление обязательно: в браузере тень рисуется по рамке блока — был квадрат. */}
+      <Animated.View style={[aStyle, shadow.glow, styles.glow]}>
         <Pressable
           disabled={disabled}
-          onPressIn={() => {
+          onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
-            onPressIn();
+            onPress();
           }}
-          onPressOut={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-            onPressOut();
-          }}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: !!disabled, busy: state === 'recording' }}
           style={[styles.button, { backgroundColor: buttonColor, opacity: disabled ? 0.4 : 1 }]}
         >
           {state === 'thinking' ? <ThinkingDots /> : <MicIcon />}
@@ -143,8 +146,10 @@ function ThinkingDots() {
 
 const styles = StyleSheet.create({
   wrapper: {
+    // Кольца пульса шире (до ~186) и выходят за блок — места под них не держим,
+    // иначе на низком экране микрофон упирается во вкладки.
     width: 200,
-    height: 200,
+    height: 160,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -152,6 +157,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 120,
     height: 120,
+    borderRadius: radius.full,
+  },
+  glow: {
     borderRadius: radius.full,
   },
   button: {

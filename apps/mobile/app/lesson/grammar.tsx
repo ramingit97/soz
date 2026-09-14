@@ -68,6 +68,8 @@ export default function GrammarScreen() {
   const failsRef = useRef(0);
   const shakeX = useSharedValue(0);
   const recordLessonError = useSettings((s) => s.recordLessonError);
+  const childId = useSettings((s) => s.childId);
+  const markLessonStep = useSettings((s) => s.markLessonStep);
 
   // Non-null after the early return below
   const exercise = exercises[exerciseIndex]!;
@@ -174,6 +176,7 @@ export default function GrammarScreen() {
         setOrderedWords([]);
       }
     } else {
+      if (childId) markLessonStep(childId, lang, dayNum, 'grammar');
       router.push(`/talk?lang=${lang}&day=${day}&fromLesson=1`);
     }
   };

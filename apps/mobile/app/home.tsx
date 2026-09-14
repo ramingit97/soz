@@ -33,8 +33,8 @@ import { track } from '@/services/analytics';
 import { useSettings } from '@/store/settings';
 import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
 import { useCompanionName, withCompanionName } from '@/utils/companion';
-import { deriveHomeState, todayPlanSteps } from '@/utils/homeState';
-import { lessonStartRoute } from '@/utils/lessonFlow';
+import { deriveHomeState, resumeStep, todayPlanSteps } from '@/utils/homeState';
+import { lessonStepRoute } from '@/utils/lessonFlow';
 
 declare const __DEV__: boolean;
 
@@ -175,6 +175,7 @@ export default function HomeScreen() {
   const userId = useSettings((s) => s.userId);
   const childId = useSettings((s) => s.childId);
   const profileType = useSettings((s) => s.profileType);
+  const lessonStepsDone = useSettings((s) => s.lessonStepsDone);
   const reset = useSettings((s) => s.reset);
   const bot = useCompanionName();
   const data = useHomeData();
@@ -200,6 +201,8 @@ export default function HomeScreen() {
     isQuizDay: data.isQuizDay,
   });
   const steps = todayPlanSteps({ focus: lesson?.focus, mature: data.mature, isQuizDay: data.isQuizDay });
+  const doneSteps = (childId && lessonStepsDone[`${childId}:${firstLang}:${currentDay}`]) || [];
+  const nextStep = resumeStep(steps, doneSteps);
 
   const handleStart = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
@@ -212,7 +215,8 @@ export default function HomeScreen() {
     }
     const focus = lesson?.focus;
     track({ event: 'lesson_started', userId, childId, props: { lang: firstLang, day: currentDay, mode: focus ?? (data.mature ? 'read' : 'kid-mode') } });
-    router.push(lessonStartRoute(focus, currentDay, firstLang, data.mature) as never);
+    // Продолжаем с первого непройденного шага, а не с начала урока.
+    router.push(lessonStepRoute(nextStep ?? steps[0] ?? 'words', focus, currentDay, firstLang, data.mature) as never);
   };
 
   const handleStartQuiz = () => {
@@ -277,6 +281,7 @@ export default function HomeScreen() {
             theme={lesson?.theme ?? null}
             vocabulary={lesson?.vocabulary ?? []}
             steps={steps}
+            doneSteps={data.doneToday ? steps : doneSteps}
             petHue={petHue}
             generating={data.generating || data.aiLessonReady === null}
             onStart={handleStart}

@@ -158,6 +158,12 @@ interface SettingsState {
    * this is the local half of that.
    */
   creditedLessons: Record<string, true>;
+  /**
+   * Пройденные шаги урока дня, ключ `childId:language:day`. Урок засчитывается
+   * только в конце, и без этого каждый новый вход начинал урок с первого шага
+   * (владелец, 2026-09-14: прошёл «Новые слова», вышел — снова «Новые слова»).
+   */
+  lessonStepsDone: Record<string, string[]>;
 
   // Bedtime mode — auto by hour OR manual override
   /** 'off' = always day theme; 'on' = always night; 'auto' = night between 20:00 and 7:00 */
@@ -243,6 +249,8 @@ interface SettingsState {
   markTodayComplete: (tzOffsetMinutes?: number) => void;
   /** True the first time this (child, language, day) is credited; false after. */
   claimLessonCredit: (childId: string, language: string, day: number) => boolean;
+  /** Отметить шаг урока пройденным; шаги прошлых дней этого ребёнка и языка стираются. */
+  markLessonStep: (childId: string, language: string, day: number, step: string) => void;
   /** Adopt the server's authoritative totals after a POST /progress. */
   applyServerProgress: (r: { totalStars?: number; streak?: number; currentDay?: number }) => void;
   reset: () => void;
@@ -254,7 +262,7 @@ const INITIAL: Omit<SettingsState,
   | 'setAuth' | 'setChildId' | 'syncChild' | 'setIsPremium' | 'logout'
   | 'setParentUILanguage' | 'setLearningLanguages' | 'setChildProfile' | 'setChildAgeBand' | 'setPetHue'
   | 'setSchedule' | 'completeOnboarding' | 'startNewProfileSetup' | 'addStars' | 'setDailyGoal' | 'advanceDay'
-  | 'markTodayComplete' | 'claimLessonCredit' | 'applyServerProgress' | 'reset'
+  | 'markTodayComplete' | 'claimLessonCredit' | 'markLessonStep' | 'applyServerProgress' | 'reset'
   | 'recordLessonError' | 'clearLessonErrors'
   | 'useStreakFreeze' | 'refillStreakFreezes' | 'setChildInterests'
   | 'setBedtimeMode' | 'setSoundEnabled' | 'setAudioConsent' | 'setProfileType' | 'setGoal' | 'setGoals' | 'setProactiveOptIn'
@@ -296,6 +304,7 @@ const INITIAL: Omit<SettingsState,
   starsResetDate: null,
   starsTodayByChild: {},
   creditedLessons: {},
+  lessonStepsDone: {},
   isPremium: false,
   bedtimeMode: 'auto',
   soundEnabled: true,
@@ -512,6 +521,20 @@ export const useSettings = create<SettingsState>()(
         set((s) => ({ creditedLessons: { ...s.creditedLessons, [key]: true } }));
         return true;
       },
+      markLessonStep: (childId, language, day, step) =>
+        set((s) => {
+          const prefix = `${childId}:${language}:`;
+          const key = `${prefix}${day}`;
+          const next: Record<string, string[]> = {};
+          for (const [k, v] of Object.entries(s.lessonStepsDone)) {
+            // Прошлые дни этого ребёнка и языка больше не нужны.
+            if (k.startsWith(prefix) && k !== key) continue;
+            next[k] = v;
+          }
+          const current = next[key] ?? [];
+          next[key] = current.includes(step) ? current : [...current, step];
+          return { lessonStepsDone: next };
+        }),
       applyServerProgress: (r) =>
         set((s) => ({
           totalStars: r.totalStars ?? s.totalStars,

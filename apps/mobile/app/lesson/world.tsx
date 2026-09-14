@@ -6,21 +6,18 @@
  * After MAX_PROMPTS prompts → navigate to word-game.
  */
 
-import * as FileSystem from 'expo-file-system/legacy';
-import { readAsBase64 } from '@/utils/recording';
+import { useVoiceRecorder } from '@/hooks/useVoiceRecorder';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
-  RecordingPresets,
   createAudioPlayer,
   requestRecordingPermissionsAsync,
   setAudioModeAsync,
-  useAudioRecorder,
 } from 'expo-audio';
 import type { AudioPlayer } from 'expo-audio';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, SafeAreaView, StyleSheet, View } from 'react-native';
+import { Pressable, SafeAreaView, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, {
   FadeIn,
   FadeInDown,
@@ -41,6 +38,8 @@ import { getLesson } from '@/data/lessons';
 import { postTalk } from '@/services/api';
 import { useSettings } from '@/store/settings';
 import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
+import { useCompanionName } from '@/utils/companion';
+import { alertTalkFailure } from '@/utils/talkAlert';
 
 type Mood = 'idle' | 'recording' | 'thinking' | 'playing';
 
@@ -74,6 +73,9 @@ export default function WorldScreen() {
   const lesson = getLesson(lang, Number(day));
   const vocabulary = lesson?.vocabulary ?? [];
   const isRu = lang === 'ru';
+  const bot = useCompanionName();
+  // Низкий экран (iPhone SE, Safari с панелями): иначе микрофон уезжал за край.
+  const compact = useWindowDimensions().height < 760;
 
   const childId = useSettings((s) => s.childId);
   const childName = useSettings((s) => s.childName);
@@ -90,7 +92,7 @@ export default function WorldScreen() {
   const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null);
   const [done, setDone] = useState(false);
 
-  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const voice = useVoiceRecorder();
   const playerRef = useRef<AudioPlayer | null>(null);
 
   const currentWord = vocabulary[promptIndex % vocabulary.length] ?? '';
@@ -140,20 +142,19 @@ export default function WorldScreen() {
   const startRecording = useCallback(async () => {
     if (!permissionGranted || mood !== 'idle' || done) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
-    await recorder.prepareToRecordAsync();
-    recorder.record();
     setMood('recording');
-  }, [permissionGranted, mood, done, recorder]);
+    // Запись останавливается сама, когда ребёнок замолчал.
+    await voice.start({ onAutoStop: () => stopRecordingRef.current?.() });
+  }, [permissionGranted, mood, done, voice]);
 
   const stopRecording = useCallback(async () => {
     if (mood !== 'recording') return;
     setMood('thinking');
     try {
-      await recorder.stop();
-      const uri = recorder.uri;
-      if (!uri) { setMood('idle'); return; }
+      const audio = await voice.stop();
+      if (!audio) { setMood('idle'); return; }
 
-      const { base64: audioBase64, mimeType: audioMimeType } = await readAsBase64(uri);
+      const { base64: audioBase64, mimeType: audioMimeType } = audio;
 
       if (!childId) { setMood('idle'); return; }
 
@@ -188,10 +189,15 @@ export default function WorldScreen() {
           setPromptIndex((i) => i + 1);
         }, 1500);
       }
-    } catch {
+    } catch (e) {
+      console.warn('world talk failed', e);
+      alertTalkFailure(e, bot);
       setMood('idle');
     }
-  }, [mood, recorder, childId, lang, day, childName, childAgeBand, apiLevel, authToken, isLast]);
+  }, [mood, voice, childId, lang, day, childName, childAgeBand, apiLevel, authToken, isLast, bot]);
+
+  const stopRecordingRef = useRef<(() => void) | null>(null);
+  stopRecordingRef.current = () => { void stopRecording(); };
 
   const handleContinue = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
@@ -248,9 +254,15 @@ export default function WorldScreen() {
           ))}
         </View>
 
+        {/* Прокручивается, если не влезло, — подсказка и микрофон всегда на экране. */}
+        <ScrollView
+          style={styles.middle}
+          contentContainerStyle={styles.middleContent}
+          showsVerticalScrollIndicator={false}
+        >
         {/* Bobo */}
         <View style={styles.boboArea}>
-          <Bobo size={110} mood={boboMood} />
+          <Bobo size={compact ? 72 : 110} mood={boboMood} />
         </View>
 
         {/* Prompt card */}
@@ -301,6 +313,7 @@ export default function WorldScreen() {
             </Pressable>
           </Animated.View>
         )}
+        </ScrollView>
 
         {/* Status hint */}
         {!done && (
@@ -312,7 +325,7 @@ export default function WorldScreen() {
                   ? (isRu ? 'Бобо отвечает...' : 'Bobo is responding...')
                   : mood === 'recording'
                     ? (isRu ? '🔴 Слушаю!' : '🔴 Go ahead!')
-                    : (isRu ? '🎤 Зажми и расскажи' : '🎤 Hold and describe')}
+                    : (isRu ? '🎤 Нажми и расскажи' : '🎤 Tap and describe')}
             </Text>
           </View>
         )}
@@ -322,8 +335,7 @@ export default function WorldScreen() {
           <Animated.View entering={FadeInUp.duration(400).delay(250)} style={styles.micArea}>
             <MicButton
               state={mood === 'recording' ? 'recording' : mood === 'thinking' || mood === 'playing' ? 'thinking' : 'idle'}
-              onPressIn={startRecording}
-              onPressOut={stopRecording}
+              onPress={() => (mood === 'recording' ? stopRecording() : startRecording())}
               disabled={mood === 'thinking' || mood === 'playing' || !permissionGranted}
             />
           </Animated.View>
@@ -337,6 +349,8 @@ export default function WorldScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#0D2B1A' },
   safe: { flex: 1 },
+  middle: { flex: 1 },
+  middleContent: { flexGrow: 1, justifyContent: 'center' },
 
   topBar: {
     flexDirection: 'row',

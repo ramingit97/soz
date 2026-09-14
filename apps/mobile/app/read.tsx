@@ -93,7 +93,10 @@ export default function ReadScreen() {
   const childLevel = useSettings((s) => s.childLevel);
   const childAgeBand = useSettings((s) => s.childAgeBand);
   const firstLang = learningLanguages[0] ?? lang;
-  const lessonRoute = afterReadingRoute(day, firstLang, isMatureLearner(childLevel, childAgeBand));
+  const mature = isMatureLearner(childLevel, childAgeBand);
+  const lessonRoute = afterReadingRoute(day, firstLang, mature);
+  const childId = useSettings((s) => s.childId);
+  const markLessonStep = useSettings((s) => s.markLessonStep);
 
   const [sceneIdx, setSceneIdx] = useState(0);
   const isLast = sceneIdx === scenes.length - 1;
@@ -117,6 +120,8 @@ export default function ReadScreen() {
 
   function startLesson() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    // У старших чтение — первый шаг урока дня; у малышей это сказка, не шаг.
+    if (mature && childId) markLessonStep(childId, firstLang, day, 'reading');
     router.replace(lessonRoute as any);
   }
 

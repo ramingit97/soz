@@ -6,12 +6,12 @@
  * On the final scene → navigate to word-game (same as listen.tsx).
  */
 
-import { readAsBase64 } from '@/utils/recording';
+import { useVoiceRecorder } from '@/hooks/useVoiceRecorder';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, SafeAreaView, StyleSheet, View } from 'react-native';
+import { Pressable, SafeAreaView, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, {
   FadeIn,
   FadeInDown,
@@ -25,10 +25,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import {
-  RecordingPresets,
   requestRecordingPermissionsAsync,
   setAudioModeAsync,
-  useAudioRecorder,
 } from 'expo-audio';
 
 import { Bobo } from '@/components/Bobo';
@@ -56,6 +54,8 @@ export default function QuestScreen() {
   const childId = useSettings((s) => s.childId);
   const authToken = useSettings((s) => s.authToken);
   const isRu = lang === 'ru';
+  // Низкий экран (iPhone SE, Safari с панелями): иначе микрофон уезжал за край.
+  const compact = useWindowDimensions().height < 760;
 
   const [sceneIndex, setSceneIndex] = useState(0);
   const [status, setStatus] = useState<Status>('idle');
@@ -64,7 +64,7 @@ export default function QuestScreen() {
   const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null);
   const [errorNote, setErrorNote] = useState<string | null>(null);
 
-  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const voice = useVoiceRecorder();
   const currentScene = scenes[sceneIndex];
   const keyword = vocabulary[sceneIndex % vocabulary.length] ?? '';
   const isLast = sceneIndex === scenes.length - 1;
@@ -107,20 +107,19 @@ export default function QuestScreen() {
     if (!permissionGranted || status !== 'idle') return;
     setErrorNote(null);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
-    await recorder.prepareToRecordAsync();
-    recorder.record();
     setStatus('recording');
-  }, [permissionGranted, status, recorder]);
+    // Запись останавливается сама, когда ребёнок замолчал.
+    await voice.start({ onAutoStop: () => stopRecordingRef.current?.(), silenceMs: 800 });
+  }, [permissionGranted, status, voice]);
 
   const stopRecording = useCallback(async () => {
     if (status !== 'recording') return;
     setStatus('thinking');
     try {
-      await recorder.stop();
-      const uri = recorder.uri;
-      if (!uri) { setStatus('idle'); return; }
+      const audio = await voice.stop();
+      if (!audio) { setStatus('idle'); return; }
 
-      const { base64: audioBase64, mimeType: audioMimeType } = await readAsBase64(uri);
+      const { base64: audioBase64, mimeType: audioMimeType } = audio;
 
       if (!childId) { setStatus('idle'); return; }
 
@@ -182,7 +181,10 @@ export default function QuestScreen() {
       );
       setStatus('idle');
     }
-  }, [status, recorder, childId, lang, keyword, authToken, attempts, advance, recordLessonError, isRu]);
+  }, [status, voice, childId, lang, keyword, authToken, attempts, advance, recordLessonError, isRu]);
+
+  const stopRecordingRef = useRef<(() => void) | null>(null);
+  stopRecordingRef.current = () => { void stopRecording(); };
 
   // Escape hatch only when the mic is unavailable (permission denied) — otherwise
   // the child must actually attempt the word (strict mode). They are never trapped:
@@ -269,11 +271,17 @@ export default function QuestScreen() {
           ))}
         </View>
 
-        {/* Bobo + story card */}
+        {/* Bobo + story card + keyword. Прокручиваются, если не влезли, — микрофон
+            и подсказка под ними всегда на экране. */}
+        <ScrollView
+          style={styles.middle}
+          contentContainerStyle={styles.middleContent}
+          showsVerticalScrollIndicator={false}
+        >
         <Animated.View entering={FadeInDown.duration(600)} style={styles.boboArea}>
           <Animated.View style={successStyle}>
-            <View style={styles.boboGlow}>
-              <Bobo size={110} mood={boboMood} />
+            <View style={[styles.boboGlow, compact && { padding: spacing[2] }]}>
+              <Bobo size={compact ? 72 : 110} mood={boboMood} />
             </View>
           </Animated.View>
         </Animated.View>
@@ -284,7 +292,7 @@ export default function QuestScreen() {
           exiting={FadeOut.duration(180)}
           style={styles.cardArea}
         >
-          <View style={[styles.storyCard, shadow.lg]}>
+          <View style={[styles.storyCard, compact && styles.storyCardCompact, shadow.lg]}>
             <Text style={{ fontSize: scaleFont(34), marginBottom: spacing[3] }}>
               {currentScene?.emoji ?? '📖'}
             </Text>
@@ -301,6 +309,7 @@ export default function QuestScreen() {
             <Text style={styles.keywordWord}>{keyword.toUpperCase()}</Text>
           </View>
         </Animated.View>
+        </ScrollView>
 
         {/* Feedback */}
         <View style={styles.feedbackArea}>
@@ -332,7 +341,7 @@ export default function QuestScreen() {
           )}
           {status === 'idle' && (
             <Text style={errorNote ? styles.feedbackFail : styles.holdHint}>
-              {errorNote ?? (isRu ? '🎤 Зажми и скажи слово' : '🎤 Hold and say the word')}
+              {errorNote ?? (isRu ? '🎤 Нажми и скажи слово' : '🎤 Tap and say the word')}
             </Text>
           )}
           {status === 'thinking' && (
@@ -343,11 +352,10 @@ export default function QuestScreen() {
         </View>
 
         {/* Mic button */}
-        <View style={styles.micArea}>
+        <View style={[styles.micArea, compact && { paddingBottom: spacing[3] }]}>
           <MicButton
             state={status === 'recording' ? 'recording' : status === 'thinking' ? 'thinking' : 'idle'}
-            onPressIn={startRecording}
-            onPressOut={stopRecording}
+            onPress={() => (status === 'recording' ? stopRecording() : startRecording())}
             disabled={status === 'success' || status === 'skipped' || status === 'thinking'}
           />
         </View>
@@ -432,6 +440,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(124, 92, 255, 0.18)',
   },
 
+  middle: { flex: 1 },
+  middleContent: { flexGrow: 1, justifyContent: 'center' },
+
   cardArea: {
     paddingHorizontal: spacing[5],
     marginBottom: spacing[3],
@@ -444,6 +455,10 @@ const styles = StyleSheet.create({
     padding: spacing[5],
     minHeight: 130,
     justifyContent: 'center',
+  },
+  storyCardCompact: {
+    minHeight: 0,
+    padding: spacing[4],
   },
   storyText: {
     fontFamily: fontFamily.display,

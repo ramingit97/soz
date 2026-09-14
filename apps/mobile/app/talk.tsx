@@ -6,16 +6,14 @@
  * Bottom: mic button on cream paper.
  */
 
-import * as FileSystem from 'expo-file-system/legacy';
-import { playableAudioUri, readAsBase64 } from '@/utils/recording';
+import { playableAudioUri } from '@/utils/recording';
+import { useVoiceRecorder } from '@/hooks/useVoiceRecorder';
 import * as Haptics from 'expo-haptics';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import {
-  RecordingPresets,
   createAudioPlayer,
   requestRecordingPermissionsAsync,
   setAudioModeAsync,
-  useAudioRecorder,
 } from 'expo-audio';
 import type { AudioPlayer } from 'expo-audio';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -40,7 +38,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { BottomTabs } from '@/components/BottomTabs';
+import { BottomTabs, BottomTabsSpacer } from '@/components/BottomTabs';
 import { HBChip } from '@/components/HBChip';
 import { HBPet } from '@/components/HBPet';
 import { MicButton } from '@/components/MicButton';
@@ -51,13 +49,14 @@ import { ReactingPet, type ReactingPetHandle } from '@/components/ReactingPet';
 import { StarParticle } from '@/components/StarParticle';
 import { Text } from '@/components/Text';
 import { track } from '@/services/analytics';
-import { fetchTalkOpener, getTalkHint, isRateLimitError, markThreadAsked, postSessionEnd, postTalk, reportAiMessage, type TalkResponsePayload } from '@/services/api';
+import { fetchTalkOpener, getTalkHint, markThreadAsked, postSessionEnd, postTalk, reportAiMessage, type TalkResponsePayload } from '@/services/api';
 import { notifyParentSensitive } from '@/services/notifications';
 import { playSfx } from '@/services/sfx';
 import { loadTalkHistory, saveTalkHistory, type StoredTurn } from '@/services/talkHistory';
 import { useSettings, todayISO } from '@/store/settings';
 import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
 import { useCompanionName } from '@/utils/companion';
+import { alertTalkFailure } from '@/utils/talkAlert';
 import { canFinishTalkLesson, MIN_LESSON_TALK_TURNS, spokenTurns } from '@/utils/lessonTalk';
 import { HBButton } from '@/components/HBButton';
 import { Icon } from '@/components/Icon';
@@ -266,7 +265,7 @@ export default function TalkScreen() {
     }
   }, [history, language, lessonDay, apiLevel, childName, authToken, hintLoading]);
 
-  const recorder = useAudioRecorder({ ...RecordingPresets.HIGH_QUALITY, isMeteringEnabled: true });
+  const voice = useVoiceRecorder();
   const playerRef = useRef<AudioPlayer | null>(null);
   const scrollRef = useRef<ScrollViewType>(null);
   // Keyed by the real childId. The old `?? 'guest'` fallback collapsed every
@@ -305,43 +304,19 @@ export default function TalkScreen() {
     );
   }, [parentUILanguage, bot, childId, conversationId, authToken]);
 
-  // Mic level → waveform bridge. Polled (not useAudioRecorderState) so metering
-  // updates never re-render the screen — they flow straight into shared values.
+  // Mic level → waveform bridge. The recorder hook reports levels through a
+  // callback straight into shared values, so metering never re-renders the screen.
   const micLevel = useSharedValue(0);
-  const meterDead = useSharedValue(0); // 1 = metering unsupported → canned wave
-  const meterTimer = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const stopMetering = useCallback(() => {
-    if (meterTimer.current) {
-      clearInterval(meterTimer.current);
-      meterTimer.current = null;
-    }
+  const meterDead = useSharedValue(0); // 1 = no level yet / metering unsupported → canned wave
+  const resetLevel = useCallback(() => {
     micLevel.value = withTiming(0, { duration: 150 });
   }, [micLevel]);
+  const onLevel = useCallback((level: number) => {
+    meterDead.value = 0;
+    micLevel.value = withTiming(level, { duration: 100 });
+  }, [micLevel, meterDead]);
 
-  const startMetering = useCallback(() => {
-    stopMetering();
-    let misses = 0;
-    meterTimer.current = setInterval(() => {
-      let db: number | undefined;
-      try {
-        db = recorder.getStatus().metering;
-      } catch {
-        db = undefined;
-      }
-      // dBFS is ≤ 0; undefined/NaN/positive values mean metering isn't working
-      if (typeof db !== 'number' || !Number.isFinite(db) || db > 0) {
-        if (++misses >= 8) meterDead.value = 1; // Android fallback → canned wave
-        return;
-      }
-      misses = 0;
-      meterDead.value = 0;
-      const norm = Math.min(1, Math.max(0, (db + 50) / 42)); // voice ≈ -50..-8 dB
-      micLevel.value = withTiming(norm, { duration: 100 });
-    }, 100);
-  }, [recorder, micLevel, meterDead, stopMetering]);
 
-  useEffect(() => stopMetering, [stopMetering]);
 
   // Keep latest session id/lang for the unmount flush (language can change mid-session)
   const sessionRef = useRef({ conversationId, language });
@@ -461,27 +436,26 @@ export default function TalkScreen() {
     if (mood !== 'idle') return;
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
-      await recorder.prepareToRecordAsync();
-      recorder.record();
-      startMetering();
+      meterDead.value = 1;
       setMood('recording');
+      // Запись останавливается сама, когда ребёнок замолчал (ref — чтобы
+      // автостоп вызвал свежую stopRecording, а не версию с mood 'idle').
+      await voice.start({ onAutoStop: () => stopRecordingRef.current?.(), onLevel });
     } catch (e) {
       console.warn('record start failed', e);
-      stopMetering();
+      resetLevel();
       setMood('idle');
     }
-  }, [permissionGranted, mood, recorder, startMetering, stopMetering, authToken, audioConsent, parentUILanguage, bot, router]);
+  }, [permissionGranted, mood, voice, onLevel, resetLevel, meterDead, authToken, audioConsent, parentUILanguage, bot, router]);
 
   const stopRecording = useCallback(async () => {
     if (mood !== 'recording') return;
-    stopMetering();
+    resetLevel();
     setMood('thinking');
     try {
-      await recorder.stop();
-      const uri = recorder.uri;
-      if (!uri) { setMood('idle'); return; }
-
-      const { base64: audioBase64, mimeType: audioMimeType } = await readAsBase64(uri);
+      const audio = await voice.stop();
+      if (!audio) { setMood('idle'); return; }
+      const { base64: audioBase64, mimeType: audioMimeType } = audio;
 
       // childId is always a real profile now — the trial gets a guest ACCOUNT
       // (see services/guestSession) instead of a made-up `guest-<timestamp>` id.
@@ -590,23 +564,17 @@ export default function TalkScreen() {
       }
     } catch (e) {
       console.warn('talk failed', e);
-      if (isRateLimitError(e)) {
-        // The daily allowance is used up. This screen is the child's — no
-        // upsell here (store policy for kids apps, and simple decency); the
-        // parent sees the counter and the Premium button on their own screen.
-        const az = useSettings.getState().parentUILanguage === 'az';
-        Alert.alert(
-          az ? `${bot} yorulub 😴` : `${bot} устал 😴`,
-          az
-            ? `${bot} bu gün çox danışdı və yatmağa gedir. Sabah davam edərik!`
-            : `${bot} сегодня много разговаривал и идёт спать. Продолжим завтра!`,
-        );
-      } else {
-        Alert.alert('Connection issue', `Could not reach ${bot}. Make sure the API is running.`);
-      }
+      alertTalkFailure(e, bot);
       setMood('idle');
     }
-  }, [language, mood, recorder, stopMetering, goals, bot]);
+  }, [language, mood, voice, resetLevel, goals, bot]);
+
+  const stopRecordingRef = useRef<(() => void) | null>(null);
+  stopRecordingRef.current = () => { void stopRecording(); };
+  const handleMicPress = useCallback(() => {
+    if (mood === 'recording') void stopRecording();
+    else void startRecording();
+  }, [mood, startRecording, stopRecording]);
 
   const playAudio = async (base64: string, mimeType: string) => {
     if (!base64) {
@@ -692,7 +660,7 @@ export default function TalkScreen() {
   }[language];
 
   const moodLabel = {
-    idle: language === 'en' ? 'Hold to talk' : 'Зажми и говори',
+    idle: language === 'en' ? 'Tap to talk' : 'Нажми и говори',
     recording: language === 'en' ? 'Listening...' : 'Слушаю...',
     thinking: language === 'en' ? `${bot} is thinking...` : `${bot} думает...`,
     playing: language === 'en' ? `${bot} is talking` : `${bot} говорит`,
@@ -900,8 +868,8 @@ export default function TalkScreen() {
                 <HBPet size={88} mood="happy" />
                 <Text style={styles.emptyText}>
                   {language === 'en'
-                    ? `Press and hold the mic to talk to ${bot} ✨`
-                    : `Зажми микрофон чтобы поговорить с ${bot} ✨`}
+                    ? `Tap the mic and talk to ${bot} ✨`
+                    : `Нажми на микрофон и поговори с ${bot} ✨`}
                 </Text>
               </Animated.View>
             ) : null}
@@ -989,7 +957,7 @@ export default function TalkScreen() {
 
           {/* ── Mic area ── */}
           <View style={styles.micArea}>
-            {latest ? (
+            {__DEV__ && latest ? (
               <HBChip
                 label={`${latest.timings.sttMs + latest.timings.llmMs + latest.timings.ttsMs}ms`}
                 bg="rgba(255,255,255,0.5)"
@@ -1008,11 +976,12 @@ export default function TalkScreen() {
             )}
             <MicButton
               state={mood}
-              onPressIn={startRecording}
-              onPressOut={stopRecording}
+              onPress={handleMicPress}
               disabled={mood === 'thinking' || mood === 'playing'}
             />
           </View>
+          {/* Место под плавающие вкладки — иначе они закрывали половину микрофона. */}
+          {!fromLesson && <BottomTabsSpacer />}
 
           {!fromLesson && <BottomTabs />}
         </View>
@@ -1250,9 +1219,9 @@ const styles = StyleSheet.create({
     paddingTop: spacing[2],
   },
   waveformOverlay: {
-    // Sits in the dead space above the 110px mic button inside its 200px wrapper
+    // Sits just above the 110px mic button, centered in its 160px wrapper
     position: 'absolute',
-    bottom: 186,
+    bottom: 166,
     alignSelf: 'center',
     zIndex: 5,
   },

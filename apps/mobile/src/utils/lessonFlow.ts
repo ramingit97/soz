@@ -40,6 +40,33 @@ export function afterReadingRoute(day: number, lang: string, mature: boolean): s
 }
 
 /**
+ * Куда ведёт конкретный шаг урока — чтобы продолжить с того места, где ребёнок
+ * остановился, а не начинать урок сначала.
+ */
+export function lessonStepRoute(
+  step: string,
+  focus: string | undefined,
+  day: number,
+  lang: string,
+  mature: boolean,
+): string {
+  switch (step) {
+    case 'grammar':
+      return `/lesson/grammar?lang=${lang}&day=${day}`;
+    case 'talk':
+      return focus === 'conversation'
+        ? `/talk?lang=${lang}&day=${day}&fromLesson=1&convo=1`
+        : `/talk?lang=${lang}&day=${day}&fromLesson=1`;
+    case 'reading':
+      return `/read?lang=${lang}&day=${day}`;
+    case 'listening':
+      return `/listening?lang=${lang}&day=${day}&fromLesson=1`;
+    default:
+      return lessonStartRoute(focus, day, lang, mature);
+  }
+}
+
+/**
  * С чего начинается урок дня. Упор дня (`focus` из плана) решает первый экран:
  * день-история — история на слух, день-разговор — разговор с персонажем, иначе
  * обычный поток. `fromLesson=1` важен: без него экран не знает, что это урок, и

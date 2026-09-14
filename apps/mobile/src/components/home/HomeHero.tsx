@@ -29,6 +29,8 @@ interface Props {
   theme: string | null;
   vocabulary: string[];
   steps: PlanStep[];
+  /** Уже пройденные шаги сегодняшнего урока — с галочкой. */
+  doneSteps: readonly string[];
   petHue: number;
   generating: boolean;
   onStart: () => void;
@@ -80,6 +82,7 @@ export function HomeHero(p: Props) {
   if (p.state === 'lesson' || p.state === 'quiz' || p.state === 'done') {
     const done = p.state === 'done';
     const start = p.state === 'quiz' ? p.onStartQuiz : p.onStart;
+    const started = !done && p.doneSteps.length > 0;
     const title = done
       ? az ? 'Dərs tamamlandı!' : 'Урок выполнен!'
       : p.theme ?? (az ? 'Günün dərsi' : 'Урок дня');
@@ -100,12 +103,13 @@ export function HomeHero(p: Props) {
           <View style={styles.steps}>
             {p.steps.map((step) => {
               const t = stepText(step, p);
+              const stepDone = done || p.doneSteps.includes(step);
               return (
                 <View key={step} style={styles.stepRow}>
                   <HBIconBox
-                    icon={done ? 'check' : STEP_ICON[step]}
-                    tint={done ? tints.sage : accent.soft}
-                    iconColor={done ? colors.accentDeep : accent.ink}
+                    icon={stepDone ? 'check' : STEP_ICON[step]}
+                    tint={stepDone ? tints.sage : accent.soft}
+                    iconColor={stepDone ? colors.accentDeep : accent.ink}
                     size={40}
                   />
                   <View style={styles.stepText}>
@@ -123,7 +127,13 @@ export function HomeHero(p: Props) {
             <HBButton
               full
               icon="play"
-              label={p.state === 'quiz' ? (az ? 'Testi başla' : 'Начать тест') : az ? 'Dərsə başla' : 'Начать урок'}
+              label={
+                p.state === 'quiz'
+                  ? az ? 'Testi başla' : 'Начать тест'
+                  : started
+                    ? az ? 'Dərsə davam et' : 'Продолжить урок'
+                    : az ? 'Dərsə başla' : 'Начать урок'
+              }
               onPress={start}
             />
           )}

@@ -111,3 +111,21 @@ describe('focusToLessonPrefs', () => {
     assert.deepEqual(focusToLessonPrefs([]), {});
   });
 });
+
+describe('markLessonStep', () => {
+  it('копит шаги дня и стирает прошлые дни того же ребёнка и языка', () => {
+    useSettings.setState({ lessonStepsDone: {} });
+    const { markLessonStep } = useSettings.getState();
+    markLessonStep('child-1', 'en', 1, 'words');
+    markLessonStep('child-1', 'en', 1, 'grammar');
+    markLessonStep('child-1', 'en', 1, 'words');
+    markLessonStep('child-2', 'en', 4, 'words');
+    assert.deepEqual(useSettings.getState().lessonStepsDone['child-1:en:1'], ['words', 'grammar']);
+
+    markLessonStep('child-1', 'en', 2, 'words');
+    const s = useSettings.getState().lessonStepsDone;
+    assert.equal(s['child-1:en:1'], undefined);
+    assert.deepEqual(s['child-1:en:2'], ['words']);
+    assert.deepEqual(s['child-2:en:4'], ['words'], 'другой ребёнок не задет');
+  });
+});

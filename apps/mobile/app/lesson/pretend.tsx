@@ -6,21 +6,18 @@
  * target language. After MAX_TURNS exchanges → navigate to word-game.
  */
 
-import * as FileSystem from 'expo-file-system/legacy';
-import { readAsBase64 } from '@/utils/recording';
+import { useVoiceRecorder } from '@/hooks/useVoiceRecorder';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
-  RecordingPresets,
   createAudioPlayer,
   requestRecordingPermissionsAsync,
   setAudioModeAsync,
-  useAudioRecorder,
 } from 'expo-audio';
 import type { AudioPlayer } from 'expo-audio';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, SafeAreaView, StyleSheet, View } from 'react-native';
+import { Pressable, SafeAreaView, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, {
   FadeIn,
   FadeInDown,
@@ -41,6 +38,7 @@ import { getLesson } from '@/data/lessons';
 import { postTalk } from '@/services/api';
 import { useSettings } from '@/store/settings';
 import { useCompanionName } from '@/utils/companion';
+import { alertTalkFailure } from '@/utils/talkAlert';
 import { colors, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
 
 type Mood = 'idle' | 'recording' | 'thinking' | 'playing';
@@ -91,6 +89,8 @@ export default function PretendScreen() {
   const authToken = useSettings((s) => s.authToken);
 
   const bot = useCompanionName();
+  // Низкий экран (iPhone SE, Safari с панелями): иначе микрофон уезжал за край.
+  const compact = useWindowDimensions().height < 760;
   const apiLevel = childLevel ?? 'beginner';
   const conversationId = `pretend-${childId}-d${day}-${lang}`;
 
@@ -102,7 +102,7 @@ export default function PretendScreen() {
   const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null);
   const [finished, setFinished] = useState(false);
 
-  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const voice = useVoiceRecorder();
   const playerRef = useRef<AudioPlayer | null>(null);
 
   const boboScale = useSharedValue(1);
@@ -147,20 +147,19 @@ export default function PretendScreen() {
   const startRecording = useCallback(async () => {
     if (!permissionGranted || mood !== 'idle' || finished) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
-    await recorder.prepareToRecordAsync();
-    recorder.record();
     setMood('recording');
-  }, [permissionGranted, mood, finished, recorder]);
+    // Запись останавливается сама, когда ребёнок замолчал.
+    await voice.start({ onAutoStop: () => stopRecordingRef.current?.() });
+  }, [permissionGranted, mood, finished, voice]);
 
   const stopRecording = useCallback(async () => {
     if (mood !== 'recording') return;
     setMood('thinking');
     try {
-      await recorder.stop();
-      const uri = recorder.uri;
-      if (!uri) { setMood('idle'); return; }
+      const audio = await voice.stop();
+      if (!audio) { setMood('idle'); return; }
 
-      const { base64: audioBase64, mimeType: audioMimeType } = await readAsBase64(uri);
+      const { base64: audioBase64, mimeType: audioMimeType } = audio;
 
       if (!childId) { setMood('idle'); return; }
 
@@ -198,10 +197,15 @@ export default function PretendScreen() {
       } else {
         setMood('idle');
       }
-    } catch {
+    } catch (e) {
+      console.warn('pretend talk failed', e);
+      alertTalkFailure(e, bot);
       setMood('idle');
     }
-  }, [mood, recorder, childId, lang, day, childName, childAgeBand, apiLevel, authToken, childTurns]);
+  }, [mood, voice, childId, lang, day, childName, childAgeBand, apiLevel, authToken, childTurns, bot]);
+
+  const stopRecordingRef = useRef<(() => void) | null>(null);
+  stopRecordingRef.current = () => { void stopRecording(); };
 
   const handleFinish = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
@@ -246,6 +250,12 @@ export default function PretendScreen() {
           <Animated.View style={[styles.progressFill, { width: `${turnProgress * 100}%` }]} />
         </View>
 
+        {/* Прокручивается, если не влезло, — статус и микрофон всегда на экране. */}
+        <ScrollView
+          style={styles.middle}
+          contentContainerStyle={styles.middleContent}
+          showsVerticalScrollIndicator={false}
+        >
         {/* Scenario card */}
         <Animated.View entering={FadeInDown.duration(500)} style={styles.scenarioArea}>
           <View style={[styles.scenarioCard, shadow.md]}>
@@ -259,7 +269,7 @@ export default function PretendScreen() {
         <View style={styles.boboArea}>
           <Animated.View style={boboAnimStyle}>
             <View style={styles.boboGlow}>
-              <Bobo size={100} mood={boboMood} />
+              <Bobo size={compact ? 72 : 100} mood={boboMood} />
             </View>
           </Animated.View>
         </View>
@@ -282,6 +292,7 @@ export default function PretendScreen() {
             </View>
           )}
         </Animated.View>
+        </ScrollView>
 
         {/* Status / finish */}
         <View style={styles.statusArea}>
@@ -311,8 +322,7 @@ export default function PretendScreen() {
           <Animated.View entering={FadeInUp.duration(400).delay(300)} style={styles.micArea}>
             <MicButton
               state={mood === 'recording' ? 'recording' : mood === 'thinking' || mood === 'playing' ? 'thinking' : 'idle'}
-              onPressIn={startRecording}
-              onPressOut={stopRecording}
+              onPress={() => (mood === 'recording' ? stopRecording() : startRecording())}
               disabled={mood === 'thinking' || mood === 'playing' || !permissionGranted}
             />
           </Animated.View>
@@ -326,6 +336,8 @@ export default function PretendScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#1A0A3D' },
   safe: { flex: 1 },
+  middle: { flex: 1 },
+  middleContent: { flexGrow: 1, justifyContent: 'center' },
   sparkleOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(124, 58, 237, 0.08)',

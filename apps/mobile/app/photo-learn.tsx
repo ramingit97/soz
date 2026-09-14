@@ -5,7 +5,6 @@
  * Flow: tap camera → take photo → upload → flashcards of words.
  */
 
-import * as FileSystem from 'expo-file-system/legacy';
 import { readAsBase64 } from '@/utils/recording';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';

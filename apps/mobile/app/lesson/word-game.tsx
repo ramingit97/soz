@@ -43,6 +43,8 @@ export default function WordGameScreen() {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [correctCount, setCorrectCount] = useState(0);
   const recordLessonError = useSettings((s) => s.recordLessonError);
+  const childId = useSettings((s) => s.childId);
+  const markLessonStep = useSettings((s) => s.markLessonStep);
 
   const shakeX = useSharedValue(0);
   const cardScale = useSharedValue(1);
@@ -72,6 +74,7 @@ export default function WordGameScreen() {
           setSelectedOption(null);
         } else {
           // All rounds done — go to grammar quest
+          if (childId) markLessonStep(childId, String(lang), Number(day), 'words');
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           router.push({ pathname: '/lesson/grammar' as any, params: { lang, day } });
         }

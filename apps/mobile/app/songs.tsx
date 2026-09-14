@@ -8,7 +8,6 @@ import {
   setAudioModeAsync,
 } from 'expo-audio';
 import type { AudioPlayer } from 'expo-audio';
-import * as FileSystem from 'expo-file-system/legacy';
 import { playableAudioUri } from '@/utils/recording';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';

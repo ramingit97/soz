@@ -37,8 +37,10 @@ import { flushProgressQueue } from '@/services/progressQueue';
 import { initPurchases, checkPremium, identifyPurchaser } from '@/services/subscriptions';
 import { useSettings } from '@/store/settings';
 import { colors } from '@/theme';
+import { installWebAlert } from '@/utils/webAlert';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
+installWebAlert();
 
 // Android notification channel
 if (Platform.OS === 'android') {

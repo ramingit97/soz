@@ -7,7 +7,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-const { deriveHomeState, todayPlanSteps } = await import('./homeState.js');
+const { deriveHomeState, resumeStep, todayPlanSteps } = await import('./homeState.js');
 
 const base = {
   isTrialMode: false,
@@ -76,5 +76,26 @@ describe('todayPlanSteps', () => {
 
   it('день теста — только тест', () => {
     assert.deepEqual(todayPlanSteps({ focus: 'story_listen', mature: false, isQuizDay: true }), ['quiz']);
+  });
+});
+
+describe('resumeStep', () => {
+  const steps = ['words', 'grammar', 'talk'] as const;
+
+  it('ничего не пройдено — с первого шага', () => {
+    assert.equal(resumeStep([...steps], []), 'words');
+  });
+
+  it('пройдены «новые слова» — продолжаем с грамматики, а не с начала', () => {
+    assert.equal(resumeStep([...steps], ['words']), 'grammar');
+    assert.equal(resumeStep([...steps], ['words', 'grammar']), 'talk');
+  });
+
+  it('шаги, которых нет в сегодняшнем уроке, не мешают', () => {
+    assert.equal(resumeStep([...steps], ['reading']), 'words');
+  });
+
+  it('всё пройдено — null', () => {
+    assert.equal(resumeStep([...steps], ['talk', 'words', 'grammar']), null);
   });
 });

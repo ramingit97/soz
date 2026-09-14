@@ -61,8 +61,16 @@ export function PaperBackground({ variant = 'cream', children, edges = ['bottom'
       start={{ x: 0.5, y: 0 }}
       end={{ x: 0.5, y: 1 }}
     >
-      {/* Subtle warm vignette at the top — только у малышей, старшим без неё */}
-      {vignette ? <View style={styles.vignetteTop} pointerEvents="none" /> : null}
+      {/* Тёплая виньетка сверху — только у малышей. Плавный градиент, а не
+          плоский блок: у блока был жёсткий нижний край на 180 dp, он резал
+          пузыри чата и карточки, и казалось, что интерфейс уезжает под полосу. */}
+      {vignette ? (
+        <LinearGradient
+          colors={['rgba(245, 212, 102, 0.14)', 'rgba(245, 212, 102, 0)']}
+          style={styles.vignetteTop}
+          pointerEvents="none"
+        />
+      ) : null}
       <SafeAreaView style={styles.safe} edges={edges}>
         {children}
       </SafeAreaView>
@@ -78,7 +86,6 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: 180,
-    backgroundColor: 'rgba(245, 212, 102, 0.10)',
+    height: 280,
   },
 });
