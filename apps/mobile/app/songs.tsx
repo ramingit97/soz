@@ -9,6 +9,7 @@ import {
 } from 'expo-audio';
 import type { AudioPlayer } from 'expo-audio';
 import * as FileSystem from 'expo-file-system/legacy';
+import { playableAudioUri } from '@/utils/recording';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
@@ -87,11 +88,7 @@ export default function SongsScreen() {
     if (!song) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     try {
-      // Write base64 to file (data URIs are unreliable on iOS)
-      const fileUri = `${FileSystem.cacheDirectory ?? ''}song-${Date.now()}.mp3`;
-      await FileSystem.writeAsStringAsync(fileUri, song.audioBase64, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
+      const { uri: fileUri } = await playableAudioUri(song.audioBase64, 'audio/mpeg', 'song');
       await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: false });
 
       try { playerRef.current?.pause(); } catch { /* released */ }

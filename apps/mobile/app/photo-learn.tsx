@@ -6,6 +6,7 @@
  */
 
 import * as FileSystem from 'expo-file-system/legacy';
+import { readAsBase64 } from '@/utils/recording';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
@@ -91,9 +92,7 @@ export default function PhotoLearnScreen() {
     setResult(null);
     setLoading(true);
     try {
-      const base64 = await FileSystem.readAsStringAsync(uri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
+      const { base64 } = await readAsBase64(uri, 'image/jpeg');
       const res = await postPhotoLearn(base64, targetLang, isAz ? 'az' : 'ru', apiLevel, authToken);
       setResult(res);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});

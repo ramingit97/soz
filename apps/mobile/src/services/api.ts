@@ -628,6 +628,7 @@ export async function postWordCheck(
   expectedWord: string,
   audioBase64: string,
   token?: string | null,
+  audioMimeType = 'audio/m4a',
 ): Promise<WordCheckResult> {
   return request<WordCheckResult>(
     '/talk/word-check',
@@ -638,7 +639,7 @@ export async function postWordCheck(
         language,
         expectedWord,
         audioBase64,
-        audioMimeType: 'audio/m4a',
+        audioMimeType,
       }),
     },
     token,

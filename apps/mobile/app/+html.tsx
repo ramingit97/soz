@@ -14,6 +14,9 @@
  *  - `outline: none` у полей — браузер рисовал синий прямоугольник фокуса
  *    внутри нашей оранжевой рамки.
  *  - `maximum-scale=1` — Safari не увеличивает страницу при фокусе на поле.
+ *  - `100dvh` — в iOS Safari `100%` высоты считается вместе с нижней панелью
+ *    браузера, и кнопка микрофона внизу урока уходила под неё наполовину.
+ *    Динамическая высота — это видимая часть экрана.
  */
 import { ScrollViewStyleReset } from 'expo-router/html';
 import type { PropsWithChildren } from 'react';
@@ -23,6 +26,7 @@ import { colors } from '@/theme/colors';
 const webFixes = `
 html, body { background-color: ${colors.bg}; overscroll-behavior: none; }
 #root { overflow: hidden; }
+html, body, #root { height: 100dvh; }
 input:focus, textarea:focus { outline: none; }
 `;
 

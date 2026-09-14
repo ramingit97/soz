@@ -7,6 +7,7 @@
  */
 
 import * as FileSystem from 'expo-file-system/legacy';
+import { readAsBase64 } from '@/utils/recording';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -152,9 +153,7 @@ export default function WorldScreen() {
       const uri = recorder.uri;
       if (!uri) { setMood('idle'); return; }
 
-      const audioBase64 = await FileSystem.readAsStringAsync(uri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
+      const { base64: audioBase64, mimeType: audioMimeType } = await readAsBase64(uri);
 
       if (!childId) { setMood('idle'); return; }
 
@@ -163,7 +162,7 @@ export default function WorldScreen() {
         conversationId,
         language: lang as 'en' | 'ru',
         audioBase64,
-        audioMimeType: 'audio/m4a',
+        audioMimeType,
         level: apiLevel,
         day: Number(day),
         childName: childName ?? undefined,

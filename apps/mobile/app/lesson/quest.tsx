@@ -6,7 +6,7 @@
  * On the final scene → navigate to word-game (same as listen.tsx).
  */
 
-import * as FileSystem from 'expo-file-system/legacy';
+import { readAsBase64 } from '@/utils/recording';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -62,6 +62,7 @@ export default function QuestScreen() {
   const [heard, setHeard] = useState<string | null>(null);
   const [attempts, setAttempts] = useState(0);
   const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null);
+  const [errorNote, setErrorNote] = useState<string | null>(null);
 
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const currentScene = scenes[sceneIndex];
@@ -104,6 +105,7 @@ export default function QuestScreen() {
 
   const startRecording = useCallback(async () => {
     if (!permissionGranted || status !== 'idle') return;
+    setErrorNote(null);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     await recorder.prepareToRecordAsync();
     recorder.record();
@@ -118,9 +120,7 @@ export default function QuestScreen() {
       const uri = recorder.uri;
       if (!uri) { setStatus('idle'); return; }
 
-      const audioBase64 = await FileSystem.readAsStringAsync(uri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
+      const { base64: audioBase64, mimeType: audioMimeType } = await readAsBase64(uri);
 
       if (!childId) { setStatus('idle'); return; }
 
@@ -130,6 +130,7 @@ export default function QuestScreen() {
         keyword,
         audioBase64,
         authToken,
+        audioMimeType,
       );
 
       setHeard(result.heard || '...');
@@ -173,9 +174,15 @@ export default function QuestScreen() {
         }
       }
     } catch {
+      // Раньше тут было молчаливое возвращение в ожидание — ребёнок говорил, а
+      // экран делал вид, что ничего не было. Не засчитываем как попытку, но
+      // говорим, что случилось.
+      setErrorNote(
+        isRu ? 'Не получилось отправить запись. Попробуй ещё раз.' : "Couldn't send your voice. Try again.",
+      );
       setStatus('idle');
     }
-  }, [status, recorder, childId, lang, keyword, authToken, attempts, advance, recordLessonError]);
+  }, [status, recorder, childId, lang, keyword, authToken, attempts, advance, recordLessonError, isRu]);
 
   // Escape hatch only when the mic is unavailable (permission denied) — otherwise
   // the child must actually attempt the word (strict mode). They are never trapped:
@@ -324,8 +331,8 @@ export default function QuestScreen() {
             </Animated.View>
           )}
           {status === 'idle' && (
-            <Text style={styles.holdHint}>
-              {isRu ? '🎤 Зажми и скажи слово' : '🎤 Hold and say the word'}
+            <Text style={errorNote ? styles.feedbackFail : styles.holdHint}>
+              {errorNote ?? (isRu ? '🎤 Зажми и скажи слово' : '🎤 Hold and say the word')}
             </Text>
           )}
           {status === 'thinking' && (

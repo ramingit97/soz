@@ -7,6 +7,7 @@
  */
 
 import * as FileSystem from 'expo-file-system/legacy';
+import { playableAudioUri, readAsBase64 } from '@/utils/recording';
 import * as Haptics from 'expo-haptics';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import {
@@ -480,9 +481,7 @@ export default function TalkScreen() {
       const uri = recorder.uri;
       if (!uri) { setMood('idle'); return; }
 
-      const audioBase64 = await FileSystem.readAsStringAsync(uri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
+      const { base64: audioBase64, mimeType: audioMimeType } = await readAsBase64(uri);
 
       // childId is always a real profile now — the trial gets a guest ACCOUNT
       // (see services/guestSession) instead of a made-up `guest-<timestamp>` id.
@@ -500,7 +499,7 @@ export default function TalkScreen() {
           conversationId,
           language,
           audioBase64,
-          audioMimeType: 'audio/m4a',
+          audioMimeType,
           level: apiLevel,
           day: lessonDay,
           childName: childName ?? undefined,
@@ -615,16 +614,9 @@ export default function TalkScreen() {
       return;
     }
     try {
-      // 1) Write base64 to a temp file — data: URIs are unreliable on iOS
-      //    with expo-audio's createAudioPlayer.
-      const ext = mimeType.includes('mp3') || mimeType.includes('mpeg') ? 'mp3'
-        : mimeType.includes('wav') ? 'wav'
-        : 'm4a';
-      const cacheDir = FileSystem.cacheDirectory ?? '';
-      const fileUri = `${cacheDir}bobo-${Date.now()}.${ext}`;
-      await FileSystem.writeAsStringAsync(fileUri, base64, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
+      // 1) Temp file on the phone (data: URIs are unreliable on iOS with
+      //    expo-audio's createAudioPlayer), data: URI on the web.
+      const { uri: fileUri, cleanup } = await playableAudioUri(base64, mimeType, 'bobo');
 
       // 2) Switch iOS audio session into PLAYBACK mode so sound is routed
       //    through the speaker (not the earpiece). Without this, audio
@@ -648,7 +640,7 @@ export default function TalkScreen() {
       playerRef.current = null;
 
       // 4) Cleanup temp file (best-effort)
-      FileSystem.deleteAsync(fileUri, { idempotent: true }).catch(() => {});
+      cleanup();
     } catch (e) {
       console.warn('playback failed', e);
     } finally {
