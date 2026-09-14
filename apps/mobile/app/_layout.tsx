@@ -1,17 +1,5 @@
-import {
-  Fredoka_500Medium,
-  Fredoka_600SemiBold,
-  Fredoka_700Bold,
-  useFonts as useFredoka,
-} from '@expo-google-fonts/fredoka';
-import {
-  Nunito_400Regular,
-  Nunito_600SemiBold,
-  Nunito_700Bold,
-  Nunito_800ExtraBold,
-  useFonts as useNunito,
-} from '@expo-google-fonts/nunito';
 import { setAudioModeAsync } from 'expo-audio';
+import { useFonts } from 'expo-font';
 import * as Notifications from 'expo-notifications';
 import { Stack, useRouter, type Href } from 'expo-router';
 import * as Sentry from '@sentry/react-native';
@@ -142,20 +130,22 @@ export default function RootLayout() {
     setAudioModeAsync({ playsInSilentMode: true }).catch(() => {});
   }, [userId]);
 
-  const [fredokaLoaded] = useFredoka({
-    Fredoka_500Medium,
-    Fredoka_600SemiBold,
-    Fredoka_700Bold,
+  // Каждое начертание подключается своим файлом, а не через корень пакета:
+  // корневой index.js пакетов @expo-google-fonts делает require на ВСЕ
+  // начертания с курсивами, и Metro кладёт их в бандл и в каждое EAS Update
+  // (было 21 файл шрифтов, используются 7). Имена — те же, что в fontFamily.
+  const [fontsLoaded, fontError] = useFonts({
+    Nunito_400Regular: require('@expo-google-fonts/nunito/Nunito_400Regular.ttf'),
+    Nunito_600SemiBold: require('@expo-google-fonts/nunito/Nunito_600SemiBold.ttf'),
+    Nunito_700Bold: require('@expo-google-fonts/nunito/Nunito_700Bold.ttf'),
+    Nunito_800ExtraBold: require('@expo-google-fonts/nunito/Nunito_800ExtraBold.ttf'),
+    Nunito_900Black: require('@expo-google-fonts/nunito/Nunito_900Black.ttf'),
+    Onest_600SemiBold: require('@expo-google-fonts/onest/600SemiBold/Onest_600SemiBold.ttf'),
+    Onest_700Bold: require('@expo-google-fonts/onest/700Bold/Onest_700Bold.ttf'),
   });
 
-  const [nunitoLoaded] = useNunito({
-    Nunito_400Regular,
-    Nunito_600SemiBold,
-    Nunito_700Bold,
-    Nunito_800ExtraBold,
-  });
-
-  const fontsReady = fredokaLoaded && nunitoLoaded;
+  // Шрифт не загрузился — рисуем системным, а не держим пустой экран вечно.
+  const fontsReady = fontsLoaded || !!fontError;
 
   useEffect(() => {
     if (fontsReady) {

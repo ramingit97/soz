@@ -53,7 +53,7 @@ export default function SetupNameScreen() {
   };
 
   return (
-    <Screen gradient decoration="bobo">
+    <Screen gradient decoration="bobo" scroll={false}>
       <KeyboardAvoider
         footer={
           <Animated.View entering={FadeInUp.duration(400).delay(560)} style={styles.cta}>

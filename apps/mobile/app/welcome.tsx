@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
-import { Button } from '@/components/Button';
+import { HBButton } from '@/components/HBButton';
 import { HBPet } from '@/components/HBPet';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
@@ -58,8 +58,9 @@ export default function WelcomeScreen() {
       </View>
 
       <Animated.View entering={FadeInUp.duration(600).delay(560)} style={styles.ctaSection}>
-        <Button label={t.welcome.cta} onPress={() => router.push('/tour')} />
-        <Button
+        <HBButton full label={t.welcome.cta} onPress={() => router.push('/tour')} />
+        <HBButton
+          full
           label={t.welcome.haveAccount}
           variant="ghost"
           size="md"

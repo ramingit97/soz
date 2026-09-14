@@ -12,7 +12,6 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp, FadeOut } from 'react-native-reanimated';
 
 import { Bobo } from '@/components/Bobo';
-import { Button } from '@/components/Button';
 import { Skeleton } from '@/components/Skeleton';
 import { Text } from '@/components/Text';
 import { getLesson } from '@/data/lessons';

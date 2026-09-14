@@ -1,8 +1,24 @@
 import { Dimensions } from 'react-native';
 
+/**
+ * Шрифты заголовков выбраны по покрытию глифов, а не только по виду.
+ *
+ * До 2026-09-14 `display` был Fredoka: в нём нет ни кириллицы, ни азербайджанских
+ * `ə ğ ş`. Android молча подставлял системный шрифт — русские заголовки целиком
+ * рисовались Roboto, а в азербайджанских шрифт менялся посреди слова. Fraunces,
+ * который план редизайна брал для подростков, тоже без кириллицы.
+ *
+ * Любой новый шрифт проверять ДО подключения на `А–я ё ə Ə ğ ı İ ş ç ö ü`:
+ * `fc-query --format='%{charset}\n' Font.ttf` и найти в выводе 400-45f, 259, 18f.
+ *
+ *  - `display*` — заголовки режима kid и все сырые стили экранов: Nunito Black.
+ *  - `teenDisplay*` — заголовки режима teen (11+ и взрослые): Onest.
+ */
 export const fontFamily = {
-  display: 'Fredoka_700Bold',
-  displaySemi: 'Fredoka_600SemiBold',
+  display: 'Nunito_900Black',
+  displaySemi: 'Nunito_800ExtraBold',
+  teenDisplay: 'Onest_700Bold',
+  teenDisplaySemi: 'Onest_600SemiBold',
   body: 'Nunito_400Regular',
   bodyMedium: 'Nunito_600SemiBold',
   bodyBold: 'Nunito_700Bold',

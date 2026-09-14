@@ -1,19 +1,22 @@
 /**
- * HBButton — Honeybear Pro pillowy button.
+ * HBButton — единственная кнопка приложения (прежний `Button.tsx` влит сюда).
  *
- * Matte gradient surface with a single warm top highlight (light from above)
- * instead of the old neomorphism double-rim. Press = anisotropic spring squish
- * (scaleX 0.96 / scaleY 0.92 + sink) with light haptics. API unchanged.
+ * Matte gradient surface with a single warm top highlight (light from above).
+ * Press = anisotropic spring squish (scaleX 0.96 / scaleY 0.92 + sink) with
+ * light haptics. Радиус и шрифт подписи — из возрастного режима.
  */
 
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
+  ActivityIndicator,
   Pressable,
   StyleSheet,
   View,
   type GestureResponderEvent,
   type PressableProps,
+  type StyleProp,
+  type ViewStyle,
 } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -22,18 +25,29 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { Icon, type IconName } from './Icon';
 import { Text } from './Text';
 import { useAccent } from '@/hooks/useAccent';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
-import { colors, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { useUIMode } from '@/hooks/useUIMode';
+import { colors, fontSize, shadow, spacing } from '@/theme';
+import { MODE_TOKENS } from '@/theme/modeTokens';
 
 interface HBButtonProps extends Omit<PressableProps, 'children' | 'style'> {
   label: string;
   variant?: 'primary' | 'accent' | 'butter' | 'berry' | 'soft' | 'ghost';
   size?: 'lg' | 'md' | 'sm';
   full?: boolean;
+  /** Иконка слева от подписи. */
+  icon?: IconName;
+  /** Иконка справа (стрелка «дальше»). */
+  iconRight?: IconName;
+  /** Крутилка вместо левой иконки; нажатие заблокировано. */
+  loading?: boolean;
+  /** Для особых случаев, когда нужен не Icon. */
   leadingIcon?: React.ReactNode;
   trailingIcon?: React.ReactNode;
+  style?: StyleProp<ViewStyle>;
 }
 
 const VARIANT_COLORS: Record<
@@ -45,8 +59,8 @@ const VARIANT_COLORS: Record<
   accent: { top: '#86D0BE', bottom: colors.accent, text: '#FFFFFF' },
   butter: { top: '#F7D972', bottom: colors.butter, text: colors.ink },
   berry: { top: '#E86A80', bottom: colors.berry, text: '#FFFFFF' },
-  soft: { top: colors.card, bottom: colors.card, text: colors.ink },
-  ghost: { top: 'transparent', bottom: 'transparent', text: colors.ink },
+  soft: { top: colors.surface, bottom: colors.surface, text: colors.ink },
+  ghost: { top: 'transparent', bottom: 'transparent', text: colors.inkSoft },
 };
 
 export function HBButton({
@@ -54,8 +68,13 @@ export function HBButton({
   variant = 'primary',
   size = 'lg',
   full,
+  icon,
+  iconRight,
+  loading = false,
   leadingIcon,
   trailingIcon,
+  disabled,
+  style,
   onPressIn,
   onPressOut,
   ...rest
@@ -64,13 +83,16 @@ export function HBButton({
   // resolves to the brand peach, so unchanged for anyone who kept the default.
   // Other variants stay their explicit semantic color.
   const accent = useAccent();
+  const t = MODE_TOKENS[useUIMode()];
   const v = variant === 'primary'
     ? { top: accent.top, bottom: accent.bottom, text: accent.text }
     : VARIANT_COLORS[variant];
   const isFlat = variant === 'soft' || variant === 'ghost';
+  const inactive = !!disabled || loading;
   const padV = size === 'lg' ? 14 : size === 'md' ? 11 : 8;
   const padH = size === 'lg' ? 22 : size === 'md' ? 16 : 12;
   const fs = size === 'lg' ? fontSize.lg : size === 'md' ? fontSize.base : fontSize.sm;
+  const iconSize = Math.round(fs * 1.15);
 
   const reduced = useReducedMotion();
   const sx = useSharedValue(1);
@@ -106,30 +128,51 @@ export function HBButton({
     onPressOut?.(e);
   };
 
+  const leading = loading ? (
+    <ActivityIndicator size="small" color={v.text} />
+  ) : icon ? (
+    <Icon name={icon} size={iconSize} color={v.text} />
+  ) : (
+    leadingIcon
+  );
+  const trailing = iconRight ? <Icon name={iconRight} size={iconSize} color={v.text} /> : trailingIcon;
+
   return (
     <Pressable
       {...rest}
+      disabled={inactive}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: inactive, busy: loading }}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      style={full ? { width: '100%' } : undefined}
+      style={[full ? { width: '100%' } : undefined, style]}
     >
-      <Animated.View style={[styles.wrap, !isFlat && shadow.md, aStyle]}>
+      <Animated.View
+        style={[
+          { borderRadius: t.button.radius },
+          !isFlat && !inactive && shadow.md,
+          inactive && styles.inactive,
+          aStyle,
+        ]}
+      >
         <LinearGradient
           colors={[v.top, v.bottom]}
           style={[
             styles.inner,
             {
+              borderRadius: t.button.radius,
               paddingVertical: padV,
               paddingHorizontal: padH,
               backgroundColor: v.bottom,
-              borderTopWidth: isFlat ? 0 : 1.5,
-              borderTopColor: colors.highlightWarm,
             },
+            variant === 'soft' ? styles.softBorder : !isFlat && styles.highlight,
           ]}
         >
-          {leadingIcon ? <View style={styles.iconSlot}>{leadingIcon}</View> : null}
-          <Text style={[styles.label, { color: v.text, fontSize: fs }]}>{label}</Text>
-          {trailingIcon ? <View style={styles.iconSlot}>{trailingIcon}</View> : null}
+          {leading ? <View style={styles.iconSlot}>{leading}</View> : null}
+          <Text style={{ color: v.text, fontSize: fs, fontFamily: t.font.button, letterSpacing: 0 }}>
+            {label}
+          </Text>
+          {trailing ? <View style={styles.iconSlot}>{trailing}</View> : null}
         </LinearGradient>
       </Animated.View>
     </Pressable>
@@ -137,20 +180,23 @@ export function HBButton({
 }
 
 const styles = StyleSheet.create({
-  wrap: {
-    borderRadius: radius.xl,
-  },
   inner: {
-    borderRadius: radius.xl,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing[2],
     overflow: 'hidden',
   },
-  label: {
-    fontFamily: fontFamily.display,
-    letterSpacing: 0,
+  highlight: {
+    borderTopWidth: 1.5,
+    borderTopColor: colors.highlightWarm,
+  },
+  softBorder: {
+    borderWidth: 1.5,
+    borderColor: colors.surfaceBorder,
+  },
+  inactive: {
+    opacity: 0.45,
   },
   iconSlot: {
     alignItems: 'center',

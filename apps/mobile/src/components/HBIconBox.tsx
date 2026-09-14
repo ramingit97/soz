@@ -1,15 +1,31 @@
 /**
- * HBIconBox — a soft tinted rounded square that holds an emoji/glyph or small
- * icon. Replaces the dozens of inline `{ width, height, borderRadius,
- * backgroundColor: '#FCE3CE' }` icon chips scattered across list rows and cards.
+ * HBIconBox — a soft tinted rounded square that holds an icon. Replaces the
+ * dozens of inline `{ width, height, borderRadius, backgroundColor: '#FCE3CE' }`
+ * icon chips scattered across list rows and cards.
+ *
+ * `icon` — Lucide из закрытой карты, рисуется тёмным оттенком своей подложки.
+ * `glyph` (эмодзи) остаётся, пока экраны не переведены на иконки.
  */
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
+import { Icon, type IconName } from '@/components/Icon';
 import { Text } from '@/components/Text';
-import { radius, tints, type TintKey } from '@/theme';
+import { colors, radius, tints, type TintKey } from '@/theme';
+
+/** Цвет иконки на каждой подложке — тот же оттенок, но тёмный. */
+const TINT_INK: Record<TintKey, string> = {
+  primary: colors.primaryDeep,
+  sage: colors.accentDeep,
+  butter: '#7F6628',
+  berry: colors.berryDeep,
+  english: '#3A6BAA',
+};
 
 interface Props {
-  /** Emoji / short glyph to render. Omit and pass children for custom content. */
+  icon?: IconName;
+  /** Цвет иконки; по умолчанию тёмный оттенок подложки. */
+  iconColor?: string;
+  /** @deprecated эмодзи — переводить на `icon`. */
   glyph?: string;
   /** Named brand tint, or any color string. Defaults to peach. */
   tint?: TintKey | string;
@@ -22,6 +38,8 @@ interface Props {
 }
 
 export function HBIconBox({
+  icon,
+  iconColor,
   glyph,
   tint = 'primary',
   size = 44,
@@ -31,6 +49,8 @@ export function HBIconBox({
   children,
 }: Props) {
   const bg = (tints as Record<string, string>)[tint] ?? tint;
+  const ink = iconColor ?? (TINT_INK as Record<string, string>)[tint] ?? colors.ink;
+  const inner = Math.round(size * 0.5);
   return (
     <View
       style={[
@@ -39,7 +59,12 @@ export function HBIconBox({
         style,
       ]}
     >
-      {children ?? <Text style={{ fontSize: glyphSize ?? Math.round(size * 0.5) }}>{glyph}</Text>}
+      {children ??
+        (icon ? (
+          <Icon name={icon} size={glyphSize ?? inner} color={ink} />
+        ) : (
+          <Text style={{ fontSize: glyphSize ?? inner }}>{glyph}</Text>
+        ))}
     </View>
   );
 }

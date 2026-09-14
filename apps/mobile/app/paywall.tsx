@@ -399,7 +399,7 @@ export default function PaywallScreen() {
                 <HBCard
                   depth={selectedPkg === annualPkg ? 'deep' : 'sm'}
                   ringColor={selectedPkg === annualPkg ? colors.primary : undefined}
-                  bg={selectedPkg === annualPkg ? colors.primary : colors.card}
+                  bg={selectedPkg === annualPkg ? colors.primary : undefined}
                   style={styles.packageCard}
                 >
                   {(() => {

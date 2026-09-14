@@ -73,6 +73,15 @@ export const radius = {
  * Overall opacity pulled down to ~0.12–0.16 so surfaces look sculpted, not muddy.
  */
 export const shadow = {
+  // Обычная карточка: белая поверхность и рамка уже отделяют её от фона, тени
+  // остаётся только намекнуть на подъём.
+  card: {
+    shadowColor: '#5A3F1C',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 2,
+  },
   sm: {
     shadowColor: '#5A3F1C',
     shadowOffset: { width: 0, height: 3 },

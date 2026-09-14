@@ -19,18 +19,15 @@ import { colors, spacing } from '@/theme';
 interface ScreenProps {
   children: ReactNode;
   /**
-   * ВНИМАНИЕ: по умолчанию `false`, и это ловушка, на которой уже обожглись.
-   *
-   * При `false` содержимое рендерится в обычный `View` с `flex: 1`. React Native
-   * НЕ обрезает то, что не влезло: содержимое вылезает за границы блока и
+   * По умолчанию `true`. До 2026-09-14 было `false`, и это была ловушка: при
+   * `false` содержимое рендерится в обычный `View` с `flex: 1`, а React Native
+   * НЕ обрезает то, что не влезло, — содержимое вылезает за границы блока и
    * рисуется поверх соседей. На device QA (Galaxy A21s, 320 × 712 dp) герой
-   * экрана welcome таким образом накрыл кнопку «Начнём» и закрыл строку абзаца.
+   * экрана welcome таким образом накрыл кнопку «Начнём».
    *
-   * Ставь `scroll`, если содержимое может не влезть. Значение по умолчанию не
-   * инвертировано намеренно: `tour.tsx` держит горизонтальный FlatList, который
-   * во вложенной вертикальной прокрутке схлопнется, а `setup/name.tsx` уже
-   * содержит свой ScrollView внутри KeyboardAvoider — вложенные вертикальные
-   * прокрутки конфликтуют.
+   * `scroll={false}` ставить явно и только с причиной: горизонтальный FlatList
+   * (`tour.tsx`) схлопнется во вложенной вертикальной прокрутке, а свой
+   * ScrollView внутри KeyboardAvoider (`setup/name.tsx`) конфликтует с внешним.
    */
   scroll?: boolean;
   gradient?: boolean;
@@ -40,7 +37,7 @@ interface ScreenProps {
 
 export function Screen({
   children,
-  scroll = false,
+  scroll = true,
   gradient = false,
   contentStyle,
   decoration = 'none',

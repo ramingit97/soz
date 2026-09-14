@@ -7,6 +7,11 @@ export const colors = {
   bg: '#F6F0E2', // oklch(96.5% 0.018 75)
   bgDeep: '#EAE0CB', // oklch(93% 0.025 70)
   card: '#FFFBF1', // Honeybear Pro — whiter, separates from bg without heavy shadow
+  // Карточки белые с тонкой рамкой: кремовое на кремовом (card на bg — контраст
+  // 1.1) не отделялось от фона на device QA. `card` остаётся для чипов и кнопок,
+  // которые лежат уже на белом, — поэтому им нужна та же рамка.
+  surface: '#FFFFFF',
+  surfaceBorder: '#EDE4CF',
   paper: '#F6F0E2', // alias for compat
   paperShadow: '#EAE0CB',
   cream: '#FFF6EC',

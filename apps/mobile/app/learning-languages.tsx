@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeInUp, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
-import { Button } from '@/components/Button';
+import { HBButton } from '@/components/HBButton';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
 import { getStrings } from '@/i18n/strings';
@@ -84,7 +84,7 @@ export default function LearningLanguagesScreen() {
       </View>
 
       <Animated.View entering={FadeInUp.duration(400).delay(560)} style={styles.cta}>
-        <Button label={t.common.continue} onPress={handleContinue} />
+        <HBButton full label={t.common.continue} onPress={handleContinue} />
       </Animated.View>
     </Screen>
   );

@@ -14,80 +14,30 @@ import * as Haptics from 'expo-haptics';
 import { useRouter, usePathname } from 'expo-router';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
-import Svg, { Circle, Path } from 'react-native-svg';
 
+import { Icon, type IconName } from '@/components/Icon';
 import { Text } from '@/components/Text';
+import { useAccent } from '@/hooks/useAccent';
+import { useUIMode } from '@/hooks/useUIMode';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
 
 type TabKey = 'home' | 'talk' | 'progress' | 'profile';
 
 interface Tab {
   key: TabKey;
+  icon: IconName;
   route: string;
   labelRu: string;
   labelAz: string;
 }
 
 const TABS: Tab[] = [
-  { key: 'home',     route: '/home',     labelRu: 'Учиться',  labelAz: 'Öyrən' },
-  { key: 'talk',     route: '/talk',     labelRu: 'Говорить', labelAz: 'Danış' },
-  { key: 'progress', route: '/progress', labelRu: 'Прогресс', labelAz: 'Tərəqqi' },
-  { key: 'profile',  route: '/profile',  labelRu: 'Профиль',  labelAz: 'Profil' },
+  { key: 'home',     icon: 'house',          route: '/home',     labelRu: 'Учиться',  labelAz: 'Öyrən' },
+  { key: 'talk',     icon: 'message-circle', route: '/talk',     labelRu: 'Говорить', labelAz: 'Danış' },
+  { key: 'progress', icon: 'chart-column',   route: '/progress', labelRu: 'Прогресс', labelAz: 'Tərəqqi' },
+  { key: 'profile',  icon: 'user',           route: '/profile',  labelRu: 'Профиль',  labelAz: 'Profil' },
 ];
-
-/** Custom duotone nav icons — soft filled shape + rounded stroke (MicIcon family). */
-function TabIcon({ name, color, size }: { name: TabKey; color: string; size: number }) {
-  const sw = 2;
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      {name === 'home' && (
-        <Path
-          d="M4 11.5 12 4l8 7.5V19a1 1 0 0 1-1 1h-4v-5h-6v5H5a1 1 0 0 1-1-1z"
-          fill={color}
-          fillOpacity={0.18}
-          stroke={color}
-          strokeWidth={sw}
-          strokeLinejoin="round"
-          strokeLinecap="round"
-        />
-      )}
-      {name === 'talk' && (
-        <Path
-          d="M4 5h16a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H9l-4 4v-4H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"
-          fill={color}
-          fillOpacity={0.18}
-          stroke={color}
-          strokeWidth={sw}
-          strokeLinejoin="round"
-          strokeLinecap="round"
-        />
-      )}
-      {name === 'progress' && (
-        <Path
-          d="M5 13v6M12 8v11M19 4v15"
-          stroke={color}
-          strokeWidth={sw}
-          strokeLinecap="round"
-        />
-      )}
-      {name === 'profile' && (
-        <>
-          <Circle cx="12" cy="8" r="4" fill={color} fillOpacity={0.18} stroke={color} strokeWidth={sw} />
-          <Path
-            d="M4.5 20a7.5 7.5 0 0 1 15 0"
-            fill={color}
-            fillOpacity={0.18}
-            stroke={color}
-            strokeWidth={sw}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </>
-      )}
-    </Svg>
-  );
-}
 
 function TabButton({
   tab,
@@ -100,6 +50,8 @@ function TabButton({
   onPress: () => void;
   isAz: boolean;
 }) {
+  const accent = useAccent();
+  const mode = useUIMode();
   const scale = useSharedValue(1);
   const lift = useSharedValue(0);
 
@@ -116,16 +68,24 @@ function TabButton({
   }));
 
   return (
-    <Pressable style={styles.tab} onPress={handlePress} hitSlop={6}>
+    <Pressable
+      style={styles.tab}
+      onPress={handlePress}
+      hitSlop={6}
+      accessibilityRole="tab"
+      accessibilityState={{ selected: active }}
+    >
       <Animated.View style={[styles.tabInner, animStyle]}>
-        <View style={[styles.iconWrap, active && styles.iconWrapActive]}>
-          <TabIcon
-            name={tab.key}
-            color={active ? colors.primary : colors.inkSoft}
+        {/* Активная вкладка в цвет питомца. У малышей — заливка-пилюля под
+            иконкой, у старших только цвет: пилюля читается как детская. */}
+        <View style={[styles.iconWrap, active && mode === 'kid' && { backgroundColor: accent.soft }]}>
+          <Icon
+            name={tab.icon}
+            color={active ? accent.ink : colors.inkSoft}
             size={active ? 24 : 22}
           />
         </View>
-        <Text style={[styles.label, active && styles.labelActive]}>
+        <Text style={[styles.label, active && styles.labelActive, active && { color: accent.ink }]}>
           {isAz ? tab.labelAz : tab.labelRu}
         </Text>
       </Animated.View>
@@ -193,7 +153,9 @@ const styles = StyleSheet.create({
   },
   bar: {
     flexDirection: 'row',
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
     borderRadius: radius['2xl'],
     paddingVertical: spacing[2],
     paddingHorizontal: spacing[1],
@@ -218,17 +180,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'transparent',
   },
-  iconWrapActive: {
-    backgroundColor: colors.primarySoft,
-  },
-  icon: {
-    fontSize: fontSize.xl,
-    opacity: 0.5,
-  },
-  iconActive: {
-    fontSize: scaleFont(22),
-    opacity: 1,
-  },
   label: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize['3xs'],
@@ -237,7 +188,6 @@ const styles = StyleSheet.create({
   },
   labelActive: {
     fontFamily: fontFamily.bodyBold,
-    color: colors.primary,
   },
 });
 

@@ -1,5 +1,8 @@
 /**
  * HBChip — pill-shaped stat / metadata chip with soft inset look.
+ *
+ * Кремовый чип почти не виден на белой карточке (контраст 1.03), поэтому у него
+ * всегда есть тонкая рамка.
  */
 
 import { StyleSheet, View, type ViewStyle } from 'react-native';
@@ -53,6 +56,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[3],
     paddingVertical: 6,
     borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
   },
   big: {
     paddingHorizontal: spacing[4],

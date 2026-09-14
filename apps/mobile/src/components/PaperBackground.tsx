@@ -25,7 +25,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
+import { useUIMode } from '@/hooks/useUIMode';
 import { colors } from '@/theme';
+import { MODE_TOKENS } from '@/theme/modeTokens';
 
 type Variant = 'cream' | 'parchment' | 'honey' | 'sage' | 'night';
 
@@ -49,6 +51,7 @@ const GRADIENTS: Record<Variant, [string, string, string?]> = {
 };
 
 export function PaperBackground({ variant = 'cream', children, edges = ['bottom'] }: Props) {
+  const { vignette } = MODE_TOKENS[useUIMode()];
   const g = GRADIENTS[variant];
   const grad: [string, string, ...string[]] = g[2] ? [g[0], g[1], g[2]] : [g[0], g[1]];
   return (
@@ -58,8 +61,8 @@ export function PaperBackground({ variant = 'cream', children, edges = ['bottom'
       start={{ x: 0.5, y: 0 }}
       end={{ x: 0.5, y: 1 }}
     >
-      {/* Subtle warm vignette at the top */}
-      <View style={styles.vignetteTop} pointerEvents="none" />
+      {/* Subtle warm vignette at the top — только у малышей, старшим без неё */}
+      {vignette ? <View style={styles.vignetteTop} pointerEvents="none" /> : null}
       <SafeAreaView style={styles.safe} edges={edges}>
         {children}
       </SafeAreaView>

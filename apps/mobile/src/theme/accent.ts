@@ -19,16 +19,22 @@ export interface Accent {
   text: string;
   /** Soft tint fill (chips, halos, progress track echoes). */
   soft: string;
+  /**
+   * Акцент как цвет иконки или короткой подписи на белом и на `soft`. `bottom`
+   * для этого слишком светлый: у «масла» контраст на белом 2.1. Все значения
+   * держат ≥ 5:1 на белом и ≥ 4:1 на своём `soft`.
+   */
+  ink: string;
 }
 
 const ACCENTS: Record<number, Accent> = {
-  55: { top: '#EC9C64', bottom: colors.primary, text: '#FFFFFF', soft: colors.primarySoft }, // honey → brand peach (default)
-  175: { top: '#86D0BE', bottom: colors.accent, text: '#FFFFFF', soft: '#D4F2EA' }, // sage
-  90: { top: '#F7D972', bottom: colors.butter, text: colors.ink, soft: '#FFF6D0' }, // butter (dark text!)
-  25: { top: '#F4A583', bottom: '#F0936F', text: '#FFFFFF', soft: '#FCD3C0' }, // coral
-  230: { top: '#96BEEC', bottom: '#84B0E6', text: '#FFFFFF', soft: '#CFE2F7' }, // sky
-  300: { top: '#CFA2D1', bottom: '#C593C8', text: '#FFFFFF', soft: '#E8D2EA' }, // orchid
-  350: { top: '#F09BB2', bottom: '#ED8AA6', text: '#FFFFFF', soft: '#FAD3DD' }, // rose
+  55: { top: '#EC9C64', bottom: colors.primary, text: '#FFFFFF', soft: colors.primarySoft, ink: '#A85A28' }, // honey → brand peach (default)
+  175: { top: '#86D0BE', bottom: colors.accent, text: '#FFFFFF', soft: '#D4F2EA', ink: '#357A69' }, // sage
+  90: { top: '#F7D972', bottom: colors.butter, text: colors.ink, soft: '#FFF6D0', ink: '#7F6628' }, // butter (dark text!)
+  25: { top: '#F4A583', bottom: '#F0936F', text: '#FFFFFF', soft: '#FCD3C0', ink: '#B54E33' }, // coral
+  230: { top: '#96BEEC', bottom: '#84B0E6', text: '#FFFFFF', soft: '#CFE2F7', ink: '#3A6BAA' }, // sky
+  300: { top: '#CFA2D1', bottom: '#C593C8', text: '#FFFFFF', soft: '#E8D2EA', ink: '#8E5594' }, // orchid
+  350: { top: '#F09BB2', bottom: '#ED8AA6', text: '#FFFFFF', soft: '#FAD3DD', ink: '#B04366' }, // rose
 };
 
 /** Pure: nearest accent for any hue (mirrors HBPet's nearest-preset logic). */

@@ -11,7 +11,7 @@ import {
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { Bobo } from '@/components/Bobo';
-import { Button } from '@/components/Button';
+import { HBButton } from '@/components/HBButton';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
 import { getStrings } from '@/i18n/strings';
@@ -61,7 +61,7 @@ export default function TourScreen() {
   const handleSkip = () => router.push('/setup/profile-type' as never);
 
   return (
-    <Screen gradient>
+    <Screen gradient scroll={false}>
       <View style={styles.topBar}>
         <View style={styles.dots}>
           {slides.map((s, i) => (
@@ -77,11 +77,10 @@ export default function TourScreen() {
             />
           ))}
         </View>
-        <Button
+        <HBButton
           label={t.common.skip}
           variant="ghost"
           size="sm"
-          fullWidth={false}
           onPress={handleSkip}
         />
       </View>
@@ -100,7 +99,7 @@ export default function TourScreen() {
       />
 
       <View style={styles.cta}>
-        <Button label={index === slides.length - 1 ? t.tour.cta : t.common.next} onPress={handleNext} />
+        <HBButton full label={index === slides.length - 1 ? t.tour.cta : t.common.next} onPress={handleNext} />
       </View>
     </Screen>
   );

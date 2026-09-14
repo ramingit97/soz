@@ -2,30 +2,30 @@
  * HBBackButton — the one back affordance for the whole app.
  *
  * Replaces ~15 hand-rolled variants (‹ / ← / ✕ at assorted sizes, some with a
- * shadow and some without). A 40×40 clay disc with a chevron, shadow.sm, and a
- * proper 44pt-ish tap target. Floats top-left by default; pass `inline` to drop
- * it into a header row.
+ * shadow and some without). A 40×40 white disc with a Lucide chevron, shadow.sm,
+ * and a proper 44pt-ish tap target. Floats top-left by default; pass `inline` to
+ * drop it into a header row.
  */
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, type ViewStyle } from 'react-native';
 
-import { Text } from '@/components/Text';
-import { colors, fontSize, radius, shadow, spacing } from '@/theme';
+import { Icon, type IconName } from '@/components/Icon';
+import { colors, radius, shadow, spacing } from '@/theme';
 
 interface Props {
   /** Defaults to router.back(). */
   onPress?: () => void;
   /** Drop into a flex row instead of floating absolutely top-left. */
   inline?: boolean;
-  /** Glyph — defaults to a chevron. */
-  glyph?: string;
+  /** Defaults to a chevron; `x` for modal-like screens. */
+  icon?: IconName;
   /** Extra top offset for the floating variant (safe-area). Defaults to 50. */
   top?: number;
   style?: ViewStyle;
 }
 
-export function HBBackButton({ onPress, inline = false, glyph = '‹', top = 50, style }: Props) {
+export function HBBackButton({ onPress, inline = false, icon = 'chevron-left', top = 50, style }: Props) {
   const router = useRouter();
   const handle = () => {
     Haptics.selectionAsync().catch(() => {});
@@ -47,10 +47,7 @@ export function HBBackButton({ onPress, inline = false, glyph = '‹', top = 50,
         style,
       ]}
     >
-      {/* Nudge the chevron optically centered */}
-      <View style={glyph === '‹' ? styles.chevronNudge : undefined}>
-        <Text style={styles.glyph}>{glyph}</Text>
-      </View>
+      <Icon name={icon} size={22} color={colors.ink} strokeWidth={2.5} />
     </Pressable>
   );
 }
@@ -60,13 +57,11 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: radius.full,
-    backgroundColor: colors.card,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
     alignItems: 'center',
     justifyContent: 'center',
-    borderTopWidth: 1.5,
-    borderTopColor: colors.highlightWarm,
   },
   pressed: { transform: [{ scale: 0.92 }], opacity: 0.9 },
-  chevronNudge: { marginTop: -2, marginLeft: -2 },
-  glyph: { fontFamily: 'Nunito_800ExtraBold', fontSize: fontSize['2xl'], color: colors.ink },
 });
