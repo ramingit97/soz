@@ -216,12 +216,34 @@ notifications and the mic mode are native).
 Нативную часть (новый модуль, разрешение, плагин в `app.config.ts`) обновить
 так нельзя — там нужна новая сборка.
 
+Проверено 2026-09-13: первое обновление ушло в `preview`, runtime
+`1a02f26809db28d65c05866f86f7c217a7b57f52`, принимает сборка `f3eb38b0`
+(коммит `5a1a0f8`). Если загрузка падает с «Asset processing timed out» —
+это временное на стороне EAS, повторный запуск той же команды проходит.
+
 Опубликовать правки на уже установленные приложения:
 
 ```bash
 # в ту же ветку, что у сборки: preview / production / development
 corepack pnpm --filter @soz/mobile exec eas update --branch preview -m "что поменялось"
 ```
+
+**Адрес API берётся из `apps/mobile/.env.production`, а не из `eas.json`.**
+Блок `env` в профилях `eas.json` действует только на `eas build`. `eas update`
+собирает бандл локально через `expo export` с `NODE_ENV=production`, и Expo CLI
+читает переменные из `.env.production` (файл в git, значение публичное). Без
+него `api.ts` запёк бы в бандл `localhost:3000`, и все установленные приложения
+остались бы без сервера после обновления. Проверить перед публикацией:
+
+```bash
+cd apps/mobile && ../../node_modules/.bin/expo export --platform android
+strings -n 10 dist/_expo/static/js/android/*.hbc | grep -c soz-api.fly.dev   # >= 1
+strings -n 10 dist/_expo/static/js/android/*.hbc | grep -c localhost:3000    # 0
+```
+
+Обновления получают только сборки, собранные **после 2026-09-11** — с
+`expo-updates` внутри. APK от 2026-09-08 (`522b13d7…`) обновляться не будет,
+его нужно заменить новой сборкой профиля `preview`.
 
 Приложение подтягивает бандл при следующем запуске. `fallbackToCacheTimeout: 0`
 означает, что на старте оно НЕ ждёт сети: открывается на том бандле, что уже
