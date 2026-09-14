@@ -3,7 +3,7 @@
  *
  * The child gives the companion a NAME (free text) and a COLOR (hue swatch).
  * Distinct animal characters come later (they need real art); for now the same
- * plush Хани blob is recoloured. Persisted: petName + petHue in the settings
+ * plush Бобо blob is recoloured. Persisted: petName + petHue in the settings
  * store — HBPet reads petHue by default everywhere after onboarding.
  */
 
@@ -30,7 +30,7 @@ import { Text } from '@/components/Text';
 import { useKeyboardVisible } from '@/hooks/useKeyboardVisible';
 import { useSettings } from '@/store/settings';
 import { colors, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
-import { StepIndicator } from './name';
+import { StepIndicator } from '@/components/StepIndicator';
 
 interface ColorOption {
   hue: number;
@@ -84,10 +84,10 @@ export default function SetupPetScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     setPetHue(selected.hue);
     setPetName(name.trim() || null);
-    router.push('/setup/age' as any);
+    router.push('/setup/level' as any);
   };
 
-  const displayName = name.trim() || (isAz ? 'Hani' : 'Хани');
+  const displayName = name.trim() || (isAz ? 'Bobo' : 'Бобо');
 
   return (
     <PaperBackground variant="honey">
@@ -144,7 +144,7 @@ export default function SetupPetScreen() {
             <TextInput
               value={name}
               onChangeText={setName}
-              placeholder={isAz ? 'Məs: Hani, Şəkər...' : 'Например: Хани, Лапка...'}
+              placeholder={isAz ? 'Məs: Bobo, Şəkər...' : 'Например: Бобо, Лапка...'}
               placeholderTextColor={colors.inkSoft}
               maxLength={20}
               autoCapitalize="words"

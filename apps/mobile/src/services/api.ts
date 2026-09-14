@@ -236,7 +236,7 @@ export interface ChildProfile {
   totalStars: number;
   streak: number;
   lastCompletedDate: string | null;
-  // Profile fork + proactive settings (family account + "Хани messages first")
+  // Profile fork + proactive settings (family account + "Bobo messages first")
   profileType?: 'kid' | 'adult';
   goal?: string | null;
   goals?: string[];
@@ -287,6 +287,8 @@ export async function deleteChild(childId: string, token: string): Promise<void>
 export interface LessonPrefs {
   moreTalk?: boolean;
   moreWords?: boolean;
+  /** Больше историй на слух в плане (упор «Слушать» из онбординга). */
+  moreListening?: boolean;
   difficulty?: 'easier' | 'harder';
 }
 
@@ -420,7 +422,7 @@ export interface TalkRequestPayload {
   objectives?: string[];
   companionName?: string;
   nativeLanguage?: 'ru' | 'az';
-  /** Conversation-lesson timing — lets Хани wrap the session up itself. */
+  /** Conversation-lesson timing — lets Бобо wrap the session up itself. */
   sessionElapsedSec?: number;
   sessionTargetSec?: number;
   audioBase64: string;
@@ -437,7 +439,7 @@ export interface TalkResponsePayload {
   pronunciationHint?: { confidence: number; unclearWords: string[] };
   /** 1-based indices of request objectives newly accomplished by the child's last utterance. */
   objectivesDone?: number[];
-  /** Хани decided the planned session time is up and said a warm goodbye. */
+  /** Бобо decided the planned session time is up and said a warm goodbye. */
   wrapSuggested?: boolean;
   /** Set when the real-time safety screen detected a crisis and Bobo returned a safe reply. */
   crisis?: boolean;
@@ -452,7 +454,7 @@ export interface OpenerResponse {
   audioMimeType: string;
   ttsStubbed: boolean;
   hasMemory: boolean;
-  /** The remembered thread Хани opened with, if any (proactive recall). */
+  /** The remembered thread Бобо opened with, if any (proactive recall). */
   thread?: { id: string; text: string } | null;
 }
 
@@ -657,7 +659,7 @@ export async function postTalk(
   );
 }
 
-/** Flag one of Хани's AI replies as inappropriate/wrong (Google Play GenAI req.). */
+/** Flag one of Бобо's AI replies as inappropriate/wrong (Google Play GenAI req.). */
 export async function reportAiMessage(
   report: { childId?: string; conversationId: string; messageText: string; reason?: string },
   token?: string | null,

@@ -5,7 +5,7 @@
  * - `childMemory` (existing): static facts + free-form follow-up notes, keyed by
  *   (childId, language). Loaded before each talk request to enrich the prompt.
  * - `memoryThreads` (new): timed, lifecycle-tracked follow-ups — events, promises,
- *   emotions, goals — read cross-call by childId. This is what lets Хани bring
+ *   emotions, goals — read cross-call by childId. This is what lets Бобо bring
  *   something up later at the right moment ("how was going out with friends?").
  *
  * Flow:
@@ -13,7 +13,7 @@
  * - `updateChildMemory` — fire-and-forget every ~4 turns (and on session end). Extracts
  *   static facts (as before) AND timed threads, computing WHEN to follow up.
  * - `getDueThread` / `getThreadById` / `markThreadAsked` / `markThreadResolved` /
- *   `buildThreadContext` — drive the proactive "Хани wants to ask you something" loop.
+ *   `buildThreadContext` — drive the proactive "Бобо wants to ask you something" loop.
  */
 
 import { and, asc, desc, eq, lte } from 'drizzle-orm';
@@ -104,7 +104,7 @@ export interface MemoryThreadRecord {
 }
 
 /**
- * Decide WHEN Хани should proactively bring an item back up.
+ * Decide WHEN Бобо should proactively bring an item back up.
  * Returns an ISO date, or null when the item should only enrich the prompt
  * (facts / goals) or must never be pushed (sensitive items go to the parent).
  */
@@ -347,7 +347,7 @@ export async function getDueThread(
 /**
  * All open, non-sensitive threads with a scheduled follow-up date, for a given
  * language. Powers the client's local proactive-push scheduling and the
- * "Хани wants to ask you something" home banner. Ordered by due date.
+ * "Бобо wants to ask you something" home banner. Ordered by due date.
  */
 export async function getOpenThreads(
   childId: string,
@@ -464,7 +464,7 @@ export async function recordSensitiveThread(
 }
 
 /** How many sensitive threads were captured for this child today (any language).
- * Drives the real-time "Хани noticed something" parent alert. */
+ * Drives the real-time "Бобо noticed something" parent alert. */
 export async function countSensitiveToday(childId: string): Promise<number> {
   if (!isDbAvailable()) return 0;
   try {

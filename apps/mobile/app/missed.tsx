@@ -2,7 +2,7 @@
  * Honeybear · "We missed you" — return after a pause.
  *
  * Shown when a child returns after several days. Soft night halo, a tear and
- * zzz on a saturate-down Хани, streak-shield badge (if applicable), three
+ * zzz on a saturate-down Бобо, streak-shield badge (if applicable), three
  * welcome-back gift tiles, and an easy-start CTA.
  */
 

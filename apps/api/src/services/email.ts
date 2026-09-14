@@ -17,7 +17,7 @@ interface SendArgs {
   html: string;
   text?: string;
   /** Abort the request after this long. The crisis alert is sent while a child is
-   *  waiting for Хани to answer, so an unbounded fetch would stall that reply. */
+   *  waiting for Бобо to answer, so an unbounded fetch would stall that reply. */
   timeoutMs?: number;
 }
 
@@ -123,7 +123,7 @@ export function crisisAlertEmail(childName: string): { subject: string; html: st
       <div style="font-family: -apple-system, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
         <h2 style="color: #7C5CFF;">Söz</h2>
         <p style="font-size: 16px; line-height: 1.5;">
-          Во время разговора с Хани ${safeName} упомянул(а) что-то важное и тревожное.
+          Во время разговора с Бобо ${safeName} упомянул(а) что-то важное и тревожное.
           Мы не приводим подробности в письме — откройте раздел «Отчёт для родителя»
           в приложении и мягко, без давления поговорите с ребёнком сегодня.
         </p>
@@ -141,12 +141,12 @@ export function crisisAlertEmail(childName: string): { subject: string; html: st
           Təhlükə varsa — Uşaq qaynar xətti <strong>116 111</strong> (24/7, pulsuz, anonim).
         </p>
         <p style="color: #888; font-size: 12px; margin-top: 20px;">
-          Хани — ИИ-помощник, а не специалист. Это письмо отправлено автоматически.
+          Бобо — ИИ-помощник, а не специалист. Это письмо отправлено автоматически.
         </p>
       </div>
     `,
     text:
-      `Söz: во время разговора с Хани ${safeName} упомянул(а) что-то важное и тревожное. ` +
+      `Söz: во время разговора с Бобо ${safeName} упомянул(а) что-то важное и тревожное. ` +
       `Откройте «Отчёт для родителя» в приложении и мягко поговорите с ребёнком сегодня. ` +
       `Детская горячая линия Азербайджана: 116 111 (круглосуточно, бесплатно).\n\n` +
       `Хani ilə söhbətdə ${safeName} narahatlıq doğuran bir şey danışdı. Tətbiqdəki ` +

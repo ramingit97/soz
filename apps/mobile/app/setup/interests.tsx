@@ -30,7 +30,7 @@ import { Text } from '@/components/Text';
 import { analyzeInterests } from '@/services/api';
 import { useSettings } from '@/store/settings';
 import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing, tints } from '@/theme';
-import { StepIndicator } from './name';
+import { StepIndicator } from '@/components/StepIndicator';
 
 // ── Known interests with display metadata ─────────────────────────────────────
 
@@ -236,7 +236,7 @@ export default function SetupInterestsScreen() {
         >
           <StepIndicator current={2} total={7} />
 
-          {/* Header — Хани + title */}
+          {/* Header — Бобо + title */}
           <Animated.View entering={FadeInDown.duration(600).delay(60)} style={styles.header}>
             <Animated.View style={[styles.petHalo, petStyle]}>
               <HBPet
@@ -255,8 +255,8 @@ export default function SetupInterestsScreen() {
                 </Text>
                 <Text style={styles.subtitle}>
                   {isAz
-                    ? 'Hər şeyi yaz — Hani özü anlayacaq'
-                    : 'Пиши всё что хочешь — Хани сам разберётся'}
+                    ? 'Hər şeyi yaz — Bobo özü anlayacaq'
+                    : 'Пиши всё что хочешь — Бобо сам разберётся'}
                 </Text>
               </Animated.View>
             )}
@@ -264,7 +264,7 @@ export default function SetupInterestsScreen() {
             {phase === 'analyzing' && (
               <Animated.View entering={FadeIn} exiting={FadeOut} style={styles.titleBlock}>
                 <Text style={styles.title}>
-                  {isAz ? 'Hani oxuyur...' : 'Хани читает...'}
+                  {isAz ? 'Bobo oxuyur...' : 'Бобо читает...'}
                 </Text>
                 <ThinkingDots />
               </Animated.View>
@@ -310,7 +310,7 @@ export default function SetupInterestsScreen() {
               <HBButton
                 full
                 variant={inputText.trim().length >= 2 ? 'primary' : 'ghost'}
-                label={isAz ? '✨ Hani analiz edir' : '✨ Хани анализирует'}
+                label={isAz ? '✨ Bobo analiz edir' : '✨ Бобо анализирует'}
                 onPress={handleAnalyze}
                 disabled={inputText.trim().length < 2}
               />

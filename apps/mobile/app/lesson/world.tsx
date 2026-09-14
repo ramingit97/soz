@@ -56,9 +56,9 @@ function getWorldPrompt(word: string, isRu: boolean): { prompt: string; emoji: s
   ];
   const templates_ru = [
     { prompt: `Найди что-нибудь "${word}" рядом и опиши!`, emoji: '👀' },
-    { prompt: `Видишь что-то связанное с "${word}"? Расскажи Bobo!`, emoji: '🔍' },
+    { prompt: `Видишь что-то связанное с "${word}"? Расскажи Бобо!`, emoji: '🔍' },
     { prompt: `Посмотри вокруг — что напоминает тебе "${word}"?`, emoji: '🌍' },
-    { prompt: `Покажи Bobo что-нибудь "${word}" в твоём мире!`, emoji: '✨' },
+    { prompt: `Покажи Бобо что-нибудь "${word}" в твоём мире!`, emoji: '✨' },
     { prompt: `Опиши что-нибудь похожее на "${word}"!`, emoji: '🎯' },
   ];
 
@@ -226,7 +226,7 @@ export default function WorldScreen() {
           <View style={styles.titlePill}>
             <Text style={{ fontSize: 14 }}>🌍</Text>
             <Text style={styles.titleText}>
-              {isRu ? 'Покажи Bobo мир!' : 'Show Bobo your world!'}
+              {isRu ? 'Покажи Бобо мир!' : 'Show Bobo your world!'}
             </Text>
           </View>
 
@@ -293,7 +293,7 @@ export default function WorldScreen() {
           <Animated.View entering={FadeIn.duration(400)} style={styles.doneArea}>
             <Text style={styles.doneEmoji}>🌟</Text>
             <Text style={styles.doneTitle}>
-              {isRu ? 'Bobo увидел твой мир!' : "Bobo saw your world!"}
+              {isRu ? 'Бобо увидел твой мир!' : "Bobo saw your world!"}
             </Text>
             <Pressable style={styles.continueButton} onPress={handleContinue}>
               <Text style={styles.continueText}>
@@ -308,9 +308,9 @@ export default function WorldScreen() {
           <View style={styles.hintArea}>
             <Text style={styles.hintText}>
               {mood === 'thinking'
-                ? (isRu ? 'Bobo слушает...' : 'Bobo is listening...')
+                ? (isRu ? 'Бобо слушает...' : 'Bobo is listening...')
                 : mood === 'playing'
-                  ? (isRu ? 'Bobo отвечает...' : 'Bobo is responding...')
+                  ? (isRu ? 'Бобо отвечает...' : 'Bobo is responding...')
                   : mood === 'recording'
                     ? (isRu ? '🔴 Слушаю!' : '🔴 Go ahead!')
                     : (isRu ? '🎤 Зажми и расскажи' : '🎤 Hold and describe')}

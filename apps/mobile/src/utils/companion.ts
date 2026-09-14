@@ -1,19 +1,28 @@
 import { useSettings } from '@/store/settings';
 
 /**
- * Имя питомца по умолчанию — то, которое носит бренд: Хани (лат. Hani).
+ * Имя персонажа по умолчанию — Бобо (лат. Bobo). Решение владельца 2026-09-14;
+ * до этого было «Хани», ещё раньше — «Bobo». Тексты интерфейса и уроков написаны
+ * с именем по умолчанию, а имя, которое дал ребёнок, подставляется поверх.
  *
- * Раньше здесь стояло 'Bobo', и это проступало на вводных экранах, где ребёнок
- * ещё не назвал питомца: «Bobo — друг, а не учитель» на первом слайде, а через
- * два экрана — «Хани подстроится под каждого». Один персонаж под двумя именами
- * в одном онбординге. В метаданных сторов и описаниях он тоже Хани.
- *
- * 'Bobo' и 'Бобо' остаются в списке подстановки: ими написана часть встроенного
- * контента уроков (src/data/lessons.ts), переписывать её незачем — замена и так
- * проходит через getLesson.
+ * «Хани» и «Hani» остаются в списке имён по умолчанию: у профилей, созданных до
+ * смены имени, на сервере могло сохраниться `petName: 'Хани'` из подсказки на
+ * экране питомца. Такой профиль показывает Бобо, а не старое имя.
  */
-const DEFAULT_NAME = 'Хани';
-const DEFAULT_NAMES = ['Хани', 'Hani', 'Bobo', 'Бобо'];
+const DEFAULT_NAME_RU = 'Бобо';
+const DEFAULT_NAME_AZ = 'Bobo';
+const DEFAULT_NAMES = ['Бобо', 'Bobo', 'Хани', 'Hani'];
+
+/** Имя по умолчанию для языка интерфейса родителя. */
+export function defaultCompanionName(uiLanguage: string | null | undefined): string {
+  return uiLanguage === 'az' ? DEFAULT_NAME_AZ : DEFAULT_NAME_RU;
+}
+
+/** Имя, которое дал ребёнок, или null, если он оставил имя по умолчанию. */
+function customName(petName: string | null | undefined): string | null {
+  const name = petName?.trim();
+  return name && !DEFAULT_NAMES.includes(name) ? name : null;
+}
 
 /**
  * Replace the default companion name with the child's chosen pet name in any
@@ -21,13 +30,22 @@ const DEFAULT_NAMES = ['Хани', 'Hani', 'Bobo', 'Бобо'];
  * default; this swaps in the kid's name everywhere it's shown.
  */
 export function withCompanionName(text: string, petName?: string | null): string {
-  const name = petName?.trim();
-  if (!name || DEFAULT_NAMES.includes(name)) return text;
+  const name = customName(petName);
+  if (!name) return text;
   return text.replace(/Bobo|Бобо|Хани|Hani/g, name);
 }
 
-/** The child's companion name for the active profile, falling back to the brand name. */
+/** То же вне React (уведомления, сервисы). */
+export function companionNameFor(
+  petName: string | null | undefined,
+  uiLanguage: string | null | undefined,
+): string {
+  return customName(petName) ?? defaultCompanionName(uiLanguage);
+}
+
+/** The child's companion name for the active profile, falling back to the default. */
 export function useCompanionName(): string {
   const petName = useSettings((s) => s.petName);
-  return petName?.trim() || DEFAULT_NAME;
+  const uiLanguage = useSettings((s) => s.parentUILanguage);
+  return customName(petName) ?? defaultCompanionName(uiLanguage);
 }

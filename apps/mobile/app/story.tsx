@@ -69,7 +69,7 @@ function buildStory(
         id: 'start',
         sceneEmoji: themeEmoji,
         sceneTint: tints.primary,
-        text: `Хани шёл по лесу и вдруг увидел ${themeEmoji}.\nОн не знал, что делать!`,
+        text: `Бобо шёл по лесу и вдруг увидел ${themeEmoji}.\nОн не знал, что делать!`,
         choices: [
           { label: w(0), emoji: '👋', nextId: 'a1' },
           { label: w(1), emoji: '🤔', nextId: 'b1' },
@@ -80,7 +80,7 @@ function buildStory(
         id: 'a1',
         sceneEmoji: '😊',
         sceneTint: tints.sage,
-        text: `«${w(0)}!» — сказал Хани.\n${themeEmoji} очень обрадовался и показал дорогу домой!`,
+        text: `«${w(0)}!» — сказал Бобо.\n${themeEmoji} очень обрадовался и показал дорогу домой!`,
         choices: [
           { label: w(2), emoji: '🎵', nextId: 'end1' },
           { label: w(3), emoji: '⭐', nextId: 'end2' },
@@ -91,7 +91,7 @@ function buildStory(
         id: 'b1',
         sceneEmoji: '🌟',
         sceneTint: colors.englishLight,
-        text: `«${w(1)}!» — прошептал Хани.\nВдруг из-за дерева выглянул волшебный зверёк!`,
+        text: `«${w(1)}!» — прошептал Бобо.\nВдруг из-за дерева выглянул волшебный зверёк!`,
         choices: [
           { label: w(2), emoji: '🤝', nextId: 'end3' },
           { label: w(4), emoji: '🎁', nextId: 'end4' },
@@ -102,7 +102,7 @@ function buildStory(
         id: 'end1',
         sceneEmoji: '🏆',
         sceneTint: tints.butter,
-        text: `«${w(2)}!» — воскликнул Хани.\nВсе друзья собрались вместе и устроили праздник! 🎉`,
+        text: `«${w(2)}!» — воскликнул Бобо.\nВсе друзья собрались вместе и устроили праздник! 🎉`,
         isEnding: true,
         stars: 3,
         petMood: 'happy',
@@ -111,7 +111,7 @@ function buildStory(
         id: 'end2',
         sceneEmoji: '✨',
         sceneTint: tints.primary,
-        text: `«${w(3)}!» — пропел Хани.\nЗвёзды засветились, и Хани нашёл дорогу домой! 🌟`,
+        text: `«${w(3)}!» — пропел Бобо.\nЗвёзды засветились, и Бобо нашёл дорогу домой! 🌟`,
         isEnding: true,
         stars: 3,
         petMood: 'happy',
@@ -120,7 +120,7 @@ function buildStory(
         id: 'end3',
         sceneEmoji: '🤝',
         sceneTint: tints.sage,
-        text: `«${w(2)}!» — сказал Хани новому другу.\nОни вместе отправились домой! Дружба — это сила! 💚`,
+        text: `«${w(2)}!» — сказал Бобо новому другу.\nОни вместе отправились домой! Дружба — это сила! 💚`,
         isEnding: true,
         stars: 3,
         petMood: 'happy',
@@ -129,7 +129,7 @@ function buildStory(
         id: 'end4',
         sceneEmoji: '🎁',
         sceneTint: colors.englishLight,
-        text: `«${w(4)}!» — засмеялся Хани.\nВолшебный зверёк подарил ему сундук сокровищ! 💜`,
+        text: `«${w(4)}!» — засмеялся Бобо.\nВолшебный зверёк подарил ему сундук сокровищ! 💜`,
         isEnding: true,
         stars: 3,
         petMood: 'happy',
@@ -142,7 +142,7 @@ function buildStory(
         id: 'start',
         sceneEmoji: '🤝',
         sceneTint: tints.sage,
-        text: `Хани встретил нового друга — ${themeEmoji}.\nКак познакомиться?`,
+        text: `Бобо встретил нового друга — ${themeEmoji}.\nКак познакомиться?`,
         choices: [
           { label: w(0), emoji: '👋', nextId: 'a1' },
           { label: w(1), emoji: '😄', nextId: 'b1' },
@@ -153,7 +153,7 @@ function buildStory(
         id: 'a1',
         sceneEmoji: themeEmoji,
         sceneTint: tints.primary,
-        text: `«${w(0)}!» — крикнул Хани.\n${themeEmoji} улыбнулся и сказал: «Пойдём играть!»`,
+        text: `«${w(0)}!» — крикнул Бобо.\n${themeEmoji} улыбнулся и сказал: «Пойдём играть!»`,
         choices: [
           { label: w(2), emoji: '⚽', nextId: 'end1' },
           { label: w(3), emoji: '🎨', nextId: 'end2' },
@@ -164,7 +164,7 @@ function buildStory(
         id: 'b1',
         sceneEmoji: '🌈',
         sceneTint: tints.butter,
-        text: `«${w(1)}!» — засмеялся Хани.\nВокруг появилась радуга! Друг удивился!`,
+        text: `«${w(1)}!» — засмеялся Бобо.\nВокруг появилась радуга! Друг удивился!`,
         choices: [
           { label: w(2), emoji: '🌟', nextId: 'end3' },
           { label: w(4), emoji: '🍀', nextId: 'end4' },
@@ -175,7 +175,7 @@ function buildStory(
         id: 'end1',
         sceneEmoji: '⚽',
         sceneTint: tints.english,
-        text: `«${w(2)}!» — позвал Хани.\nОни играли весь день и стали лучшими друзьями! 🏆`,
+        text: `«${w(2)}!» — позвал Бобо.\nОни играли весь день и стали лучшими друзьями! 🏆`,
         isEnding: true,
         stars: 3,
         petMood: 'happy',
@@ -184,7 +184,7 @@ function buildStory(
         id: 'end2',
         sceneEmoji: '🎨',
         sceneTint: tints.primary,
-        text: `«${w(3)}!» — предложил Хани.\nОни нарисовали картину вместе! Вышел шедевр! 🎉`,
+        text: `«${w(3)}!» — предложил Бобо.\nОни нарисовали картину вместе! Вышел шедевр! 🎉`,
         isEnding: true,
         stars: 3,
         petMood: 'happy',
@@ -193,7 +193,7 @@ function buildStory(
         id: 'end3',
         sceneEmoji: '🌟',
         sceneTint: tints.butter,
-        text: `«${w(2)}!» — воскликнул Хани.\nЗвезда упала прямо к ним! Желание сбылось! ⭐`,
+        text: `«${w(2)}!» — воскликнул Бобо.\nЗвезда упала прямо к ним! Желание сбылось! ⭐`,
         isEnding: true,
         stars: 3,
         petMood: 'happy',
@@ -202,7 +202,7 @@ function buildStory(
         id: 'end4',
         sceneEmoji: '🍀',
         sceneTint: tints.sage,
-        text: `«${w(4)}!» — прошептал Хани.\nЧетырёхлистный клевер принёс удачу всем! 🍀`,
+        text: `«${w(4)}!» — прошептал Бобо.\nЧетырёхлистный клевер принёс удачу всем! 🍀`,
         isEnding: true,
         stars: 3,
         petMood: 'happy',
@@ -215,7 +215,7 @@ function buildStory(
         id: 'start',
         sceneEmoji: '🚪',
         sceneTint: colors.englishLight,
-        text: `Хани нашёл волшебную дверь!\nВ ней было написано слово. Какое ты выбираешь?`,
+        text: `Бобо нашёл волшебную дверь!\nВ ней было написано слово. Какое ты выбираешь?`,
         choices: [
           { label: w(0), emoji: '✨', nextId: 'a1' },
           { label: w(1), emoji: '🔮', nextId: 'b1' },
@@ -237,7 +237,7 @@ function buildStory(
         id: 'b1',
         sceneEmoji: '🌌',
         sceneTint: tints.berry,
-        text: `«${w(1)}!» — сказал Хани.\nДверь улетела в небо и унесла их в облака!`,
+        text: `«${w(1)}!» — сказал Бобо.\nДверь улетела в небо и унесла их в облака!`,
         choices: [
           { label: w(2), emoji: '☁️', nextId: 'end3' },
           { label: w(4), emoji: '🌈', nextId: 'end4' },
@@ -248,7 +248,7 @@ function buildStory(
         id: 'end1',
         sceneEmoji: '🏅',
         sceneTint: tints.butter,
-        text: `«${w(2)}!» — объявил Хани.\nВолшебный мир подарил ему золотую медаль! 🏅`,
+        text: `«${w(2)}!» — объявил Бобо.\nВолшебный мир подарил ему золотую медаль! 🏅`,
         isEnding: true,
         stars: 3,
         petMood: 'happy',
@@ -257,7 +257,7 @@ function buildStory(
         id: 'end2',
         sceneEmoji: '🎶',
         sceneTint: tints.sage,
-        text: `«${w(3)}!» — запел Хани.\nВся страна запела вместе с ним! 🎵`,
+        text: `«${w(3)}!» — запел Бобо.\nВся страна запела вместе с ним! 🎵`,
         isEnding: true,
         stars: 3,
         petMood: 'happy',
@@ -266,7 +266,7 @@ function buildStory(
         id: 'end3',
         sceneEmoji: '☁️',
         sceneTint: colors.englishLight,
-        text: `«${w(2)}!» — закричал Хани в облаках.\nОблако стало мягкой кроватью для отдыха! 💜`,
+        text: `«${w(2)}!» — закричал Бобо в облаках.\nОблако стало мягкой кроватью для отдыха! 💜`,
         isEnding: true,
         stars: 3,
         petMood: 'happy',
@@ -275,7 +275,7 @@ function buildStory(
         id: 'end4',
         sceneEmoji: '🌈',
         sceneTint: tints.primary,
-        text: `«${w(4)}!» — произнёс Хани.\nРадуга стала мостом прямо домой! 🎉`,
+        text: `«${w(4)}!» — произнёс Бобо.\nРадуга стала мостом прямо домой! 🎉`,
         isEnding: true,
         stars: 3,
         petMood: 'happy',
@@ -288,7 +288,7 @@ function buildStory(
         id: 'start',
         sceneEmoji: '🗺️',
         sceneTint: tints.butter,
-        text: `Хани нашёл карту сокровищ!\nПервая подсказка: скажи слово и иди!`,
+        text: `Бобо нашёл карту сокровищ!\nПервая подсказка: скажи слово и иди!`,
         choices: [
           { label: w(0), emoji: '➡️', nextId: 'a1' },
           { label: w(1), emoji: '⬆️', nextId: 'b1' },
@@ -299,7 +299,7 @@ function buildStory(
         id: 'a1',
         sceneEmoji: themeEmoji,
         sceneTint: tints.primary,
-        text: `Правильно! Хани нашёл ${themeEmoji}!\nВторая подсказка спрятана здесь. Выбери слово!`,
+        text: `Правильно! Бобо нашёл ${themeEmoji}!\nВторая подсказка спрятана здесь. Выбери слово!`,
         choices: [
           { label: w(2), emoji: '🔍', nextId: 'end1' },
           { label: w(3), emoji: '🗝️', nextId: 'end2' },
@@ -310,7 +310,7 @@ function buildStory(
         id: 'b1',
         sceneEmoji: '🏔️',
         sceneTint: tints.sage,
-        text: `«${w(1)}!» — Хани забрался на гору.\nСнизу видна вся карта! Что дальше?`,
+        text: `«${w(1)}!» — Бобо забрался на гору.\nСнизу видна вся карта! Что дальше?`,
         choices: [
           { label: w(2), emoji: '🌊', nextId: 'end3' },
           { label: w(4), emoji: '🌲', nextId: 'end4' },
@@ -330,7 +330,7 @@ function buildStory(
         id: 'end2',
         sceneEmoji: '🗝️',
         sceneTint: tints.butter,
-        text: `Ключ подошёл! «${w(3)}!» — воскликнул Хани.\nСокровище нашлось — это дружба! 🤝`,
+        text: `Ключ подошёл! «${w(3)}!» — воскликнул Бобо.\nСокровище нашлось — это дружба! 🤝`,
         isEnding: true,
         stars: 3,
         petMood: 'happy',
@@ -339,7 +339,7 @@ function buildStory(
         id: 'end3',
         sceneEmoji: '🌊',
         sceneTint: tints.english,
-        text: `«${w(2)}!» — Хани нырнул!\nПод водой он нашёл подводный дворец! 🏰`,
+        text: `«${w(2)}!» — Бобо нырнул!\nПод водой он нашёл подводный дворец! 🏰`,
         isEnding: true,
         stars: 3,
         petMood: 'happy',
@@ -348,7 +348,7 @@ function buildStory(
         id: 'end4',
         sceneEmoji: '🌲',
         sceneTint: tints.sage,
-        text: `«${w(4)}!» — в лесу ожил волшебный дуб.\nОн подарил Хани шапку-невидимку! ✨`,
+        text: `«${w(4)}!» — в лесу ожил волшебный дуб.\nОн подарил Бобо шапку-невидимку! ✨`,
         isEnding: true,
         stars: 3,
         petMood: 'happy',
@@ -442,10 +442,10 @@ export default function StoryScreen() {
 
   const archetype = (day - 1) % 4;
   const rawNodes = buildStory(theme, themeEmoji, vocab, archetype);
-  // Story archetypes are authored with "Хани"; swap in the child's pet name.
+  // Story archetypes are authored with "Бобо"; swap in the child's pet name.
   const nodes =
-    bot && bot !== 'Хани'
-      ? rawNodes.map((n) => ({ ...n, text: n.text.replace(/Хани/g, bot) }))
+    bot && bot !== 'Бобо'
+      ? rawNodes.map((n) => ({ ...n, text: n.text.replace(/Бобо/g, bot) }))
       : rawNodes;
   const nodeMap = new Map(nodes.map((n) => [n.id, n]));
 

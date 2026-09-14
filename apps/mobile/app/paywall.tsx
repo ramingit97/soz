@@ -1,7 +1,7 @@
 /**
  * Honeybear · Paywall (Söz Premium).
  *
- * Хани wears a crown, sparkles around, peach radial halo on cream paper.
+ * Бобо wears a crown, sparkles around, peach radial halo on cream paper.
  * Features card uses dashed dividers; testimonials in butter-tinted cards
  * with a left berry rule. Plan toggle has the year card painted primary with
  * a savings badge whose percentage is computed from the real prices.
@@ -54,9 +54,9 @@ const PREMIUM_DAYS = 30 - FREE_DAYS;
 const FEATURES = [
   {
     emoji: '🧠',
-    titleRu: 'Bobo помнит вашего ребёнка',
+    titleRu: 'Бобо помнит вашего ребёнка',
     titleAz: 'Bobo uşağınızı xatırlayır',
-    subRu: 'Имя кота, любимый цвет, школа — Bobo запоминает каждый разговор',
+    subRu: 'Имя кота, любимый цвет, школа — Бобо запоминает каждый разговор',
     subAz: 'Pişiyin adı, sevimli rəng, məktəb — Bobo hər söhbəti yadda saxlayır',
   },
   {
@@ -75,7 +75,7 @@ const FEATURES = [
   },
   {
     emoji: '🗣️',
-    titleRu: 'Безлимитные разговоры с Bobo',
+    titleRu: 'Безлимитные разговоры с Бобо',
     titleAz: 'Bobo ilə limitsiz söhbət',
     subRu: 'Свободная практика речи в любое время дня',
     subAz: 'İstənilən vaxtda sərbəst nitq təcrübəsi',
@@ -91,7 +91,7 @@ const FEATURES = [
 
 const TESTIMONIALS = [
   {
-    quoteRu: 'Мой Самир уже сам открывает приложение каждый вечер. Bobo стал его другом!',
+    quoteRu: 'Мой Самир уже сам открывает приложение каждый вечер. Бобо стал его другом!',
     quoteAz: 'Səmirim hər axşam özü tətbiqi açır. Bobo onun dostu oldu!',
     nameRu: 'Лейла, мама Самира (7 лет)',
     nameAz: 'Leyla, Səmirin anası (7 yaş)',
@@ -276,7 +276,7 @@ export default function PaywallScreen() {
       </Pressable>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-        {/* Hero — Хани with crown */}
+        {/* Hero — Бобо with crown */}
         <Animated.View entering={FadeInDown.duration(700)} style={styles.hero}>
           {/* sparkles — gently twinkling */}
           {[

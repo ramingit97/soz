@@ -14,6 +14,7 @@
  * change it from a web search alone — a wrong number here is worse than none.
  */
 
+import type { CompanionKind } from './persona.js';
 import { generateBoboReply } from './llm.js';
 
 // Azerbaijan Child Helpline (Uşaq qaynar xətti) — 24/7, free, confidential.
@@ -103,7 +104,7 @@ export async function screenChildMessage(
     }
   }
 
-  // Classifier unreachable. Keep the conversation going (Хани's own system prompt
+  // Classifier unreachable. Keep the conversation going (Бобо's own system prompt
   // still carries the safety rails) but do not silently drop escalation.
   console.error('[safety] classifier unavailable after retries:', lastError);
   if (keywordCrisisScreen(t)) {
@@ -135,10 +136,12 @@ async function classify(t: string): Promise<SafetyResult> {
 }
 
 /** Calm, non-probing safe reply used when a crisis is detected. */
-export function safeCrisisReply(language: 'en' | 'ru'): string {
+export function safeCrisisReply(language: 'en' | 'ru', kind: CompanionKind = 'bear'): string {
   const line = AZ_CRISIS_LINE;
   if (language === 'en') {
-    return `That sounds really important, and I'm glad you told me. I'm just a little AI bear 🐻 — please talk to a parent or a grown-up you trust about this right now.${line ? ` You can also call ${line}.` : ''} You're not alone. 💛`;
+    const self = kind === 'robot' ? 'an AI robot 🤖' : 'a little AI bear 🐻';
+    return `That sounds really important, and I'm glad you told me. I'm just ${self} — please talk to a parent or a grown-up you trust about this right now.${line ? ` You can also call ${line}.` : ''} You're not alone. 💛`;
   }
-  return `Это очень важно, и хорошо, что ты сказал мне. Я всего лишь маленький ИИ-медвежонок 🐻 — пожалуйста, прямо сейчас расскажи об этом родителям или взрослому, которому доверяешь.${line ? ` Ещё можно позвонить ${line}.` : ''} Ты не один. 💛`;
+  const self = kind === 'robot' ? 'ИИ-робот 🤖' : 'маленький ИИ-медвежонок 🐻';
+  return `Это очень важно, и хорошо, что ты сказал мне. Я всего лишь ${self} — пожалуйста, прямо сейчас расскажи об этом родителям или взрослому, которому доверяешь.${line ? ` Ещё можно позвонить ${line}.` : ''} Ты не один. 💛`;
 }

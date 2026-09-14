@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
@@ -7,6 +8,7 @@ import { HBPet } from '@/components/HBPet';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
 import { useCompactScreen } from '@/hooks/useCompactScreen';
+import { detectParentLanguage } from '@/i18n/detectLanguage';
 import { getStrings } from '@/i18n/strings';
 import { useSettings } from '@/store/settings';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -15,8 +17,17 @@ import { colors, radius, shadow, spacing } from '@/theme';
 
 export default function WelcomeScreen() {
   const router = useRouter();
-  const lang = useSettings((s) => s.parentUILanguage) ?? 'ru';
+  // Отдельного экрана выбора языка нет: при первом запуске язык берётся с
+  // телефона, переключатель AZ | RU — в углу. Выбор фиксируется первым нажатием.
+  const storedLang = useSettings((s) => s.parentUILanguage);
+  const setParentUILanguage = useSettings((s) => s.setParentUILanguage);
+  const [detected] = useState(detectParentLanguage);
+  const lang = storedLang ?? detected;
   const t = getStrings(lang);
+  const go = (href: string) => {
+    if (!storedLang) setParentUILanguage(lang);
+    router.push(href as never);
+  };
   const { short } = useCompactScreen();
 
   // scroll обязателен, а не для красоты. Содержимое этого экрана на 320 × 712 dp
@@ -27,6 +38,22 @@ export default function WelcomeScreen() {
   // уменьшенный маскот на коротких экранах убирает необходимость прокручивать.
   return (
     <Screen gradient decoration="bobo" scroll>
+      <View style={styles.langToggle} accessibilityRole="radiogroup">
+        {(['az', 'ru'] as const).map((l) => (
+          <Pressable
+            key={l}
+            onPress={() => setParentUILanguage(l)}
+            accessibilityRole="radio"
+            accessibilityState={{ selected: lang === l }}
+            hitSlop={6}
+            style={[styles.langOption, lang === l && styles.langOptionOn]}
+          >
+            <Text variant="label" tone={lang === l ? 'primary' : 'secondary'}>
+              {l.toUpperCase()}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
       <View style={styles.heroSection}>
         <Animated.View entering={FadeInDown.duration(700).delay(100)}>
           <HBPet size={short ? 120 : 170} mood="happy" />
@@ -58,13 +85,13 @@ export default function WelcomeScreen() {
       </View>
 
       <Animated.View entering={FadeInUp.duration(600).delay(560)} style={styles.ctaSection}>
-        <HBButton full label={t.welcome.cta} onPress={() => router.push('/tour')} />
+        <HBButton full label={t.welcome.cta} onPress={() => go('/setup/profile-type')} />
         <HBButton
           full
           label={t.welcome.haveAccount}
           variant="ghost"
           size="md"
-          onPress={() => router.push('/auth/login' as any)}
+          onPress={() => go('/auth/login')}
         />
 
         {/* Dev-only reset button */}
@@ -72,7 +99,7 @@ export default function WelcomeScreen() {
           <Pressable
             onPress={() => {
               useSettings.getState().reset();
-              router.replace('/language');
+              router.replace('/welcome');
             }}
             style={styles.devReset}
           >
@@ -85,6 +112,22 @@ export default function WelcomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  langToggle: {
+    flexDirection: 'row',
+    alignSelf: 'flex-end',
+    marginTop: spacing[2],
+    padding: 3,
+    borderRadius: radius.full,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
+  },
+  langOption: {
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[1],
+    borderRadius: radius.full,
+  },
+  langOptionOn: { backgroundColor: colors.bgDeep },
   heroSection: {
     // Не flex:1 — внутри ScrollView это распирало бы блок и возвращало ту же
     // поломку. flexGrow отдаёт герою лишнее место, когда оно есть, и не мешает

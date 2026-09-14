@@ -35,14 +35,14 @@ export default function PrivacyPolicyScreen() {
 
           <Section title={isAz ? '1. Hansı məlumatları toplayırıq' : '1. Какие данные мы собираем'}>
             {isAz
-              ? 'Söz uşağınızın öyrənmə təcrübəsini fərdiləşdirmək üçün lazım olan minimum məlumatı toplayır:\n\n• Valideyn email və şifrə (parolun hash-i)\n• Uşağın adı, yaşı, dərs təqvimi\n• Dərslər zamanı qarşılaşdığı suallara verdiyi cavablar\n• Hani ilə səs müzakirələrinin transkripti'
-              : 'Söz собирает минимум данных, нужный для персонализации обучения:\n\n• Email родителя и хэш пароля\n• Имя ребёнка, возраст, расписание уроков\n• Ответы на упражнения и допущенные ошибки\n• Транскрипты разговоров с Хани'}
+              ? 'Söz uşağınızın öyrənmə təcrübəsini fərdiləşdirmək üçün lazım olan minimum məlumatı toplayır:\n\n• Valideyn email və şifrə (parolun hash-i)\n• Uşağın adı, yaşı, dərs təqvimi\n• Dərslər zamanı qarşılaşdığı suallara verdiyi cavablar\n• Bobo ilə səs müzakirələrinin transkripti'
+              : 'Söz собирает минимум данных, нужный для персонализации обучения:\n\n• Email родителя и хэш пароля\n• Имя ребёнка, возраст, расписание уроков\n• Ответы на упражнения и допущенные ошибки\n• Транскрипты разговоров с Бобо'}
           </Section>
 
           <Section title={isAz ? '2. Səs yazıları' : '2. Аудиозаписи'}>
             {isAz
-              ? 'Hani ilə müzakirələr zamanı səs müvəqqəti olaraq Deepgram (transkripsiya) və OpenAI (cavab) tərəfdaşlarına göndərilir. Audio sənədləri saxlamırıq — yalnız mətn transkripti istifadəçinin profilinə bağlanır. Mətn son söhbətdən 90 gün sonra avtomatik silinir.'
-              : 'Во время разговора с Хани аудио передаётся партнёрам Deepgram (распознавание) и OpenAI (генерация ответа). Сами аудиофайлы НЕ сохраняются — только текстовая расшифровка привязывается к профилю. Расшифровки автоматически удаляются через 90 дней после последнего разговора.'}
+              ? 'Bobo ilə müzakirələr zamanı səs müvəqqəti olaraq Deepgram (transkripsiya) və OpenAI (cavab) tərəfdaşlarına göndərilir. Audio sənədləri saxlamırıq — yalnız mətn transkripti istifadəçinin profilinə bağlanır. Mətn son söhbətdən 90 gün sonra avtomatik silinir.'
+              : 'Во время разговора с Бобо аудио передаётся партнёрам Deepgram (распознавание) и OpenAI (генерация ответа). Сами аудиофайлы НЕ сохраняются — только текстовая расшифровка привязывается к профилю. Расшифровки автоматически удаляются через 90 дней после последнего разговора.'}
           </Section>
 
           <Section title={isAz ? '3. Uşaq məxfiliyi (COPPA / GDPR-K)' : '3. Конфиденциальность детей (COPPA / GDPR-K)'}>
@@ -59,8 +59,8 @@ export default function PrivacyPolicyScreen() {
 
           <Section title={isAz ? '5. Üçüncü tərəflər' : '5. Третьи стороны'}>
             {isAz
-              ? 'İstifadə etdiyimiz xidmətlər:\n\n• Neon (PostgreSQL) — verilənlər bazası\n• OpenAI — Hani dialoqları və danışıq tanınması\n• Deepgram — danışıq tanınması\n• ElevenLabs — Hani-nin səsi\n• RevenueCat — abunəliklər\n• Sentry — qəza diaqnostikası (şəxsi məlumat olmadan)\n\nBütün tərəfdaşlar uşaq məxfiliyi standartlarına uyğun gəlir.'
-              : 'Партнёры:\n\n• Neon (PostgreSQL) — база данных\n• OpenAI — диалоги Хани и распознавание речи\n• Deepgram — распознавание речи\n• ElevenLabs — голос Хани\n• RevenueCat — подписки\n• Sentry — диагностика сбоев (без персональных данных)\n\nВсе партнёры соответствуют стандартам детской конфиденциальности.'}
+              ? 'İstifadə etdiyimiz xidmətlər:\n\n• Neon (PostgreSQL) — verilənlər bazası\n• OpenAI — Bobo dialoqları və danışıq tanınması\n• Deepgram — danışıq tanınması\n• ElevenLabs — Bobo-nun səsi\n• RevenueCat — abunəliklər\n• Sentry — qəza diaqnostikası (şəxsi məlumat olmadan)\n\nBütün tərəfdaşlar uşaq məxfiliyi standartlarına uyğun gəlir.'
+              : 'Партнёры:\n\n• Neon (PostgreSQL) — база данных\n• OpenAI — диалоги Бобо и распознавание речи\n• Deepgram — распознавание речи\n• ElevenLabs — голос Бобо\n• RevenueCat — подписки\n• Sentry — диагностика сбоев (без персональных данных)\n\nВсе партнёры соответствуют стандартам детской конфиденциальности.'}
           </Section>
 
           <Section title={isAz ? '6. Əlaqə' : '6. Контакты'}>

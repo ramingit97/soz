@@ -145,6 +145,7 @@ function buildGeneratorPrompt(input: GeneratorInput): string {
   const p = input.prefs ?? {};
   const prefLines = [
     p.moreTalk ? '  - The family wants MORE conversation — bias each day toward more talk_to_bobo practice and richer talkSystemPrompt.' : '',
+    p.moreListening ? '  - The family wants MORE listening — make "story_listen" the most common focus across the range (at least half the days where the range allows) while keeping at least one "conversation" day.' : '',
     p.moreWords ? '  - The family wants MORE vocabulary — you may push toward 6-7 words/day where age-appropriate.' : '',
     p.difficulty === 'easier' ? '  - The family wants it EASIER — shorter sentences, gentler ramp, more review.' : '',
     p.difficulty === 'harder' ? '  - The family wants it HARDER — longer sentences, faster ramp, fewer review words.' : '',

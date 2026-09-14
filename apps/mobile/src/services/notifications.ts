@@ -2,12 +2,13 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
 import { useSettings, type ScheduleDay } from '@/store/settings';
+import { companionNameFor } from '@/utils/companion';
 
 /** The child-chosen companion name, or the brand default. Read from the store so
- * scheduled notifications speak of "Хани" (or whatever the child named the pet),
+ * scheduled notifications speak of "Бобо" (or whatever the child named the pet),
  * never a stale hardcoded "Bobo". */
 function companion(isAz: boolean): string {
-  return useSettings.getState().petName || (isAz ? 'Hani' : 'Хани');
+  return companionNameFor(useSettings.getState().petName, isAz ? 'az' : 'ru');
 }
 
 Notifications.setNotificationHandler({
@@ -100,7 +101,7 @@ export async function notifyParentSensitive(isAz: boolean): Promise<void> {
   const granted = await requestNotificationPermission();
   if (!granted) return;
 
-  const title = isAz ? '💛 Хани bir şey hiss etdi' : '💛 Хани кое-что заметил';
+  const title = isAz ? '💛 Bobo bir şey hiss etdi' : '💛 Бобо кое-что заметил';
   const body = isAz
     ? 'Söhbətdə həssas an oldu. Hesabata baxın və uşaqla mehribanca danışın.'
     : 'В разговоре был деликатный момент. Загляните в отчёт и мягко поговорите с ребёнком.';
@@ -119,7 +120,7 @@ interface CallbackThread {
 }
 
 /**
- * Schedule local "Хани wants to ask you something" callbacks from memory threads.
+ * Schedule local "Bobo wants to ask you something" callbacks from memory threads.
  *
  * This is the Phase-1 (no-server) path for proactive follow-ups: when the child
  * mentions an event ("going out with friends tomorrow"), a thread is created with
@@ -160,7 +161,7 @@ export async function scheduleFriendCallbacks(
 
     scheduledDays.add(t.followUpAt);
     const snippet = t.text.length > 60 ? `${t.text.slice(0, 57)}…` : t.text;
-    const title = opts.isAz ? 'Хани soruşmaq istəyir 🐻' : 'Хани хочет спросить 🐻';
+    const title = opts.isAz ? 'Bobo soruşmaq istəyir 🐻' : 'Бобо хочет спросить 🐻';
     const body =
       t.language === 'en'
         ? `Hi ${opts.childName}! You mentioned "${snippet}" — how did it go? Let's chat 🐻`
@@ -215,7 +216,7 @@ export async function scheduleStreakRiskReminder(
   target.setHours(20, 0, 0, 0);
   if (target.getTime() <= now.getTime()) return; // Too late today
 
-  const bot = companionName || (isAz ? 'Hani' : 'Хани');
+  const bot = companionName || (isAz ? 'Bobo' : 'Бобо');
   const title = isAz ? `🍯 ${bot} səni xatırlayır` : `🍯 ${bot} соскучился`;
   const body = isAz
     ? `${childName}, bir neçə dəqiqə birlikdə? Buraxsan da narahat olma — ${bot} seriyanı saxlayacaq 💛`

@@ -97,7 +97,7 @@ export default function AdultGoalScreen() {
             </View>
             <Text style={styles.title}>{isAz ? 'Səndən bir az' : 'Немного о тебе'}</Text>
             <Text style={styles.subtitle}>
-              {isAz ? 'Хани söhbəti sənin üçün uyğunlaşdıracaq' : 'Хани подстроит разговор под тебя'}
+              {isAz ? 'Bobo söhbəti sənin üçün uyğunlaşdıracaq' : 'Бобо подстроит разговор под тебя'}
             </Text>
           </Animated.View>
 
@@ -203,7 +203,7 @@ export default function AdultGoalScreen() {
             >
               <View style={{ flex: 1 }}>
                 <Text style={styles.toggleTitle}>
-                  {isAz ? 'Хани özü yazsın' : 'Хани пишет первым'}
+                  {isAz ? 'Bobo özü yazsın' : 'Бобо пишет первым'}
                 </Text>
                 <Text style={styles.toggleSub}>
                   {isAz

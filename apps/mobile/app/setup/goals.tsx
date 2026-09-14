@@ -18,7 +18,7 @@ import { Text } from '@/components/Text';
 import { useSettings, type LearningFocus } from '@/store/settings';
 import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
 import { HBButton } from '@/components/HBButton';
-import { StepIndicator } from './name';
+import { StepIndicator } from '@/components/StepIndicator';
 
 interface GoalOpt { key: string; emoji: string; ru: string; az: string }
 const GOALS: GoalOpt[] = [

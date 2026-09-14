@@ -1,5 +1,5 @@
 /**
- * Pet-care persistence — keeps Хани's tamagotchi stats (hunger/love/energy)
+ * Pet-care persistence — keeps Бобо's tamagotchi stats (hunger/love/energy)
  * between sessions so caring for the pet actually matters.
  *
  * Design notes:
@@ -18,7 +18,7 @@ export interface PetStats {
   energy: number;
 }
 
-/** A freshly-adopted (or storage-less) Хани starts content, not needy. */
+/** A freshly-adopted (or storage-less) Бобо starts content, not needy. */
 export const DEFAULT_STATS: PetStats = { hunger: 72, love: 65, energy: 80 };
 
 const MAX = 100;

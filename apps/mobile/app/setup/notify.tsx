@@ -31,7 +31,7 @@ export default function SetupNotifyScreen() {
   const isAz = lang === 'az';
   const [busy, setBusy] = useState(false);
 
-  const next = () => router.replace('/setup/plan-select' as any);
+  const next = () => router.replace('/home');
 
   const handleAllow = async () => {
     if (busy) return;

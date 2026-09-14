@@ -23,6 +23,7 @@ const lessonPrefsSchema = z
   .object({
     moreTalk: z.boolean().optional(),
     moreWords: z.boolean().optional(),
+    moreListening: z.boolean().optional(),
     difficulty: z.enum(['easier', 'harder']).optional(),
   })
   .strict();
@@ -41,9 +42,9 @@ const GOAL_FACT: Record<string, { ru: string; en: string }> = {
 };
 
 /**
- * Seed Хани's memory from onboarding: the child TOLD us their interests and
+ * Seed Бобо's memory from onboarding: the child TOLD us their interests and
  * goal — the companion should "remember" them from the very first conversation
- * (and the "What Хани remembers" screen shouldn't start empty).
+ * (and the "What Бобо remembers" screen shouldn't start empty).
  */
 async function seedChildMemory(
   childId: string,
@@ -133,7 +134,7 @@ childrenRoute.post('/', zValidator('json', createChildSchema), async (c) => {
 
   if (!child) return c.json({ error: 'create_failed' }, 500);
 
-  // Хани "remembers" the onboarding answers from day 0 (non-blocking, best effort).
+  // Бобо "remembers" the onboarding answers from day 0 (non-blocking, best effort).
   seedChildMemory(
     child.id,
     body.learningLanguages,

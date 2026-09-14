@@ -264,7 +264,7 @@ export default function ParentScreen() {
                 );
               })}
               <Pressable
-                onPress={() => router.push('/parent-add-child' as any)}
+                onPress={() => router.push('/setup/profile-type' as never)}
                 style={[styles.childAddBtn, shadow.sm]}
               >
                 <Text style={styles.childAddPlus}>+</Text>
@@ -447,7 +447,7 @@ export default function ParentScreen() {
                 <Text style={styles.quotaText}>
                   {isAz
                     ? `Bu gün ${quota.remaining} / ${quota.limit} söhbət qalıb`
-                    : `Разговоров с Хани сегодня: осталось ${quota.remaining} из ${quota.limit}`}
+                    : `Разговоров с Бобо сегодня: осталось ${quota.remaining} из ${quota.limit}`}
                 </Text>
               )}
               <Pressable

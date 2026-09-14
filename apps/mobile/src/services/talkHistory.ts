@@ -4,7 +4,7 @@
  * Why local: the server already remembers conversation *facts* (memory_threads)
  * and drives temporal callbacks, but the raw chat bubbles are cleared every time
  * the child re-enters /talk. Showing the previous conversation muted above the
- * live chat makes Хани's memory *visible* to the child — the app's headline
+ * live chat makes Бобо's memory *visible* to the child — the app's headline
  * differentiator (see the market analysis). This is a display aid, not the
  * source of truth for memory.
  *

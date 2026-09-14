@@ -132,12 +132,12 @@ export default function PhotoLearnScreen() {
               <HBPet size={88} hue={storedHue} mood="curious" />
             </View>
             <Text style={styles.heroTitle}>
-              {isAz ? 'Hani-yə dünyanı göstər!' : 'Покажи Хани свой мир!'}
+              {isAz ? 'Bobo-ya dünyanı göstər!' : 'Покажи Бобо свой мир!'}
             </Text>
             <Text style={styles.heroSub}>
               {isAz
-                ? 'Şəkil çək — Hani sənə yeni sözlər deyəcək'
-                : 'Сделай фото — Хани назовёт что на нём по-английски'}
+                ? 'Şəkil çək — Bobo sənə yeni sözlər deyəcək'
+                : 'Сделай фото — Бобо назовёт что на нём по-английски'}
             </Text>
 
             <View style={styles.ctas}>
@@ -179,7 +179,7 @@ export default function PhotoLearnScreen() {
                 <View style={styles.previewOverlay}>
                   <ActivityIndicator color={colors.card} size="large" />
                   <Text style={styles.overlayText}>
-                    {isAz ? 'Hani baxır...' : 'Хани смотрит...'}
+                    {isAz ? 'Bobo baxır...' : 'Бобо смотрит...'}
                   </Text>
                 </View>
               )}

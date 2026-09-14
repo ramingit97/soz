@@ -55,6 +55,7 @@ export const authCodes = pgTable('auth_codes', {
 export interface LessonPrefs {
   moreTalk?: boolean; // weight lessons toward more Bobo conversation
   moreWords?: boolean; // teach a bit more vocabulary per lesson
+  moreListening?: boolean; // weight the plan toward story_listen days (onboarding focus «Слушать»)
   difficulty?: 'easier' | 'harder'; // pacing nudge (keeps the skeleton)
 }
 
@@ -89,7 +90,7 @@ export const children = pgTable('children', {
   goal: text('goal'), // PRIMARY goal (goals[0]) — kept for back-compat / single-goal reads
   goals: json('goals').$type<string[]>().notNull().default([]), // all chosen "why learning" goals (kid path: up to 2)
   timezone: text('timezone'), // IANA tz e.g. 'Asia/Baku' — proactive daytime window (buildTimeContext uses server time today)
-  // Proactive "Хани messages first" — kids: parent opt-in, default OFF (0).
+  // Proactive "Бобо messages first" — kids: parent opt-in, default OFF (0).
   proactiveOptIn: integer('proactive_opt_in').notNull().default(0), // 0/1
   proactiveWindowStart: integer('proactive_window_start').notNull().default(16), // local hour
   proactiveWindowEnd: integer('proactive_window_end').notNull().default(19),
@@ -289,7 +290,7 @@ export const childMemory = pgTable(
 //
 // Additive to childMemory (which stays for static facts). A thread is one
 // rememberable item with a lifecycle: captured → (maybe) scheduled to ask back
-// at followUpAt → asked → resolved. This is what powers Хани bringing something
+// at followUpAt → asked → resolved. This is what powers Бобо bringing something
 // up later ("how was going out with friends?"). Read cross-language by childId
 // so the timed follow-ups are not split by the childMemory UNIQUE(childId,language).
 
@@ -313,7 +314,7 @@ export const memoryThreads = pgTable('memory_threads', {
   status: text('status').$type<MemoryThreadStatus>().notNull().default('open'),
   mentionedAt: text('mentioned_at').notNull(), // ISO date the child first said it
   eventDate: text('event_date'), // ISO date the event happens, if known ("on Saturday")
-  followUpAt: text('follow_up_at'), // ISO date Хани should bring it back up (null = inject only, never push)
+  followUpAt: text('follow_up_at'), // ISO date Бобо should bring it back up (null = inject only, never push)
   askedAt: text('asked_at'),
   resolvedAt: text('resolved_at'),
   priority: integer('priority').notNull().default(0),
@@ -336,7 +337,7 @@ export const conversations = pgTable('conversations', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
-// ── AI content reports (Google Play GenAI: users flag Хани's replies) ────────
+// ── AI content reports (Google Play GenAI: users flag Бобо's replies) ────────
 //
 // One row per in-app "flag this reply" tap. childId is stored as plain text with
 // NO foreign key on purpose: a report is a moderation record that must survive
@@ -348,7 +349,7 @@ export const aiReports = pgTable('ai_reports', {
   childId: text('child_id'),
   conversationId: text('conversation_id'),
   reason: text('reason'),
-  messageText: text('message_text'), // the flagged Хани reply
+  messageText: text('message_text'), // the flagged Бобо reply
   reviewed: integer('reviewed').notNull().default(0), // 0/1 — operator triage flag
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });

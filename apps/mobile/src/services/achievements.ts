@@ -76,7 +76,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'static_complete',
     emoji: '🏆',
-    titleRu: 'Месяц с Bobo',
+    titleRu: 'Месяц с Бобо',
     titleAz: 'Bobo ilə bir ay',
     descRu: 'Завершил все 30 дней',
     descAz: 'Bütün 30 günü bitirdi',

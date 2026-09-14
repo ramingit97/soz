@@ -1,5 +1,5 @@
 /**
- * Bobo — the mascot, now rendered as Honeybear's "Хани" clay-blob.
+ * Bobo — the mascot, now rendered as Honeybear's "Бобо" clay-blob.
  *
  * This is a thin wrapper around `HBPet` that preserves the original Bobo API
  * (size, mood, style) plus subtle breathing animation, so every screen that

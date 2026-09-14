@@ -3,10 +3,10 @@
  *
  * The privacy policy promised that conversation transcripts are deleted
  * automatically — and nothing in the codebase did it. Every word a child ever
- * said to Хани stayed in `conversations` until the parent deleted the whole
+ * said to Бобо stayed in `conversations` until the parent deleted the whole
  * account. This makes the promise true.
  *
- * Scope is deliberately just transcripts. Хани's memory of the child (facts,
+ * Scope is deliberately just transcripts. Бобо's memory of the child (facts,
  * interests, follow-up threads) is a separate table and a separate promise; the
  * crisis records in `safety_alerts` carry no transcript and are kept as an audit
  * trail.

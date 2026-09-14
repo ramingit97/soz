@@ -38,3 +38,20 @@ export function lessonEntryRoute(day: number, lang: string, mature: boolean): st
 export function afterReadingRoute(day: number, lang: string, mature: boolean): string {
   return mature ? `/lesson/grammar?lang=${lang}&day=${day}` : kidModeRoute(day, lang);
 }
+
+/**
+ * С чего начинается урок дня. Упор дня (`focus` из плана) решает первый экран:
+ * день-история — история на слух, день-разговор — разговор с персонажем, иначе
+ * обычный поток. `fromLesson=1` важен: без него экран не знает, что это урок, и
+ * не засчитывает его — дни-истории так и оставались незавершёнными.
+ */
+export function lessonStartRoute(
+  focus: string | undefined,
+  day: number,
+  lang: string,
+  mature: boolean,
+): string {
+  if (focus === 'story_listen') return `/listening?lang=${lang}&day=${day}&fromLesson=1`;
+  if (focus === 'conversation') return `/talk?lang=${lang}&day=${day}&fromLesson=1&convo=1`;
+  return lessonEntryRoute(day, lang, mature);
+}

@@ -9,7 +9,7 @@ import { Text } from '@/components/Text';
 import { useSettings, type AgeRange, type ChildLevel } from '@/store/settings';
 import { colors, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
 import { HBButton } from '@/components/HBButton';
-import { StepIndicator } from './name';
+import { StepIndicator } from '@/components/StepIndicator';
 
 interface LevelOption {
   key: ChildLevel;

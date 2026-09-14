@@ -35,12 +35,22 @@ export const AGE_RANGE_META: Record<
   adult: { repAge: 25, band: 'adult', playful: false, conversation: true },
 };
 
-/** Map the learner's chosen focus onto the lesson "dials" the skin engine understands. */
+/**
+ * Map the learner's chosen focus onto the lesson "dials" the generator understands.
+ *
+ * «Слушать» раньше тоже превращалось в `moreTalk` — сервер не знал другого. Теперь
+ * это отдельный `moreListening`: план с упором на истории на слух.
+ *
+ * ПОРЯДОК ВЫКЛАДКИ: сначала API, потом приложение. Схема `lessonPrefs` на сервере
+ * строгая (`.strict()`), и API без `moreListening` отвечает 400 на создание
+ * ребёнка — онбординг с упором «Слушать» падал бы на последнем шаге.
+ */
 export function focusToLessonPrefs(
   focus: LearningFocus[],
-): { moreTalk?: boolean; moreWords?: boolean } {
-  const prefs: { moreTalk?: boolean; moreWords?: boolean } = {};
-  if (focus.includes('speaking') || focus.includes('listening')) prefs.moreTalk = true;
+): { moreTalk?: boolean; moreWords?: boolean; moreListening?: boolean } {
+  const prefs: { moreTalk?: boolean; moreWords?: boolean; moreListening?: boolean } = {};
+  if (focus.includes('speaking')) prefs.moreTalk = true;
+  if (focus.includes('listening')) prefs.moreListening = true;
   if (focus.includes('words')) prefs.moreWords = true;
   return prefs;
 }
@@ -107,11 +117,11 @@ interface SettingsState {
   goal: string | null;
   /** All chosen "why learning" goals (kid path allows up to 2; goal === goalsAll[0]). */
   goalsAll: string[];
-  /** Proactive "Хани messages first" — parent opt-in for kids, default off. */
+  /** Proactive "Bobo messages first" — parent opt-in for kids, default off. */
   proactiveOptIn: boolean;
   /** Last date a sensitive-topic parent alert fired (throttle to ≤1/day). */
   lastSensitiveAlertDate: string | null;
-  /** Хани's color in oklch hue degrees (55=honey, 175=sage, 300=berry, 90=butter). */
+  /** Бобо's color in oklch hue degrees (55=honey, 175=sage, 300=berry, 90=butter). */
   petHue: number;
   /** Free-typed companion name (kid-chosen). Null = use the default brand name. */
   petName: string | null;
@@ -222,6 +232,11 @@ interface SettingsState {
   setChildAgeRange: (range: AgeRange) => void;
   setSchedule: (days: ScheduleDay[], minutes: ScheduleMinutes, hour: number) => void;
   completeOnboarding: () => void;
+  /**
+   * Начать настройку нового профиля (первый ребёнок, второй ребёнок, «для себя»).
+   * Стирает всё, что относится к ребёнку, и не трогает аккаунт.
+   */
+  startNewProfileSetup: (type: ProfileType) => void;
   addStars: (n: number) => void;
   setDailyGoal: (goal: number) => void;
   advanceDay: (completedDay?: number) => void;
@@ -238,7 +253,7 @@ const DEFAULT_DAYS: ScheduleDay[] = ['mon', 'tue', 'wed', 'thu', 'fri'];
 const INITIAL: Omit<SettingsState,
   | 'setAuth' | 'setChildId' | 'syncChild' | 'setIsPremium' | 'logout'
   | 'setParentUILanguage' | 'setLearningLanguages' | 'setChildProfile' | 'setChildAgeBand' | 'setPetHue'
-  | 'setSchedule' | 'completeOnboarding' | 'addStars' | 'setDailyGoal' | 'advanceDay'
+  | 'setSchedule' | 'completeOnboarding' | 'startNewProfileSetup' | 'addStars' | 'setDailyGoal' | 'advanceDay'
   | 'markTodayComplete' | 'claimLessonCredit' | 'applyServerProgress' | 'reset'
   | 'recordLessonError' | 'clearLessonErrors'
   | 'useStreakFreeze' | 'refillStreakFreezes' | 'setChildInterests'
@@ -419,6 +434,38 @@ export const useSettings = create<SettingsState>()(
       setSchedule: (days, minutes, hour) =>
         set({ scheduleDays: days, scheduleMinutes: minutes, scheduleHour: hour }),
       completeOnboarding: () => set({ onboardingComplete: true }),
+      // Всё, что принадлежит ребёнку, возвращается к INITIAL. Без этого имя
+      // питомца из прошлого профиля (petName лежит в AsyncStorage) всплывало в
+      // новом онбординге — баг «Ппп» с device QA. Аккаунт, язык интерфейса,
+      // согласие, премиум и настройки звука остаются: это не про ребёнка.
+      startNewProfileSetup: (type) =>
+        set({
+          childId: null,
+          childName: null,
+          childAge: null,
+          childAgeBand: type === 'adult' ? 'adult' : null,
+          childAgeRange: null,
+          childLevel: null,
+          profileType: type,
+          goal: INITIAL.goal,
+          goalsAll: INITIAL.goalsAll,
+          proactiveOptIn: INITIAL.proactiveOptIn,
+          petHue: INITIAL.petHue,
+          petName: INITIAL.petName,
+          childInterests: INITIAL.childInterests,
+          learningFocus: INITIAL.learningFocus,
+          scheduleDays: INITIAL.scheduleDays,
+          scheduleMinutes: INITIAL.scheduleMinutes,
+          scheduleHour: INITIAL.scheduleHour,
+          activeLearningLanguage: INITIAL.activeLearningLanguage,
+          currentDay: INITIAL.currentDay,
+          totalStars: INITIAL.totalStars,
+          lastCompletedDate: INITIAL.lastCompletedDate,
+          streak: INITIAL.streak,
+          starsEarnedToday: INITIAL.starsEarnedToday,
+          starsResetDate: INITIAL.starsResetDate,
+          currentLessonErrors: INITIAL.currentLessonErrors,
+        }),
       addStars: (n) =>
         set((s) => {
           const today = todayISO();

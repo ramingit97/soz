@@ -178,7 +178,7 @@ export default function ConsentScreen() {
                 label={
                   isAz
                     ? "Bobo ilə müzakirələr zamanı səs müvəqqəti AI partnyorlarına göndərilməsinə razıyam (audio yazılmır)"
-                    : 'Согласен на отправку голоса AI-партнёрам (Deepgram, OpenAI) во время разговоров с Bobo. Аудио НЕ сохраняется'
+                    : 'Согласен на отправку голоса AI-партнёрам (Deepgram, OpenAI) во время разговоров с Бобо. Аудио НЕ сохраняется'
                 }
               />
             </Animated.View>
@@ -210,30 +210,6 @@ export default function ConsentScreen() {
                 </LinearGradient>
               </Pressable>
 
-              {/* Guest escape (was on the removed plan-summary page): day 1
-                  locally, no account. Talking to Bobo still sends audio to AI
-                  partners, so the AUDIO consent box must be ticked even here —
-                  otherwise the mic stays gated. */}
-              <Pressable
-                onPress={() => {
-                  if (!agreed.audio) {
-                    setError(
-                      isAz
-                        ? 'Səs razılığını qeyd edin — Bobo ilə danışmaq üçün lazımdır.'
-                        : 'Отметьте согласие на голос — оно нужно, чтобы говорить с Bobo.',
-                    );
-                    return;
-                  }
-                  setAudioConsent(true);
-                  useSettings.getState().completeOnboarding();
-                  router.replace('/home');
-                }}
-                style={{ paddingVertical: spacing[3], alignItems: 'center' }}
-              >
-                <Text style={[styles.privacyLinkText, !agreed.audio && { opacity: 0.5 }]}>
-                  {isAz ? 'Hesabsız 1-ci günü sınamaq →' : 'Попробовать день 1 без аккаунта →'}
-                </Text>
-              </Pressable>
               {error ? (
                 <Text style={[styles.errorText, { marginTop: spacing[1] }]}>{error}</Text>
               ) : null}

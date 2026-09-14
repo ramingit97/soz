@@ -189,19 +189,19 @@ export default function ParentSummaryScreen() {
           </Text>
         </Animated.View>
 
-        {/* Хани memory & proactive control (parent transparency) */}
+        {/* Бобо memory & proactive control (parent transparency) */}
         {!loading && childId && authToken && error !== 'no_auth' && error !== 'no_child' && (
           <Animated.View entering={FadeInUp.duration(500).delay(40)}>
             <HBCard depth="sm" ringColor={proactiveOn ? colors.accent : undefined} style={styles.memCard}>
               <View style={styles.cardHeader}>
                 <HBIconBox glyph="🐻" tint={colors.primarySoft} size={36} rounding={radius.md} glyphSize={18} />
-                <Text style={styles.cardTitle}>{isAz ? 'Хани yaddaşı' : 'Память Хани'}</Text>
+                <Text style={styles.cardTitle}>{isAz ? 'Bobo yaddaşı' : 'Память Бобо'}</Text>
               </View>
 
               <Pressable onPress={toggleProactive} style={styles.memToggleRow}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.memToggleTitle}>
-                    {isAz ? 'Хани özü yazsın' : 'Хани пишет первым'}
+                    {isAz ? 'Bobo özü yazsın' : 'Бобо пишет первым'}
                   </Text>
                   <Text style={styles.memToggleSub}>
                     {isAz
@@ -235,7 +235,7 @@ export default function ParentSummaryScreen() {
                 </View>
               ) : (
                 <Text style={styles.cardSub}>
-                  {isAz ? 'Хани hələ bir şey planlaşdırmayıb.' : 'Хани пока ничего не запланировал.'}
+                  {isAz ? 'Bobo hələ bir şey planlaşdırmayıb.' : 'Бобо пока ничего не запланировал.'}
                 </Text>
               )}
             </HBCard>

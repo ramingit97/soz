@@ -144,8 +144,8 @@ export default function StreakScreen() {
               </Text>
               <Text style={styles.emptyBody}>
                 {isAz
-                  ? 'Hər gün dərs keç — Hani sənin seriyani izləyir'
-                  : 'Проходи урок каждый день — Хани следит за твоей серией'}
+                  ? 'Hər gün dərs keç — Bobo sənin seriyani izləyir'
+                  : 'Проходи урок каждый день — Бобо следит за твоей серией'}
               </Text>
               <View style={styles.emptyExamples}>
                 {(['1 gün → 🌱', '7 gün → 🔥', '30 gün → 🏆'] as const).map((ex) => (
@@ -276,7 +276,7 @@ export default function StreakScreen() {
               </Text>
               <Text style={styles.motivSub}>
                 {streak >= 7
-                  ? (isAz ? 'Hani sənin səbatınla fəxr edir 🍯' : 'Хани гордится твоей настойчивостью 🍯')
+                  ? (isAz ? 'Bobo sənin səbatınla fəxr edir 🍯' : 'Бобо гордится твоей настойчивостью 🍯')
                   : (isAz ? 'Hər gün bir az irəliləyirsən' : 'Каждый день — маленький шаг вперёд')}
               </Text>
             </View>
@@ -287,8 +287,8 @@ export default function StreakScreen() {
         <Animated.View entering={FadeIn.duration(400).delay(320)} style={styles.freezeTip}>
           <Text style={styles.freezeTipText}>
             ❄️ {isAz
-              ? 'Bir günü buraxsan, narahat olma — Hani seriyanı avtomatik saxlayır'
-              : 'Пропустишь день — не переживай, Хани сам сбережёт серию'}
+              ? 'Bir günü buraxsan, narahat olma — Bobo seriyanı avtomatik saxlayır'
+              : 'Пропустишь день — не переживай, Бобо сам сбережёт серию'}
           </Text>
         </Animated.View>
 

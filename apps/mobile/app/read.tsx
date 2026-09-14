@@ -239,7 +239,7 @@ export default function ReadScreen() {
           )}
         </Animated.View>
 
-        {/* Hani reaction at bottom */}
+        {/* Bobo reaction at bottom */}
         <Animated.View entering={FadeIn.duration(500).delay(300)} style={styles.petRow}>
           <HBPet
             size={56}

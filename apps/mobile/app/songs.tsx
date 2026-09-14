@@ -186,8 +186,8 @@ export default function SongsScreen() {
             />
             <Text style={styles.tip}>
               {isAz
-                ? 'Hani 4 sətrlik mahnı bəstələyir. ~15 saniyə.'
-                : 'Хани сочинит 4 строчки. ~15 секунд.'}
+                ? 'Bobo 4 sətrlik mahnı bəstələyir. ~15 saniyə.'
+                : 'Бобо сочинит 4 строчки. ~15 секунд.'}
             </Text>
           </Animated.View>
         )}
@@ -197,7 +197,7 @@ export default function SongsScreen() {
           <Animated.View entering={FadeIn.duration(300)} style={styles.loaderBox}>
             <ActivityIndicator color={colors.primary} size="large" />
             <Text style={styles.loaderText}>
-              {isAz ? 'Hani bəstələyir...' : 'Хани сочиняет...'}
+              {isAz ? 'Bobo bəstələyir...' : 'Бобо сочиняет...'}
             </Text>
           </Animated.View>
         )}

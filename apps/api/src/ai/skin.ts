@@ -65,6 +65,9 @@ function buildSkinPrompt(input: SkinInput): string {
     d.moreTalk
       ? '- The family asked for MORE conversation: make talkSystemPrompt invite a longer, chattier back-and-forth.'
       : '',
+    d.moreListening
+      ? '- The family asked for MORE listening: make the story a little longer and more vivid to listen to (still simple, same vocabulary).'
+      : '',
     d.moreWords
       ? '- The family asked for MORE words: the story may naturally include a couple of extra interest-related words (still simple, still themed).'
       : '',

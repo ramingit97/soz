@@ -1,8 +1,8 @@
 /**
- * Honeybear · Talk to Хани.
+ * Honeybear · Talk to Бобо.
  *
- * Top bar: back + Хани avatar + "Хани · слушаю..." status + turn counter
- * Chat bubbles: Хани bubble cream with RU subtitle, child bubble peach
+ * Top bar: back + Бобо avatar + "Бобо · слушаю..." status + turn counter
+ * Chat bubbles: Бобо bubble cream with RU subtitle, child bubble peach
  * Bottom: mic button on cream paper.
  */
 
@@ -57,6 +57,9 @@ import { loadTalkHistory, saveTalkHistory, type StoredTurn } from '@/services/ta
 import { useSettings, todayISO } from '@/store/settings';
 import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
 import { useCompanionName } from '@/utils/companion';
+import { canFinishTalkLesson, MIN_LESSON_TALK_TURNS, spokenTurns } from '@/utils/lessonTalk';
+import { HBButton } from '@/components/HBButton';
+import { Icon } from '@/components/Icon';
 import type { LanguageCode } from '@soz/shared-types';
 
 declare const __DEV__: boolean;
@@ -145,7 +148,7 @@ export default function TalkScreen() {
   // A graded "conversation day" from the path (not free-chat / topics / threads):
   // it needs a real END. The session has a planned LENGTH (grows with age/level,
   // longer when the goal is real speaking); we send elapsed/target to the server
-  // each turn and Хани itself wraps up warmly when time is up ([[wrap]] marker →
+  // each turn and Бобо itself wraps up warmly when time is up ([[wrap]] marker →
   // wrapSuggested → finish banner → completion screen: stars, streak, day+1).
   // Soft — the child may keep chatting past it if they want.
   const convoLesson = params.convo === '1';
@@ -171,7 +174,7 @@ export default function TalkScreen() {
   const [mood, setMood] = useState<Mood>('idle');
   const [history, setHistory] = useState<Turn[]>([]);
   // The previous conversation (loaded from storage) — shown muted above the live
-  // chat so the child sees Хани actually remembers. Not part of the live history.
+  // chat so the child sees Бобо actually remembers. Not part of the live history.
   const [pastTurns, setPastTurns] = useState<StoredTurn[]>([]);
   const historyLoadedRef = useRef(false);
   const [latest, setLatest] = useState<TalkResponsePayload | null>(null);
@@ -195,8 +198,12 @@ export default function TalkScreen() {
   const [goalsBanner, setGoalsBanner] = useState(false);
   const allDoneRef = useRef(false);
 
-  // Conversation-lesson completion (time-based, soft cap)
-  const [convoReady, setConvoReady] = useState(false);
+  // Lesson completion. `finishBanner` — the celebratory "finish?" banner is on
+  // screen; `wrapUnlocked` — a timed conversation lesson reached its end (Бобо
+  // wrapped up or the safety-net time passed). Completion itself is gated by
+  // canFinishTalkLesson: no real speaking — no credit.
+  const [finishBanner, setFinishBanner] = useState(false);
+  const [wrapUnlocked, setWrapUnlocked] = useState(false);
   const [convoElapsed, setConvoElapsed] = useState(0); // seconds, drives the progress bar
   const convoStartRef = useRef(Date.now());
   const convoDoneRef = useRef(false);
@@ -205,9 +212,22 @@ export default function TalkScreen() {
   // nudge for a parent who happens to be holding the device — once per session is
   // plenty; it used to re-fire on every flagged turn.
   const crisisNotifiedRef = useRef(false);
-  const finishConvoLesson = useCallback(() => {
+  const spoken = spokenTurns(history);
+  const canFinish = fromLesson && canFinishTalkLesson({ spoken, convoLesson, wrapUnlocked });
+  const finishLesson = useCallback(() => {
+    if (!canFinish) return;
     router.replace(`/lesson/complete?lang=${language}&day=${lessonDay}`);
-  }, [router, language, lessonDay]);
+  }, [router, language, lessonDay, canFinish]);
+
+  // The moment the lesson becomes finishable, offer it once. A timed lesson
+  // already celebrated at the wrap; the plain lesson step celebrates here.
+  const finishOfferedRef = useRef(false);
+  useEffect(() => {
+    if (!canFinish || finishOfferedRef.current) return;
+    finishOfferedRef.current = true;
+    setFinishBanner(true);
+    if (!convoLesson) playSfx('fanfare', 0.7);
+  }, [canFinish, convoLesson]);
 
   // Tick the visible timer once a second while the conversation lesson runs.
   useEffect(() => {
@@ -409,10 +429,11 @@ export default function TalkScreen() {
   };
 
   const startRecording = useCallback(async () => {
-    // Audio-consent gate: talking sends the child's voice to AI partners, so a
-    // guest who never ticked the audio box must consent before the mic opens.
-    // Authenticated users consented on the register/consent screen.
-    if (!authToken && !audioConsent) {
+    // Audio-consent gate: talking sends the child's voice to AI partners. The
+    // parent ticks consent on the first onboarding step; a guest now holds a real
+    // token, so the gate is on consent alone — checking the token too would let
+    // every guest past it.
+    if (!audioConsent) {
       const az = parentUILanguage === 'az';
       Alert.alert(
         az ? 'Səs razılığı lazımdır' : 'Нужно согласие на голос',
@@ -548,14 +569,14 @@ export default function TalkScreen() {
         });
       }
 
-      // Conversation lesson: Хани wraps the session up itself when the planned
+      // Conversation lesson: Бобо wraps the session up itself when the planned
       // time is done (wrapSuggested). Safety net: if the model never emits the
       // marker, surface the finish banner at 1.5× the target anyway.
       if (convoLesson && !convoDoneRef.current) {
         const elapsedSec = (Date.now() - convoStartRef.current) / 1000;
         if (response.wrapSuggested || elapsedSec >= convoTargetSec * 1.5) {
           convoDoneRef.current = true;
-          setConvoReady(true);
+          setWrapUnlocked(true);
           playSfx('fanfare', 0.7);
           spawnParticles();
         }
@@ -694,19 +715,16 @@ export default function TalkScreen() {
         <View style={styles.container}>
           {/* ── Header ── */}
           <View style={styles.header}>
+            {/* Выход. В уроке это «×» — уйти без награды; засчитывает урок только
+                «Завершить урок» после настоящего разговора (раньше тут стояла «✓»,
+                которая засчитывала урок без единого слова). */}
             <Pressable
-              onPress={() => {
-                if (fromLesson) {
-                  router.replace(`/lesson/complete?lang=${language}&day=${lessonDay}`);
-                } else {
-                  router.replace('/home');
-                }
-              }}
+              onPress={() => router.replace('/home')}
+              accessibilityRole="button"
+              accessibilityLabel={parentUILanguage === 'az' ? 'Çıx' : 'Выйти'}
               style={[styles.homeBtn, shadow.sm]}
             >
-              <Text style={{ fontSize: fromLesson ? 14 : 18, color: colors.ink, fontFamily: fontFamily.bodyBlack }}>
-                {fromLesson ? '✓' : '‹'}
-              </Text>
+              <Icon name={fromLesson ? 'x' : 'chevron-left'} size={20} color={colors.ink} strokeWidth={2.5} />
             </Pressable>
 
             <Animated.View style={[styles.headerCenter, glowStyle]}>
@@ -733,7 +751,32 @@ export default function TalkScreen() {
           </View>
 
           {/* ── Conversation-lesson progress (time bar toward the finish) ── */}
-          {convoLesson && !convoReady ? (
+          {canFinish && !finishBanner ? (
+            <View style={styles.finishRow}>
+              <HBButton
+                size="sm"
+                icon="circle-check"
+                label={parentUILanguage === 'az' ? 'Dərsi bitir' : 'Завершить урок'}
+                onPress={finishLesson}
+              />
+            </View>
+          ) : fromLesson && !convoLesson ? (
+            <View style={styles.convoProgress}>
+              <View style={styles.convoBarTrack}>
+                <View
+                  style={[
+                    styles.convoBarFill,
+                    { width: `${Math.min(100, (spoken / MIN_LESSON_TALK_TURNS) * 100)}%` },
+                  ]}
+                />
+              </View>
+              <Text style={styles.convoProgressText}>
+                {parentUILanguage === 'az'
+                  ? `Deyilən cümlə: ${Math.min(spoken, MIN_LESSON_TALK_TURNS)} / ${MIN_LESSON_TALK_TURNS}`
+                  : `Фраз сказано: ${Math.min(spoken, MIN_LESSON_TALK_TURNS)} из ${MIN_LESSON_TALK_TURNS}`}
+              </Text>
+            </View>
+          ) : convoLesson && !finishBanner ? (
             <View style={styles.convoProgress}>
               <View style={styles.convoBarTrack}>
                 <View
@@ -784,19 +827,19 @@ export default function TalkScreen() {
           ) : null}
 
           {/* ── Conversation-lesson finish banner ── */}
-          {convoReady ? (
+          {finishBanner ? (
             <Animated.View entering={FadeInDown.duration(400).springify()} style={[styles.goalsBanner, shadow.md]}>
               <Text style={styles.goalsBannerTitle}>
                 {parentUILanguage === 'az' ? `🎉 ${bot} ilə əla söhbət!` : `🎉 Отличная беседа с ${bot}!`}
               </Text>
               <View style={styles.goalsBannerRow}>
-                <Pressable onPress={() => setConvoReady(false)} style={styles.goalsBannerBtn}>
+                <Pressable onPress={() => setFinishBanner(false)} style={styles.goalsBannerBtn}>
                   <Text style={styles.goalsBannerBtnText}>
                     {parentUILanguage === 'az' ? 'Bir az da' : 'Ещё немного'}
                   </Text>
                 </Pressable>
                 <Pressable
-                  onPress={finishConvoLesson}
+                  onPress={finishLesson}
                   style={[styles.goalsBannerBtn, styles.goalsBannerBtnPrimary]}
                 >
                   <Text style={[styles.goalsBannerBtnText, { color: colors.white }]}>
@@ -821,7 +864,7 @@ export default function TalkScreen() {
             contentContainerStyle={styles.historyContent}
             showsVerticalScrollIndicator={false}
           >
-            {/* Previous conversation recap — proof that Хани remembers */}
+            {/* Previous conversation recap — proof that Бобо remembers */}
             {pastTurns.length > 0 ? (
               <View style={styles.pastWrap}>
                 <View style={styles.pastDivider}>
@@ -1256,6 +1299,10 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
 
+  finishRow: {
+    alignItems: 'center',
+    paddingVertical: spacing[1],
+  },
   convoProgress: {
     flexDirection: 'row',
     alignItems: 'center',

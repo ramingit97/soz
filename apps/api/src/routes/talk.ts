@@ -11,6 +11,7 @@ import { appendTurn, getHistory } from '../ai/conversations.js';
 import { sttCost, ttsCost } from '../ai/cost.js';
 import { generateBoboReply } from '../ai/llm.js';
 import { transcribe } from '../ai/stt.js';
+import { companionKind, companionName as resolveCompanionName } from '../ai/persona.js';
 import { safeCrisisReply, screenChildMessage } from '../ai/safety.js';
 import { buildSystemPrompt } from '../ai/system-prompts.js';
 import { synthesizeBobo } from '../ai/tts.js';
@@ -142,18 +143,19 @@ async function resolveLessonContext(args: {
 // client for this). Cheap single-column lookup; safe to call once per turn/opener.
 // Kid-chosen companion name — server-side authoritative so EVERY conversation
 // (free chat, topics, AND structured lessons that don't send it) uses the name.
-async function getChildPetName(childId: string): Promise<string | undefined> {
-  if (!isDbAvailable()) return undefined;
+/** Pet name and exact age — the age decides bear (≤10) vs robot, see ai/persona.ts. */
+async function getChildPersonaInfo(childId: string): Promise<{ petName?: string; age?: number }> {
+  if (!isDbAvailable()) return {};
   try {
     const db = getDb();
     const [row] = await db
-      .select({ petName: children.petName })
+      .select({ petName: children.petName, age: children.age })
       .from(children)
       .where(eq(children.id, childId))
       .limit(1);
-    return row?.petName ?? undefined;
+    return { petName: row?.petName ?? undefined, age: row?.age ?? undefined };
   } catch {
-    return undefined;
+    return {};
   }
 }
 
@@ -245,7 +247,7 @@ const talkRequestSchema = z.object({
   objectives: z.array(z.string().min(1).max(200)).max(5).nullish(),
   companionName: z.string().max(40).nullish(),
   nativeLanguage: z.enum(['ru', 'az']).nullish(), // learner L1 → corrections explained in their own language
-  // Conversation-lesson timing: when set, the prompt tells Хани the planned
+  // Conversation-lesson timing: when set, the prompt tells Бобо the planned
   // session length so it wraps up warmly on its own (marker [[wrap]] → the
   // client shows the "finish" banner). Sent only for graded conversation days.
   sessionElapsedSec: z.number().int().min(0).max(7200).nullish(),
@@ -285,7 +287,7 @@ talkRoute.post(
   // 1. STT — what did the child say?
   // Code-switch mode when the learner's L1 differs from the lesson language:
   // they may weave native words into target-language speech ("...but рынок
-  // сейчас сдох") and Хани must understand + translate rather than mishear.
+  // сейчас сдох") and Бобо must understand + translate rather than mishear.
   // Default the L1 to 'ru' when the client didn't send one (audience is ru/az;
   // an unset parentUILanguage on device must never silently disable this).
   const native = body.nativeLanguage ?? 'ru';
@@ -318,7 +320,7 @@ talkRoute.post(
   const unclearWords = stt.words.filter((w) => w.confidence < LOW_CONF);
   // Cyrillic inside an EN-lesson transcript = deliberately code-switched Russian,
   // not unclear pronunciation — never nag "say it clearer" about a word the child
-  // said in their own language; let Хани understand and translate it instead.
+  // said in their own language; let Бобо understand and translate it instead.
   // (The az code-switch path returns words=[] so this gate never fires there.)
   const codeSwitched = codeSwitch === 'ru' && body.language === 'en' && /[Ѐ-ӿ]/.test(stt.transcript);
   if (
@@ -354,7 +356,10 @@ talkRoute.post(
   // 1c. Real-time safety screen — runs BEFORE Bobo replies, independent of the
   // retrospective memory extraction. A crisis on turn 1 is caught even if the app
   // closes right after. On crisis: calm safe reply + immediate sensitive thread.
-  const safety = await screenChildMessage(stt.transcript, body.language);
+  const [safety, personaInfo] = await Promise.all([
+    screenChildMessage(stt.transcript, body.language),
+    getChildPersonaInfo(body.childId),
+  ]);
   if (safety.crisis) {
     const meta = { childId: body.childId, language: body.language, day: body.day };
     await appendTurn(body.conversationId, { role: 'child', text: stt.transcript }, meta);
@@ -376,7 +381,7 @@ talkRoute.post(
       }),
     ]);
 
-    const safeText = safeCrisisReply(body.language);
+    const safeText = safeCrisisReply(body.language, companionKind(personaInfo.age, body.ageBand));
     await appendTurn(body.conversationId, { role: 'bobo', text: safeText }, meta);
     const tts = await synthesizeBobo({ text: safeText, language: body.language });
     await escalation.catch((e) => console.error('[safety] escalation failed', e));
@@ -413,7 +418,8 @@ talkRoute.post(
     timeContext,
     scenario: body.scenario ?? undefined,
     objectives: body.objectives ?? undefined,
-    companionName: body.companionName ?? (await getChildPetName(body.childId)),
+    companionName: body.companionName ?? personaInfo.petName,
+    childAge: personaInfo.age,
     nativeLanguage: body.nativeLanguage ?? undefined,
     sessionElapsedSec: body.sessionElapsedSec ?? undefined,
     sessionTargetSec: body.sessionTargetSec ?? undefined,
@@ -557,7 +563,7 @@ talkRoute.post('/opener', zValidator('json', openerSchema), async (c) => {
   const denied = await requireChild(c, childId);
   if (denied) return denied;
 
-  const bot = companionName?.trim() || (await getChildPetName(childId)) || 'Bobo';
+  const bot = resolveCompanionName(companionName?.trim() || (await getChildPersonaInfo(childId)).petName, language);
 
   const memory = await getChildMemory(childId, language);
   const memoryString = buildMemoryString(memory, childName ?? 'friend', language);
@@ -724,7 +730,7 @@ talkRoute.post('/threads/:threadId/asked', async (c) => {
   return c.json({ ok: true });
 });
 
-// POST /talk/report — a user flagged one of Хани's AI replies as inappropriate or
+// POST /talk/report — a user flagged one of Бобо's AI replies as inappropriate or
 // wrong. Google Play's Generative-AI policy requires an in-app way to report AI
 // content. Any signed-in caller can report (the trial included — guests hold a
 // real token now). Surfaced in the API log so the operator sees flagged content,

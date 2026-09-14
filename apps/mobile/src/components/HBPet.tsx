@@ -1,5 +1,5 @@
 /**
- * HBPet — "Хани" the clay-blob mascot.
+ * HBPet — "Бобо" the clay-blob mascot.
  *
  * Recreates the Honeybear soft-claymorphism pet from the Claude Design handoff
  * using react-native-svg: layered radial gradients on a squircle body with

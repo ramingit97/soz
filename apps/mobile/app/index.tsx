@@ -3,13 +3,11 @@ import { Redirect } from 'expo-router';
 import { useSettings } from '@/store/settings';
 
 export default function Index() {
-  const parentUILanguage = useSettings((s) => s.parentUILanguage);
   const onboardingComplete = useSettings((s) => s.onboardingComplete);
   const learningLanguages = useSettings((s) => s.learningLanguages);
   const authToken = useSettings((s) => s.authToken);
   const isGuestAccount = useSettings((s) => s.isGuestAccount);
   const currentDay = useSettings((s) => s.currentDay);
-  const profileType = useSettings((s) => s.profileType);
 
   // A guest holds a real token now (the trial runs on an anonymous account), so
   // "signed up" is `authToken && !isGuestAccount` — testing the token alone would
@@ -34,16 +32,8 @@ export default function Index() {
     return <Redirect href={(isGuestAccount ? '/auth/register' : '/auth/login') as never} />;
   }
 
-  // No UI language — very first launch
-  if (!parentUILanguage) {
-    return <Redirect href="/language" />;
-  }
-
-  // Picked languages but hasn't done questionnaire — resume the right path by profile
-  if (learningLanguages.length > 0) {
-    return <Redirect href={(profileType === 'adult' ? '/setup/goal' : '/setup/name') as never} />;
-  }
-
-  // Has UI language but hasn't picked learning languages
+  // Не прошёл онбординг — всегда с welcome. Он сам знает язык (с телефона, если
+  // родитель ещё не выбирал), а онбординг теперь в четыре шага, так что
+  // «продолжить с середины» не стоит отдельной логики.
   return <Redirect href="/welcome" />;
 }

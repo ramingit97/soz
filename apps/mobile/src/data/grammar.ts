@@ -327,7 +327,7 @@ export const STATIC_GRAMMAR: Record<string, Record<number, GrammarExerciseData[]
       { kind: 'order_words', prompt: 'Составь предложение:', options: ['реки', 'растут', 'у', 'Цветы'], correct: ['Цветы', 'растут', 'у', 'реки'] },
     ],
     16: [
-      { kind: 'fill_blank', prompt: 'Bobo умеет ___ очень быстро.', options: ['бегать', 'бегает', 'бежать', 'бегал'], correct: 'бегать' },
+      { kind: 'fill_blank', prompt: 'Бобо умеет ___ очень быстро.', options: ['бегать', 'бегает', 'бежать', 'бегал'], correct: 'бегать' },
       { kind: 'order_words', prompt: 'Составь предложение:', options: ['плавать', 'умею', 'хорошо', 'Я'], correct: ['Я', 'умею', 'хорошо', 'плавать'] },
     ],
     17: [

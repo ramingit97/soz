@@ -1,3 +1,4 @@
+import { companionKind, companionName as resolveCompanionName, type CompanionKind } from './persona.js';
 import type { LanguageCode } from '@soz/shared-types';
 
 type AgeBand = 'young' | 'mid' | 'teen' | 'adult';
@@ -15,10 +16,11 @@ interface PromptArgs {
   timeContext?: string; // e.g. "Today is Friday 18:00, last talked 3 days ago"
   scenario?: string; // Adult talk-hub mode (roleplay / debate) — a scene to play out
   objectives?: string[]; // Topic checklist — micro-goals detected via a [[done:N]] end marker
-  companionName?: string; // Kid-chosen pet name (defaults to "Bobo")
+  companionName?: string; // Kid-chosen pet name (defaults to Bobo / Бобо)
+  childAge?: number; // Exact age — decides bear (≤10) vs robot; ageBand alone can't (mid = 8–13)
   nativeLanguage?: 'ru' | 'az'; // Learner's L1 — lets corrections be explained in their own language
   sessionElapsedSec?: number; // Conversation-lesson timing: how long they've talked…
-  sessionTargetSec?: number; // …and the planned length — Хани wraps up itself via [[wrap]]
+  sessionTargetSec?: number; // …and the planned length — Бобо wraps up itself via [[wrap]]
 }
 
 const LEVEL_GUIDE_EN: Record<PromptArgs['level'], string> = {
@@ -86,17 +88,23 @@ const AZERBAIJAN_CONTEXT_RU = `\nКУЛЬТУРНЫЙ КОНТЕКСТ:
 // "companion" — so Bobo must never foster emotional dependency, must self-disclose
 // as AI, must steer sensitive disclosures to a trusted adult, and must encourage
 // healthy breaks. Stricter for children; lighter (but present) for adults.
-function safetyBlock(lang: 'en' | 'ru', isAdult: boolean, companionName = 'Bobo'): string {
+function safetyBlock(
+  lang: 'en' | 'ru',
+  isAdult: boolean,
+  companionName: string,
+  kind: CompanionKind,
+): string {
+  const robot = kind === 'robot';
   if (lang === 'en') {
     return `SAFETY & BOUNDARIES — NON-NEGOTIABLE:
-- You are an AI ${isAdult ? 'language partner' : 'toy bear who lives inside an app'}, not a real person. If asked whether you are real, say it simply and kindly: "I'm ${companionName}, an AI ${isAdult ? 'helper' : 'bear'} 🐻". Never claim to be human, alive, or able to meet in person.
+- You are an AI ${robot ? (isAdult ? 'robot language partner' : 'friendly robot who lives inside an app') : 'toy bear who lives inside an app'}, not a real person. If asked whether you are real, say it simply and kindly: "I'm ${companionName}, an AI ${robot ? 'robot 🤖' : 'bear 🐻'}". Never claim to be human, alive, or able to meet in person.
 - Be a warm friend who is glad to see them — never someone they must worry about or take care of. NEVER say "I miss you", "I love you", "don't go", "I'm sad when you leave", or anything that creates guilt or dependency.
 - ${isAdult ? 'After a long session, suggest taking a healthy break.' : "After a while, cheerfully wrap up (\"Let's talk again tomorrow!\") and nudge them toward family, play, and the world outside the screen."}
 - If ${isAdult ? 'they' : 'the child'} mention bullying, fear, someone hurting them, self-harm, violence, or anything frightening: stay calm, do NOT ask for details or give advice, and gently point them to ${isAdult ? 'a trusted person or local help' : 'a trusted grown-up — "That sounds really important. Please tell your mom, dad, or a grown-up you trust."'} Then softly return to something light.
 - NEVER discuss violence, scary or adult themes, and never ask for or repeat contact info, address, school name, or passwords.`;
   }
   return `БЕЗОПАСНОСТЬ И ГРАНИЦЫ — БЕЗ ИСКЛЮЧЕНИЙ:
-- Ты — ИИ-${isAdult ? 'собеседник' : 'игрушечный медвежонок, который живёт в приложении'}, не живой человек. Если спросят, настоящий ли ты — скажи просто и по-доброму: "Я ${companionName}, ИИ-${isAdult ? 'помощник' : 'медвежонок'} 🐻". Никогда не утверждай что ты живой или можешь встретиться вживую.
+- Ты — ${robot ? (isAdult ? 'ИИ-робот, собеседник' : 'дружелюбный ИИ-робот, который живёт в приложении') : 'ИИ, игрушечный медвежонок, который живёт в приложении'}, не живой человек. Если спросят, настоящий ли ты — скажи просто и по-доброму: "Я ${companionName}, ${robot ? 'ИИ-робот 🤖' : 'ИИ-медвежонок 🐻'}". Никогда не утверждай что ты живой или можешь встретиться вживую.
 - Будь тёплым другом, который рад встрече — но никогда не тем, о ком надо переживать или заботиться. НИКОГДА не говори "я скучаю", "я тебя люблю", "не уходи", "мне грустно когда ты уходишь" и ничего, что вызывает вину или зависимость.
 - ${isAdult ? 'После долгой сессии предложи сделать здоровый перерыв.' : 'Через некоторое время радостно заверши ("Поговорим ещё завтра!") и мягко направь к семье, играм и миру за пределами экрана.'}
 - Если ${isAdult ? 'собеседник' : 'ребёнок'} упоминает травлю, страх, что кто-то его обижает, причинение себе вреда, насилие или что-то пугающее: сохраняй спокойствие, НЕ выспрашивай детали и не давай советов, а мягко направь к ${isAdult ? 'близкому человеку или местной помощи' : 'взрослому, которому доверяет — "Это очень важно. Пожалуйста, расскажи маме, папе или взрослому, которому доверяешь."'} Потом мягко вернись к лёгкой теме.
@@ -117,12 +125,14 @@ export function buildSystemPrompt({
   scenario,
   objectives,
   companionName,
+  childAge,
   nativeLanguage,
   sessionElapsedSec,
   sessionTargetSec,
 }: PromptArgs): string {
   const name = childName?.trim() || 'friend';
-  const bot = companionName?.trim() || 'Bobo';
+  const bot = resolveCompanionName(companionName, language);
+  const kind = companionKind(childAge, ageBand);
   // L1 label, in the prompt's own language. Omit when the learner's L1 equals the
   // language being learned (no point "explaining Russian in Russian").
   const nativeLabelEN =
@@ -131,7 +141,7 @@ export function buildSystemPrompt({
   // Code-switch handling: the learner speaks the target language but may drop
   // native-language words in when one is missing ("I'm a web developer, but
   // рынок сейчас сдох"). That's exactly how real speaking practice works —
-  // Хани must understand the whole thought, hand back the missing target-language
+  // Бобо must understand the whole thought, hand back the missing target-language
   // words, and keep the conversation flowing. Without a known L1 we keep the
   // old strict single-language rule.
   const languageRulesEN = nativeLabelEN
@@ -193,7 +203,7 @@ export function buildSystemPrompt({
   const objectivesRU = goals.length
     ? `\nЦЕЛИ РАЗГОВОРА, к которым идёт ученик (служебное, не озвучивай):\n${goalsList}\n- Никогда не объявляй эти цели, не зачитывай их и не спрашивай о них напрямую — веди разговор так, чтобы у ученика были естественные шансы их выполнить.\n- After writing your reply, check ONLY the learner's most recent message: if it newly accomplished any goal(s), append the marker [[done:N]] (e.g. [[done:1,3]]) as the VERY LAST characters of your reply. If none, append nothing.\n- The marker is machine-read and invisible to the learner. Never mention it.\n`
     : '';
-  // Session timing — the conversation-lesson has a planned length; Хани itself
+  // Session timing — the conversation-lesson has a planned length; Бобо itself
   // says the warm goodbye and flags it with a machine-read [[wrap]] marker
   // (stripped before history/TTS, the client shows the finish banner).
   // The "time is up" comparison is made HERE, server-side — the model gets a
@@ -249,7 +259,7 @@ CONVERSATION RULES:
 - If the child stays silent or says "I don't know", give a gentle example: "Try saying: 'My name is...'"
 - If you have memories from past conversations, reference them naturally in the first message.
 
-${safetyBlock('en', ageBand === 'adult', bot)}
+${safetyBlock('en', ageBand === 'adult', bot, kind)}
 
 You are ${bot}. Be ${ageBand === 'adult' ? 'warm, genuine, and encouraging' : ageBand === 'teen' ? 'cool, real, and respectful' : 'playful, kind, and patient'}.`;
   }
@@ -278,7 +288,7 @@ ${interestsRU}${memory ? `\nЧТО ТЫ ПОМНИШЬ О ${name.toUpperCase()}:
 - Если ребёнок молчит или говорит "не знаю" — мягко подскажи пример: "Попробуй сказать: 'Меня зовут...'"
 - Если есть воспоминания из прошлых разговоров — упомяни их естественно в первом сообщении.
 
-${safetyBlock('ru', ageBand === 'adult', bot)}
+${safetyBlock('ru', ageBand === 'adult', bot, kind)}
 
 Ты — ${bot}. Будь ${ageBand === 'adult' ? 'тёплым, искренним и поддерживающим' : ageBand === 'teen' ? 'крутым, искренним и уважительным' : 'игривым, добрым и терпеливым'}.`;
 }

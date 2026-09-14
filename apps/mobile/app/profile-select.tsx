@@ -299,7 +299,7 @@ export default function ProfileSelectScreen() {
   const handleAddChild = () => {
     Haptics.selectionAsync().catch(() => {});
     parentalGate.run(() => {
-      router.push('/setup/name' as any);
+      router.push('/setup/profile-type' as never);
     });
   };
 

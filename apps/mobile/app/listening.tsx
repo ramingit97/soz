@@ -12,9 +12,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-audio';
 import * as FileSystem from 'expo-file-system/legacy';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 import { HBBackButton } from '@/components/HBBackButton';
@@ -33,6 +33,7 @@ import {
 } from '@/services/api';
 import { savePhrases } from '@/services/srs';
 import { useSettings } from '@/store/settings';
+import { localDateISO, localOffsetMinutes } from '@soz/shared-types';
 import { useCompanionName } from '@/utils/companion';
 import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
 
@@ -46,6 +47,9 @@ interface LocalStory {
 }
 
 async function cacheAudio(id: string, base64: string, mimeType: string): Promise<string> {
+  // На вебе файловой системы нет — writeAsStringAsync бросал, и история не
+  // открывалась вовсе (веб-превью для владельца). Плеер понимает data-URI.
+  if (Platform.OS === 'web') return `data:${mimeType};base64,${base64}`;
   const ext = mimeType.includes('mp3') || mimeType.includes('mpeg') ? 'mp3' : mimeType.includes('wav') ? 'wav' : 'm4a';
   const uri = `${FileSystem.cacheDirectory ?? ''}listening-${id}.${ext}`;
   await FileSystem.writeAsStringAsync(uri, base64, { encoding: FileSystem.EncodingType.Base64 });
@@ -54,6 +58,11 @@ async function cacheAudio(id: string, base64: string, mimeType: string): Promise
 
 export default function ListeningScreen() {
   const router = useRouter();
+  // `fromLesson=1&day=N` — экран открыт как шаг урока дня (день-история в плане):
+  // после вопросов он засчитывает урок. Без параметров — библиотека историй.
+  const params = useLocalSearchParams<{ lang?: string; day?: string; fromLesson?: string }>();
+  const lessonDay = Number(params.day);
+  const fromLesson = params.fromLesson === '1' && Number.isFinite(lessonDay) && lessonDay > 0;
   const lang = useSettings((s) => s.parentUILanguage) ?? 'ru';
   const bot = useCompanionName();
   const learningLanguages = useSettings((s) => s.learningLanguages);
@@ -62,7 +71,8 @@ export default function ListeningScreen() {
   const childLevel = useSettings((s) => s.childLevel);
   const petHue = useSettings((s) => s.petHue);
   const isAz = lang === 'az';
-  const learnLang = learningLanguages[0] ?? 'en';
+  const learnLang: 'en' | 'ru' =
+    params.lang === 'en' || params.lang === 'ru' ? params.lang : learningLanguages[0] ?? 'en';
 
   const [library, setLibrary] = useState<ListeningStoryMeta[]>([]);
   const [busy, setBusy] = useState(false);
@@ -133,7 +143,12 @@ export default function ListeningScreen() {
     setBusy(true);
     setNotice(null);
     try {
-      const s = await generateListeningStory(childId, learnLang, authToken, childLevel ?? undefined);
+      // Генерация иногда падает на разборе ответа модели (502) — один повтор
+      // незаметно для ребёнка лучше, чем «не получилось». Лимит (429) не повторяем.
+      const s = await generateListeningStory(childId, learnLang, authToken, childLevel ?? undefined).catch((e: unknown) => {
+        if (e instanceof Error && e.message.startsWith('429')) throw e;
+        return generateListeningStory(childId, learnLang, authToken, childLevel ?? undefined);
+      });
       const audioUri = await cacheAudio(s.id, s.audioBase64, s.audioMimeType);
       const local: LocalStory = {
         id: s.id, title: s.title, text: s.text, questions: s.questions, phrases: s.phrases ?? [], audioUri,
@@ -143,13 +158,16 @@ export default function ListeningScreen() {
       await openStory(local);
       refreshLibrary();
     } catch (e) {
+      // Автоматическая история при первом входе раньше падала молча — экран
+      // оставался пустым, и было непонятно, что произошло. Сообщение показываем
+      // всегда; вибрация — только на нажатие кнопки.
+      const msg = e instanceof Error ? e.message : '';
+      setNotice(
+        msg.startsWith('429') || msg.includes('daily_limit')
+          ? (isAz ? 'Bu gün üçün limit doldu — köhnə hekayələri dinlə' : 'На сегодня лимит историй — переслушай старые')
+          : (isAz ? 'Hekayəni hazırlamaq alınmadı. İnterneti yoxla və yenidən cəhd et.' : 'Не получилось подготовить историю. Проверь интернет и попробуй ещё раз.'),
+      );
       if (!opts?.silent) {
-        const msg = e instanceof Error ? e.message : '';
-        setNotice(
-          msg.includes('daily_limit') || msg.includes('429')
-            ? (isAz ? 'Bu gün üçün limit doldu — köhnə hekayələri dinlə 🎧' : 'На сегодня лимит — переслушай старые истории 🎧')
-            : (isAz ? 'Alınmadı, yenidən cəhd et' : 'Не получилось, попробуй ещё раз'),
-        );
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       }
     } finally {
@@ -163,6 +181,22 @@ export default function ListeningScreen() {
   // Silent failure path (cap reached / offline → just the library).
   useEffect(() => {
     if (!childId || !authToken) return;
+    if (fromLesson) {
+      // Урок дня открыт повторно (вышли и вернулись) — берём сегодняшнюю историю,
+      // а не генерируем новую: иначе упёрлись бы в дневной лимит и день-историю
+      // стало бы невозможно завершить.
+      const today = localDateISO(localOffsetMinutes());
+      getListeningStories(childId, authToken)
+        .then((list) => {
+          const todays = list.find(
+            (st) => st.language === learnLang && localDateISO(localOffsetMinutes(), new Date(st.createdAt)) === today,
+          );
+          if (todays) handleOpenFromLibrary(todays.id);
+          else handleGenerate({ silent: true });
+        })
+        .catch(() => handleGenerate({ silent: true }));
+      return;
+    }
     let cancelled = false;
     AsyncStorage.getItem(`listening-autogen:${childId}`)
       .then((last) => {
@@ -185,7 +219,9 @@ export default function ListeningScreen() {
       const raw = await AsyncStorage.getItem(`listening:${id}`).catch(() => null);
       if (raw) {
         const local = JSON.parse(raw) as LocalStory;
-        const info = await FileSystem.getInfoAsync(local.audioUri);
+        const info = local.audioUri.startsWith('data:')
+          ? { exists: true }
+          : await FileSystem.getInfoAsync(local.audioUri);
         if (info.exists) { await openStory({ ...local, phrases: local.phrases ?? [] }); return; }
       }
       // Otherwise fetch + re-cache (re-runs TTS once).
@@ -213,6 +249,7 @@ export default function ListeningScreen() {
   };
 
   const needsAccount = !childId || !authToken;
+  const allAnswered = !!current && current.questions.every((_, qi) => answers[qi] !== undefined);
 
   return (
     <PaperBackground variant="honey">
@@ -231,10 +268,17 @@ export default function ListeningScreen() {
         </Animated.View>
 
         {needsAccount ? (
-          <HBCard style={{ alignItems: 'center', gap: spacing[2] }}>
+          <HBCard style={{ alignItems: 'center', gap: spacing[3] }}>
             <Text style={styles.sub}>
-              {isAz ? 'Bu funksiya üçün hesab lazımdır.' : 'Для этой функции нужен аккаунт.'}
+              {isAz
+                ? `${bot} hekayələri profil qurulandan sonra danışır.`
+                : `${bot} рассказывает истории после настройки профиля.`}
             </Text>
+            <HBButton
+              full
+              label={isAz ? 'Profili qur' : 'Настроить профиль'}
+              onPress={() => router.push('/setup/profile-type' as never)}
+            />
           </HBCard>
         ) : (
           <>
@@ -320,7 +364,28 @@ export default function ListeningScreen() {
               </Animated.View>
             )}
 
+            {fromLesson && current ? (
+              <View style={{ marginTop: spacing[4] }}>
+                <HBButton
+                  full
+                  icon="circle-check"
+                  label={isAz ? 'Dərsi bitir' : 'Завершить урок'}
+                  disabled={!allAnswered}
+                  onPress={() => {
+                    stopPlayback();
+                    router.replace(`/lesson/complete?lang=${learnLang}&day=${lessonDay}` as never);
+                  }}
+                />
+                {!allAnswered ? (
+                  <Text variant="caption" tone="secondary" align="center" style={{ marginTop: spacing[2] }}>
+                    {isAz ? 'Əvvəlcə suallara cavab ver' : 'Сначала ответь на вопросы'}
+                  </Text>
+                ) : null}
+              </View>
+            ) : null}
+
             {/* New story */}
+            {(!fromLesson || (!current && !busy)) && (
             <Animated.View entering={FadeInUp.duration(450).delay(120)} style={{ marginTop: spacing[4] }}>
               <HBButton
                 full
@@ -331,9 +396,18 @@ export default function ListeningScreen() {
               />
               {busy && <ActivityIndicator color={colors.primary} style={{ marginTop: spacing[3] }} />}
             </Animated.View>
+            )}
+            {fromLesson && busy && !current ? (
+              <View style={{ marginTop: spacing[4], alignItems: 'center', gap: spacing[2] }}>
+                <ActivityIndicator color={colors.primary} />
+                <Text variant="caption" tone="secondary">
+                  {isAz ? `${bot} hekayə hazırlayır…` : `${bot} готовит историю…`}
+                </Text>
+              </View>
+            ) : null}
 
             {/* Library */}
-            {library.length > 0 && (
+            {!fromLesson && library.length > 0 && (
               <View style={{ marginTop: spacing[6] }}>
                 <Text style={styles.libHeader}>{isAz ? 'Hekayələrim' : 'Мои истории'}</Text>
                 {library.map((s) => (

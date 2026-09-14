@@ -56,7 +56,7 @@ export default function RootLayout() {
   const router = useRouter();
   const [introDone, setIntroDone] = useState(false);
 
-  // Deep-link taps on proactive "Хани wants to ask" callbacks → open that thread
+  // Deep-link taps on proactive "Bobo wants to ask" callbacks → open that thread
   useEffect(() => {
     function handle(response: Notifications.NotificationResponse | null) {
       const data = response?.notification.request.content.data as

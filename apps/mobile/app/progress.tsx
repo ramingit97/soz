@@ -12,9 +12,11 @@ import { HBCard } from '@/components/HBCard';
 import { HBPet } from '@/components/HBPet';
 import { PaperBackground } from '@/components/PaperBackground';
 import { HBIconBox } from '@/components/HBIconBox';
+import { Icon } from '@/components/Icon';
 import { Text } from '@/components/Text';
 import { getLesson, STATIC_MAX_DAY } from '@/data/lessons';
 import { useSettings } from '@/store/settings';
+import { useCompanionName } from '@/utils/companion';
 import { colors, fontFamily, fontSize, radius, shadow, spacing, tints } from '@/theme';
 
 // Recent word preview — last N unique words
@@ -39,6 +41,7 @@ export default function ProgressScreen() {
   const totalStars = useSettings((s) => s.totalStars);
   const streak = useSettings((s) => s.streak);
   const isAz = lang === 'az';
+  const bot = useCompanionName();
 
   const firstLang = learningLanguages[0] ?? 'en';
 
@@ -150,6 +153,41 @@ export default function ProgressScreen() {
                 {isAz ? 'Albom' : 'Альбом'}
               </Text>
               <Text style={styles.quickArrow}>›</Text>
+            </HBCard>
+          </Pressable>
+        </Animated.View>
+
+        {/* ── COURSE PROGRESS (moved from home: the path is progress, not today's action) ── */}
+        {currentDay <= STATIC_MAX_DAY && (
+          <Animated.View entering={FadeInUp.duration(450).delay(195)}>
+            <HBCard depth="sm" style={styles.courseCard}>
+              <View style={styles.courseHead}>
+                <Text variant="bodyBold">{isAz ? 'Kurs' : 'Курс'}</Text>
+                <Text variant="caption" tone="secondary">
+                  {isAz ? `Gün ${currentDay} / ${STATIC_MAX_DAY}` : `День ${currentDay} из ${STATIC_MAX_DAY}`}
+                </Text>
+              </View>
+              <View style={styles.courseTrack}>
+                <View style={[styles.courseFill, { width: `${Math.round(((currentDay - 1) / STATIC_MAX_DAY) * 100)}%` }]} />
+              </View>
+            </HBCard>
+          </Animated.View>
+        )}
+
+        {/* ── MEMORY LINK (moved from home) ── */}
+        <Animated.View entering={FadeInUp.duration(450).delay(205)}>
+          <Pressable onPress={() => router.push('/memory' as never)} accessibilityRole="button">
+            <HBCard depth="sm" style={styles.reviewCard}>
+              <HBIconBox size={48} icon="brain" tint="primary" style={{ flexShrink: 0 }} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.reviewTitle}>
+                  {isAz ? `${bot} nəyi xatırlayır` : `Что помнит ${bot}`}
+                </Text>
+                <Text style={styles.reviewSub}>
+                  {isAz ? 'Söhbətlərdən yadda qalanlar' : 'Что запомнилось из разговоров'}
+                </Text>
+              </View>
+              <Icon name="chevron-right" size={20} color={colors.inkSoft} />
             </HBCard>
           </Pressable>
         </Animated.View>
@@ -357,6 +395,12 @@ const styles = StyleSheet.create({
     color: colors.inkSoft,
     alignSelf: 'flex-end',
   },
+
+  // Course progress
+  courseCard: { gap: spacing[2] },
+  courseHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
+  courseTrack: { height: 8, borderRadius: radius.full, backgroundColor: colors.bgDeep, overflow: 'hidden' },
+  courseFill: { height: '100%', borderRadius: radius.full, backgroundColor: colors.primary },
 
   // Review CTA
   reviewCard: {

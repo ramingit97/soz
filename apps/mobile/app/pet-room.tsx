@@ -1,7 +1,7 @@
 /**
  * Pet room — tamagotchi-style companion screen.
  * All state is local (no persistence). Child feeds, plays with and cares
- * for Хани between lessons. Stats decay slowly on a 30-second tick.
+ * for Бобо between lessons. Stats decay slowly on a 30-second tick.
  */
 
 import * as Haptics from 'expo-haptics';
@@ -252,7 +252,7 @@ export default function PetRoomScreen() {
       <View style={styles.topBar}>
         <HBBackButton inline />
         <Text style={styles.topTitle}>
-          {isAz ? 'Hani-nin otağı' : 'Комната Хани'}
+          {isAz ? 'Bobo-nun otağı' : 'Комната Бобо'}
         </Text>
         <View style={{ width: 36 }} />
       </View>
@@ -282,7 +282,7 @@ export default function PetRoomScreen() {
         {/* Mood + name */}
         <Animated.View entering={FadeIn.duration(400).delay(200)} style={styles.nameRow}>
           <Text style={styles.petName}>
-            {isAz ? 'Hani' : 'Хани'}
+            {isAz ? 'Bobo' : 'Бобо'}
           </Text>
           <View style={[styles.moodBadge, { backgroundColor: avg >= 70 ? tints.sage : avg >= 45 ? '#FFF8D6' : tints.berry }]}>
             <Text style={[styles.moodText, { color: avg >= 70 ? colors.accent : avg >= 45 ? '#9C7E00' : colors.berry }]}>
@@ -320,7 +320,7 @@ export default function PetRoomScreen() {
         {tab === 'room' && (
           <Animated.View entering={FadeIn.duration(350)} style={styles.tabContent}>
             <Text style={styles.sectionLabel}>
-              {isAz ? 'Hani-nin evi 🏡' : 'Дом Хани 🏡'}
+              {isAz ? 'Bobo-nun evi 🏡' : 'Дом Бобо 🏡'}
             </Text>
             <View style={styles.roomGrid}>
               <RoomItem emoji="🛏️" label={isAz ? 'Çarpayı' : 'Кровать'} />
@@ -329,7 +329,7 @@ export default function PetRoomScreen() {
               <RoomItem emoji="🏆" label={isAz ? 'Kuboklar' : 'Кубки'} />
             </View>
             <Text style={styles.tipText}>
-              {isAz ? '💡 Hani-yə toxun — sevinir!' : '💡 Потрогай Хани — он радуется!'}
+              {isAz ? '💡 Bobo-ya toxun — sevinir!' : '💡 Потрогай Бобо — он радуется!'}
             </Text>
           </Animated.View>
         )}
@@ -383,7 +383,7 @@ export default function PetRoomScreen() {
         {tab === 'care' && (
           <Animated.View entering={FadeIn.duration(350)} style={styles.tabContent}>
             <Text style={styles.sectionLabel}>
-              {isAz ? 'Hani-yə qayğı göstər' : 'Позаботься о Хани'}
+              {isAz ? 'Bobo-ya qayğı göstər' : 'Позаботься о Бобо'}
             </Text>
             <View style={styles.actionGrid}>
               {CARE_ACTIONS.map((action) => (
@@ -408,8 +408,8 @@ export default function PetRoomScreen() {
           <Text style={{ fontSize: 22 }}>📚</Text>
           <Text style={styles.nudgeText}>
             {isAz
-              ? `${childName}, dərs keçsən Hani daha çox xoşbəxt olacaq!`
-              : `${childName}, после урока Хани будет ещё счастливее!`}
+              ? `${childName}, dərs keçsən Bobo daha çox xoşbəxt olacaq!`
+              : `${childName}, после урока Бобо будет ещё счастливее!`}
           </Text>
           <Pressable
             style={styles.nudgeBtn}

@@ -1,7 +1,7 @@
 /**
  * Honeybear · Lesson Complete (Reward).
  *
- * Soft confetti on the warm-cream surface, Хани basking in a butter-halo,
+ * Soft confetti on the warm-cream surface, Бобо basking in a butter-halo,
  * stats card (stars / words / accuracy), new-badge callout, tomorrow's
  * preview, and a primary "Talk with Bobo" CTA.
  */
@@ -273,7 +273,7 @@ export default function LessonCompleteScreen() {
       </View>
 
       <View style={styles.content}>
-        {/* Хани with butter halo */}
+        {/* Бобо with butter halo */}
         <Animated.View entering={FadeInDown.duration(700)} style={styles.petWrap}>
           <View style={styles.halo}>
             <HBPet size={150} mood="happy" />

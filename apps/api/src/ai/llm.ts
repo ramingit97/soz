@@ -43,7 +43,7 @@ export async function generateBoboReply(args: {
   /**
    * Abort the request after this long. The OpenAI SDK defaults to a 10-minute
    * timeout, which is fine for a background job and completely wrong for anything
-   * a child is waiting on — the safety screen runs BEFORE Хани replies, so a
+   * a child is waiting on — the safety screen runs BEFORE Бобо replies, so a
    * stalled request there freezes the conversation. Callers on the hot path
    * should always set this.
    */

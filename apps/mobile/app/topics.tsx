@@ -117,7 +117,7 @@ export default function TopicsScreen() {
         <Animated.View entering={FadeInDown.duration(500)} style={styles.header}>
           <HBPet size={84} hue={petHue} mood="curious" />
           <Text style={styles.title}>{isAz ? 'Nədən danışaq?' : 'О чём поговорим?'}</Text>
-          <Text style={styles.sub}>{isAz ? 'Mövzu seç — Хани ilə canlı söhbət' : 'Выбери тему — живой разговор с Хани'}</Text>
+          <Text style={styles.sub}>{isAz ? 'Mövzu seç — Bobo ilə canlı söhbət' : 'Выбери тему — живой разговор с Бобо'}</Text>
         </Animated.View>
 
         {/* Custom topic */}

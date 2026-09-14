@@ -23,7 +23,7 @@ import { PaperBackground } from '@/components/PaperBackground';
 import { Text } from '@/components/Text';
 import { useSettings, type ChildLevel } from '@/store/settings';
 import { colors, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
-import { StepIndicator } from './name';
+import { StepIndicator } from '@/components/StepIndicator';
 
 interface Q { prompt: string; options: string[]; correct: number }
 

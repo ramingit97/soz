@@ -11,7 +11,7 @@ import { scheduleLessonReminders } from '@/services/notifications';
 import { useSettings, type ScheduleDay, type ScheduleMinutes } from '@/store/settings';
 import { useCompanionName } from '@/utils/companion';
 import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
-import { StepIndicator } from './name';
+import { StepIndicator } from '@/components/StepIndicator';
 
 const DAYS: { key: ScheduleDay; labelRu: string; labelAz: string }[] = [
   { key: 'mon', labelRu: 'Пн', labelAz: 'B.e' },

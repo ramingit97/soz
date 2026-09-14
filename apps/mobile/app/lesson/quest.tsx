@@ -315,7 +315,7 @@ export default function QuestScreen() {
             <Animated.View entering={FadeIn.duration(300)} exiting={FadeOut.duration(200)}>
               <Text style={styles.feedbackFail}>
                 {isRu
-                  ? `Bobo услышал: «${heard}». Попробуй ещё раз!`
+                  ? `Бобо услышал: «${heard}». Попробуй ещё раз!`
                   : `Bobo heard: "${heard}". Try again!`}
               </Text>
               <Text style={styles.feedbackHint}>
@@ -330,7 +330,7 @@ export default function QuestScreen() {
           )}
           {status === 'thinking' && (
             <Text style={styles.holdHint}>
-              {isRu ? 'Bobo слушает...' : 'Bobo is listening...'}
+              {isRu ? 'Бобо слушает...' : 'Bobo is listening...'}
             </Text>
           )}
         </View>

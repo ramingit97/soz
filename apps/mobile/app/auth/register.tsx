@@ -108,7 +108,7 @@ export default function RegisterScreen() {
           fetchFullCurriculum(existingChildId, learnLang, auth.token).catch(() => {});
         }
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-        router.replace('/setup/notify' as any);
+        router.replace('/home');
         return;
       }
 
@@ -140,8 +140,7 @@ export default function RegisterScreen() {
       }
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-      // Explicit notification priming → plan selection → home.
-      router.replace('/setup/notify' as any);
+      router.replace('/home');
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message.toLowerCase() : '';
       if (msg.includes('409') || msg.includes('already') || msg.includes('exists') || msg.includes('taken')) {

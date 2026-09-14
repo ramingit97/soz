@@ -89,6 +89,9 @@ export function Screen({
             scroll ? [styles.scrollContent, contentStyle] : contentStyle
           }
           showsVerticalScrollIndicator={false}
+          // Нажатие на карточку при открытой клавиатуре должно выбирать её, а не
+          // только закрывать клавиатуру (экран имени и возраста).
+          {...(scroll ? { keyboardShouldPersistTaps: 'handled' as const } : null)}
         >
           {children}
         </Container>
