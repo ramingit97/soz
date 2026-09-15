@@ -170,7 +170,7 @@ export default function SetupPetScreen() {
                       pressed && { transform: [{ scale: 0.94 }] },
                     ]}
                   >
-                    <HBPet size={40} hue={c.hue} eyes={false} still />
+                    <HBPet size={40} hue={c.hue} still />
                   </Pressable>
                 );
               })}

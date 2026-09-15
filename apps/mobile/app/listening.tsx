@@ -17,12 +17,16 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 
-import { HBBackButton } from '@/components/HBBackButton';
 import { HBButton } from '@/components/HBButton';
 import { HBCard } from '@/components/HBCard';
+import { HBIconBox } from '@/components/HBIconBox';
 import { HBPet } from '@/components/HBPet';
+import { Icon } from '@/components/Icon';
+import { InlineBanner } from '@/components/InlineBanner';
 import { PaperBackground } from '@/components/PaperBackground';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { Text } from '@/components/Text';
+import { useTheme } from '@/hooks/useTheme';
 import {
   generateListeningStory,
   getListeningStories,
@@ -35,7 +39,7 @@ import { savePhrases } from '@/services/srs';
 import { useSettings } from '@/store/settings';
 import { localDateISO, localOffsetMinutes } from '@soz/shared-types';
 import { useCompanionName } from '@/utils/companion';
-import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, radius, spacing } from '@/theme';
 
 interface LocalStory {
   id: string;
@@ -69,8 +73,8 @@ export default function ListeningScreen() {
   const childId = useSettings((s) => s.childId);
   const authToken = useSettings((s) => s.authToken);
   const childLevel = useSettings((s) => s.childLevel);
-  const petHue = useSettings((s) => s.petHue);
   const isAz = lang === 'az';
+  const { t, accent } = useTheme();
   const learnLang: 'en' | 'ru' =
     params.lang === 'en' || params.lang === 'ru' ? params.lang : learningLanguages[0] ?? 'en';
 
@@ -252,24 +256,37 @@ export default function ListeningScreen() {
   const allAnswered = !!current && current.questions.every((_, qi) => answers[qi] !== undefined);
 
   return (
-    <PaperBackground variant="honey">
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <HBBackButton />
-
-        <Animated.View entering={FadeInDown.duration(500)} style={styles.header}>
-          <HBPet size={88} hue={petHue} mood={playing ? 'happy' : 'curious'} talking={playing} />
-          <Text style={styles.title}>{isAz ? 'Dinlə' : 'Слушай'}</Text>
-          <Text style={styles.sub}>
-            {isAz ? `${bot} sənin üçün hekayə danışır` : `${bot} расскажет историю для тебя`}
-          </Text>
-          <Pressable onPress={() => router.push('/phrases' as any)} style={styles.reviewLink} hitSlop={8}>
-            <Text style={styles.reviewLinkText}>{isAz ? '🔁 İfadələrim' : '🔁 Мои фразы'}</Text>
+    <PaperBackground>
+      <ScreenHeader
+        title={isAz ? 'Dinlə' : 'Слушай'}
+        right={
+          <Pressable
+            onPress={() => router.push('/phrases' as any)}
+            hitSlop={8}
+            accessibilityRole="button"
+            style={styles.reviewLink}
+          >
+            <Icon name="repeat" size={14} color={accent.ink} strokeWidth={2.5} />
+            <Text style={[styles.reviewLinkText, { color: accent.ink }]}>{isAz ? 'İfadələrim' : 'Мои фразы'}</Text>
           </Pressable>
+        }
+      />
+      <ScrollView
+        contentContainerStyle={[styles.scroll, { paddingHorizontal: t.density.padX, gap: t.density.gap }]}
+        showsVerticalScrollIndicator={false}
+      >
+        <Animated.View entering={FadeInDown.duration(400)} style={styles.intro}>
+          <HBPet size={t.mascot.inline} mood={playing ? 'happy' : busy ? 'thinking' : 'curious'} talking={playing} />
+          <Text variant="body" tone="secondary" style={styles.introText}>
+            {busy && !current
+              ? (isAz ? `${bot} hekayə hazırlayır…` : `${bot} готовит историю…`)
+              : (isAz ? `${bot} sənin üçün hekayə danışır` : `${bot} расскажет историю для тебя`)}
+          </Text>
         </Animated.View>
 
         {needsAccount ? (
-          <HBCard style={{ alignItems: 'center', gap: spacing[3] }}>
-            <Text style={styles.sub}>
+          <HBCard style={{ gap: spacing[3] }}>
+            <Text variant="body" tone="secondary">
               {isAz
                 ? `${bot} hekayələri profil qurulandan sonra danışır.`
                 : `${bot} рассказывает истории после настройки профиля.`}
@@ -283,48 +300,64 @@ export default function ListeningScreen() {
         ) : (
           <>
             {current && (
-              <Animated.View key={current.id} entering={FadeIn.duration(350)}>
-                <HBCard style={styles.storyCard} depth="md">
-                  <Text style={styles.storyTitle}>{current.title}</Text>
+              <Animated.View key={current.id} entering={FadeIn.duration(350)} style={{ gap: t.density.gap }}>
+                <HBCard style={styles.storyCard}>
+                  <Text variant="headline">{current.title}</Text>
                   <View style={styles.controls}>
-                    <Pressable onPress={() => play(current.audioUri)} style={[styles.playBtn, shadow.sm]}>
-                      <Text style={styles.playBtnText}>{playing ? '🔊' : '▶'}</Text>
-                      <Text style={styles.playBtnLabel}>{isAz ? 'Bir də' : 'Ещё раз'}</Text>
+                    <Pressable
+                      onPress={() => play(current.audioUri)}
+                      accessibilityRole="button"
+                      style={[styles.playBtn, { backgroundColor: accent.soft }]}
+                    >
+                      <Icon name={playing ? 'volume-2' : 'play'} size={20} color={accent.ink} strokeWidth={2.5} />
+                      <Text style={[styles.playBtnLabel, { color: accent.ink }]}>{isAz ? 'Bir də' : 'Ещё раз'}</Text>
                     </Pressable>
-                    <Pressable onPress={() => setShowText((v) => !v)} style={[styles.textToggle, shadow.sm]}>
+                    <Pressable
+                      onPress={() => setShowText((v) => !v)}
+                      accessibilityRole="button"
+                      style={styles.textToggle}
+                    >
+                      <Icon name="book-open" size={18} color={colors.inkSoft} />
                       <Text style={styles.textToggleLabel}>
-                        {showText ? (isAz ? 'Mətni gizlət' : 'Скрыть текст') : (isAz ? 'Mətni göstər' : 'Показать текст')}
+                        {showText ? (isAz ? 'Gizlət' : 'Скрыть текст') : (isAz ? 'Mətn' : 'Текст')}
                       </Text>
                     </Pressable>
                   </View>
-                  {showText && <Text style={styles.storyText}>{current.text}</Text>}
+                  {showText && <Text variant="body" style={styles.storyText}>{current.text}</Text>}
                 </HBCard>
 
-                {/* Comprehension questions */}
+                {/* Вопросы на понимание */}
                 {current.questions.length > 0 && (
                   <View style={styles.qBlock}>
-                    <Text style={styles.qHeader}>{isAz ? 'Sual' : 'Вопросы'}</Text>
+                    <Text variant="label" tone="secondary">{isAz ? 'Suallar' : 'Вопросы'}</Text>
                     {current.questions.map((q, qi) => {
                       const picked = answers[qi];
                       return (
-                        <HBCard key={qi} style={styles.qCard} depth="sm">
-                          <Text style={styles.qText}>{q.q}</Text>
+                        <HBCard key={qi} style={styles.qCard}>
+                          <Text variant="bodyBold">{q.q}</Text>
                           {q.options.map((opt, oi) => {
                             const revealed = picked !== undefined;
                             const isCorrect = oi === q.correct;
                             const isPicked = picked === oi;
-                            const bg = revealed && isCorrect ? '#E3F7EF' : revealed && isPicked ? '#FDE3E8' : colors.white;
+                            const state = revealed && isCorrect ? 'right' : revealed && isPicked ? 'wrong' : 'idle';
                             return (
                               <Pressable
                                 key={oi}
                                 disabled={revealed}
+                                accessibilityRole="button"
+                                accessibilityState={{ selected: isPicked, disabled: revealed }}
                                 onPress={() => {
                                   Haptics.selectionAsync().catch(() => {});
                                   setAnswers((p) => ({ ...p, [qi]: oi }));
                                 }}
-                                style={[styles.opt, { backgroundColor: bg }]}
+                                style={[styles.opt, state === 'right' && styles.optRight, state === 'wrong' && styles.optWrong]}
                               >
-                                <Text style={styles.optText}>{opt}</Text>
+                                <Text variant="body" style={styles.optText}>{opt}</Text>
+                                {state === 'right' ? (
+                                  <Icon name="circle-check" size={18} color={colors.accentDeep} strokeWidth={2.5} />
+                                ) : state === 'wrong' ? (
+                                  <Icon name="x" size={18} color={colors.berryDeep} strokeWidth={2.5} />
+                                ) : null}
                               </Pressable>
                             );
                           })}
@@ -334,38 +367,40 @@ export default function ListeningScreen() {
                   </View>
                 )}
 
-                {/* Key phrases → spaced repetition */}
+                {/* Полезные фразы → в повторение */}
                 {current.phrases.length > 0 && (
                   <View style={styles.qBlock}>
-                    <Text style={styles.qHeader}>{isAz ? 'Faydalı ifadələr' : 'Полезные фразы'}</Text>
-                    {current.phrases.map((p, i) => (
-                      <HBCard key={i} style={styles.phraseCard} depth="sm">
-                        <Text style={styles.phraseText}>{p.text}</Text>
-                        <Text style={styles.phraseTr}>{p.translation}</Text>
+                    <Text variant="label" tone="secondary">{isAz ? 'Faydalı ifadələr' : 'Полезные фразы'}</Text>
+                    {current.phrases.map((ph, i) => (
+                      <HBCard key={i} style={styles.phraseCard}>
+                        <Text variant="bodyBold" style={styles.phraseText}>{ph.text}</Text>
+                        <Text variant="caption" tone="secondary" style={styles.phraseTr}>{ph.translation}</Text>
                       </HBCard>
                     ))}
-                    <View style={{ marginTop: spacing[2] }}>
-                      <HBButton
-                        full
-                        variant="butter"
-                        label={savedNote ? (isAz ? '✓ Təkrara əlavə olundu' : '✓ Добавлено в повторение') : (isAz ? '📌 Təkrara əlavə et' : '📌 В повторение')}
-                        onPress={handleSavePhrases}
-                        disabled={savedNote}
-                      />
-                    </View>
+                    <HBButton
+                      full
+                      variant="soft"
+                      icon={savedNote ? 'check' : 'bookmark-plus'}
+                      label={savedNote ? (isAz ? 'Təkrara əlavə olundu' : 'Добавлено в повторение') : (isAz ? 'Təkrara əlavə et' : 'В повторение')}
+                      onPress={handleSavePhrases}
+                      disabled={savedNote}
+                    />
                   </View>
                 )}
               </Animated.View>
             )}
 
-            {notice && (
-              <Animated.View entering={FadeIn.duration(250)}>
-                <Text style={styles.notice}>{notice}</Text>
-              </Animated.View>
-            )}
+            {notice ? (
+              <InlineBanner
+                tone="danger"
+                text={notice}
+                onClose={() => setNotice(null)}
+                closeLabel={isAz ? 'Bağla' : 'Закрыть'}
+              />
+            ) : null}
 
             {fromLesson && current ? (
-              <View style={{ marginTop: spacing[4] }}>
+              <View style={{ gap: spacing[2] }}>
                 <HBButton
                   full
                   icon="circle-check"
@@ -377,45 +412,47 @@ export default function ListeningScreen() {
                   }}
                 />
                 {!allAnswered ? (
-                  <Text variant="caption" tone="secondary" align="center" style={{ marginTop: spacing[2] }}>
+                  <Text variant="caption" tone="secondary" align="center">
                     {isAz ? 'Əvvəlcə suallara cavab ver' : 'Сначала ответь на вопросы'}
                   </Text>
                 ) : null}
               </View>
             ) : null}
 
-            {/* New story */}
+            {/* Новая история */}
             {(!fromLesson || (!current && !busy)) && (
-            <Animated.View entering={FadeInUp.duration(450).delay(120)} style={{ marginTop: spacing[4] }}>
-              <HBButton
-                full
-                variant="primary"
-                label={busy ? (isAz ? 'Hazırlanır…' : 'Готовлю…') : (isAz ? '✨ Yeni hekayə' : '✨ Новая история')}
-                onPress={() => handleGenerate()}
-                disabled={busy}
-              />
-              {busy && <ActivityIndicator color={colors.primary} style={{ marginTop: spacing[3] }} />}
-            </Animated.View>
+              <Animated.View entering={FadeInUp.duration(400).delay(100)}>
+                <HBButton
+                  full
+                  icon="sparkles"
+                  loading={busy}
+                  label={busy ? (isAz ? 'Hazırlanır…' : 'Готовлю…') : (isAz ? 'Yeni hekayə' : 'Новая история')}
+                  onPress={() => handleGenerate()}
+                  disabled={busy}
+                />
+              </Animated.View>
             )}
             {fromLesson && busy && !current ? (
-              <View style={{ marginTop: spacing[4], alignItems: 'center', gap: spacing[2] }}>
-                <ActivityIndicator color={colors.primary} />
-                <Text variant="caption" tone="secondary">
-                  {isAz ? `${bot} hekayə hazırlayır…` : `${bot} готовит историю…`}
-                </Text>
+              <View style={styles.preparing}>
+                <ActivityIndicator color={accent.ink} />
               </View>
             ) : null}
 
-            {/* Library */}
+            {/* Библиотека */}
             {!fromLesson && library.length > 0 && (
-              <View style={{ marginTop: spacing[6] }}>
-                <Text style={styles.libHeader}>{isAz ? 'Hekayələrim' : 'Мои истории'}</Text>
-                {library.map((s) => (
-                  <Pressable key={s.id} onPress={() => handleOpenFromLibrary(s.id)} disabled={busy}>
-                    <HBCard style={styles.libItem} depth="sm">
-                      <Text style={{ fontSize: 20 }}>🎧</Text>
-                      <Text style={styles.libItemTitle} numberOfLines={1}>{s.title}</Text>
-                      <Text style={styles.libItemArrow}>›</Text>
+              <View style={styles.qBlock}>
+                <Text variant="label" tone="secondary">{isAz ? 'Hekayələrim' : 'Мои истории'}</Text>
+                {library.map((st) => (
+                  <Pressable
+                    key={st.id}
+                    onPress={() => handleOpenFromLibrary(st.id)}
+                    disabled={busy}
+                    accessibilityRole="button"
+                  >
+                    <HBCard style={styles.libItem}>
+                      <HBIconBox icon="headphones" tint={accent.soft} iconColor={accent.ink} size={36} />
+                      <Text variant="bodyBold" style={styles.libItemTitle} numberOfLines={1}>{st.title}</Text>
+                      <Icon name="chevron-right" size={20} color={colors.inkSoft} />
                     </HBCard>
                   </Pressable>
                 ))}
@@ -429,23 +466,24 @@ export default function ListeningScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { paddingHorizontal: spacing[6], paddingTop: 56, paddingBottom: spacing[10] },
+  scroll: { paddingTop: spacing[2], paddingBottom: spacing[10] },
 
-  header: { alignItems: 'center', gap: spacing[2], marginBottom: spacing[5], marginTop: spacing[4] },
-  title: { fontFamily: fontFamily.display, fontSize: fontSize['3xl'], color: colors.ink, letterSpacing: -0.5, marginTop: spacing[2] },
-  sub: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize.sm, color: colors.inkSoft, textAlign: 'center' },
+  intro: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
+  introText: { flex: 1 },
   reviewLink: {
-    marginTop: spacing[2],
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[2],
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: spacing[3],
+    paddingVertical: 6,
     borderRadius: radius.full,
-    backgroundColor: colors.card,
-    ...shadow.sm,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
   },
-  reviewLinkText: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.sm, color: colors.primaryDeep },
+  reviewLinkText: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.xs },
 
   storyCard: { gap: spacing[3] },
-  storyTitle: { fontFamily: fontFamily.display, fontSize: fontSize.xl, color: colors.ink, textAlign: 'center' },
   controls: { flexDirection: 'row', gap: spacing[2] },
   playBtn: {
     flex: 1,
@@ -453,58 +491,48 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing[2],
-    backgroundColor: colors.primarySoft,
     borderRadius: radius.lg,
     paddingVertical: spacing[3],
   },
-  playBtnText: { fontSize: fontSize.lg },
-  playBtnLabel: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize.base, color: colors.primaryDeep },
+  playBtnLabel: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize.base },
   textToggle: {
     flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.white,
+    gap: spacing[2],
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
     borderRadius: radius.lg,
     paddingVertical: spacing[3],
   },
   textToggleLabel: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.sm, color: colors.inkSoft },
-  storyText: { fontFamily: fontFamily.body, fontSize: fontSize.base, color: colors.ink, lineHeight: 26 },
+  storyText: { lineHeight: 26 },
 
-  qBlock: { marginTop: spacing[4], gap: spacing[3] },
-  qHeader: {
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize.caption,
-    color: colors.inkSoft,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
+  qBlock: { gap: spacing[2] },
   qCard: { gap: spacing[2] },
-  qText: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize.base, color: colors.ink },
-  opt: { borderRadius: radius.md, paddingVertical: spacing[3], paddingHorizontal: spacing[4] },
-  optText: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize.base, color: colors.ink },
+  opt: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[2],
+    borderRadius: radius.md,
+    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[3],
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
+    backgroundColor: colors.surface,
+  },
+  optRight: { backgroundColor: '#E3F7EF', borderColor: '#B9E3D5' },
+  optWrong: { backgroundColor: '#FDE3E8', borderColor: '#F5C2CC' },
+  optText: { flex: 1 },
 
   phraseCard: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing[3] },
-  phraseText: { flex: 1, fontFamily: fontFamily.bodyBlack, fontSize: fontSize.base, color: colors.ink },
-  phraseTr: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize.caption, color: colors.inkSoft, textAlign: 'right', flexShrink: 1 },
+  phraseText: { flex: 1 },
+  phraseTr: { textAlign: 'right', flexShrink: 1 },
 
-  notice: {
-    marginTop: spacing[4],
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize.sm,
-    color: colors.inkSoft,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
+  preparing: { alignItems: 'center', paddingVertical: spacing[2] },
 
-  libHeader: {
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize.caption,
-    color: colors.inkSoft,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: spacing[3],
-  },
-  libItem: { flexDirection: 'row', alignItems: 'center', gap: spacing[3], marginBottom: spacing[2] },
-  libItemTitle: { flex: 1, fontFamily: fontFamily.bodyBold, fontSize: fontSize.base, color: colors.ink },
-  libItemArrow: { fontFamily: fontFamily.bodyBlack, fontSize: scaleFont(22), color: colors.inkSoft },
+  libItem: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
+  libItemTitle: { flex: 1 },
 });

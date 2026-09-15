@@ -1,9 +1,10 @@
 /**
- * Honeybear · Talk to Бобо.
+ * «Говорить» — разговор с персонажем.
  *
- * Top bar: back + Бобо avatar + "Бобо · слушаю..." status + turn counter
- * Chat bubbles: Бобо bubble cream with RU subtitle, child bubble peach
- * Bottom: mic button on cream paper.
+ * Шапка: выход, персонаж со статусом («слушаю», «думаю», «говорю»), язык.
+ * Пузыри: персонаж — белый, ребёнок — мягкий цвет питомца с тёмным текстом.
+ * Внизу подсказка и микрофон. Ошибки, лимит и нужное согласие — полоской над
+ * микрофоном (`InlineBanner`), а не системным диалогом.
  */
 
 import { playableAudioUri } from '@/utils/recording';
@@ -30,33 +31,35 @@ import Animated, {
   FadeInDown,
   FadeInUp,
   FadeOut,
-  useAnimatedStyle,
   useSharedValue,
-  withRepeat,
-  withSequence,
-  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 
 import { BottomTabs, BottomTabsSpacer } from '@/components/BottomTabs';
+import { HBCard } from '@/components/HBCard';
 import { HBChip } from '@/components/HBChip';
+import { HBIconBox } from '@/components/HBIconBox';
 import { HBPet } from '@/components/HBPet';
+import { InlineBanner } from '@/components/InlineBanner';
 import { MicButton } from '@/components/MicButton';
 import { MicWaveform } from '@/components/MicWaveform';
 import { ObjectiveChips } from '@/components/ObjectiveChips';
 import { PaperBackground } from '@/components/PaperBackground';
 import { ReactingPet, type ReactingPetHandle } from '@/components/ReactingPet';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { StarParticle } from '@/components/StarParticle';
 import { Text } from '@/components/Text';
+import { TypingDots } from '@/components/TypingDots';
+import { useTheme } from '@/hooks/useTheme';
 import { track } from '@/services/analytics';
 import { fetchTalkOpener, getTalkHint, markThreadAsked, postSessionEnd, postTalk, reportAiMessage, type TalkResponsePayload } from '@/services/api';
 import { notifyParentSensitive } from '@/services/notifications';
 import { playSfx } from '@/services/sfx';
 import { loadTalkHistory, saveTalkHistory, type StoredTurn } from '@/services/talkHistory';
 import { useSettings, todayISO } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, radius, scaleFont, spacing } from '@/theme';
 import { useCompanionName } from '@/utils/companion';
-import { alertTalkFailure } from '@/utils/talkAlert';
+import { talkFailureMessage, type TalkFailureMessage } from '@/utils/talkAlert';
 import { canFinishTalkLesson, MIN_LESSON_TALK_TURNS, spokenTurns } from '@/utils/lessonTalk';
 import { HBButton } from '@/components/HBButton';
 import { Icon } from '@/components/Icon';
@@ -65,6 +68,13 @@ import type { LanguageCode } from '@soz/shared-types';
 declare const __DEV__: boolean;
 
 type Mood = 'idle' | 'recording' | 'thinking' | 'playing';
+
+/** Что сейчас сказать полоской над микрофоном. */
+type Banner =
+  | { kind: 'failure'; msg: TalkFailureMessage }
+  | { kind: 'consent' }
+  | { kind: 'mic' }
+  | { kind: 'reported' };
 
 interface Turn {
   role: 'child' | 'bobo';
@@ -182,6 +192,8 @@ export default function TalkScreen() {
   const [particles, setParticles] = useState<Particle[]>([]);
   const [hint, setHint] = useState<string | null>(null);
   const [hintLoading, setHintLoading] = useState(false);
+  const [banner, setBanner] = useState<Banner | null>(null);
+  const { t, accent } = useTheme();
 
   // Topic checklist (from /topics): 3 micro-goals shown as chips, detected server-side
   const goals = useMemo<{ ru: string; az: string; en: string }[] | null>(() => {
@@ -294,10 +306,7 @@ export default function TalkScreen() {
               { childId: childId ?? undefined, conversationId, messageText: text, reason: 'inappropriate' },
               authToken,
             ).catch(() => {});
-            Alert.alert(
-              az ? 'Təşəkkür' : 'Спасибо',
-              az ? 'Bildiriş göndərildi.' : 'Жалоба отправлена — мы проверим этот ответ.',
-            );
+            setBanner({ kind: 'reported' });
           },
         },
       ],
@@ -363,18 +372,6 @@ export default function TalkScreen() {
     );
   }, [history, childId, language]);
 
-  const glowScale = useSharedValue(1);
-  useEffect(() => {
-    glowScale.value = withRepeat(
-      withSequence(withTiming(1.05, { duration: 2000 }), withTiming(1, { duration: 2000 })),
-      -1,
-      true,
-    );
-  }, []);
-  const glowStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: glowScale.value }],
-  }));
-
   useEffect(() => {
     track({ event: 'talk_session_started', userId, childId, props: { lang: language, day: lessonDay } });
     (async () => {
@@ -410,30 +407,15 @@ export default function TalkScreen() {
     // token, so the gate is on consent alone — checking the token too would let
     // every guest past it.
     if (!audioConsent) {
-      const az = parentUILanguage === 'az';
-      Alert.alert(
-        az ? 'Səs razılığı lazımdır' : 'Нужно согласие на голос',
-        az
-          ? `${bot} ilə danışmaq üçün səsin AI partnyorlarına göndərilməsinə razılıq lazımdır.`
-          : `Чтобы говорить с ${bot}, нужно согласие родителя на отправку голоса AI-партнёрам.`,
-        [
-          { text: az ? 'Ləğv et' : 'Отмена', style: 'cancel' },
-          {
-            text: az ? 'Razılıq ver' : 'Дать согласие',
-            onPress: () => router.push('/auth/consent' as any),
-          },
-        ],
-      );
+      setBanner({ kind: 'consent' });
       return;
     }
     if (!permissionGranted) {
-      Alert.alert(
-        'Microphone needed',
-        `Söz needs microphone access to talk with ${bot}. Please enable it in Settings.`,
-      );
+      setBanner({ kind: 'mic' });
       return;
     }
     if (mood !== 'idle') return;
+    setBanner(null);
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
       meterDead.value = 1;
@@ -446,7 +428,7 @@ export default function TalkScreen() {
       resetLevel();
       setMood('idle');
     }
-  }, [permissionGranted, mood, voice, onLevel, resetLevel, meterDead, authToken, audioConsent, parentUILanguage, bot, router]);
+  }, [permissionGranted, mood, voice, onLevel, resetLevel, meterDead, audioConsent]);
 
   const stopRecording = useCallback(async () => {
     if (mood !== 'recording') return;
@@ -564,7 +546,7 @@ export default function TalkScreen() {
       }
     } catch (e) {
       console.warn('talk failed', e);
-      alertTalkFailure(e, bot);
+      setBanner({ kind: 'failure', msg: talkFailureMessage(e, bot) });
       setMood('idle');
     }
   }, [language, mood, voice, resetLevel, goals, bot]);
@@ -653,11 +635,9 @@ export default function TalkScreen() {
     setLatest(null);
   };
 
-  const boboMood = mood === 'thinking' || mood === 'recording' ? 'curious' : 'happy';
-  const langConfig = {
-    en: { flag: '🇬🇧', label: 'English', color: colors.english },
-    ru: { flag: '🇷🇺', label: 'Русский', color: colors.russian },
-  }[language];
+  const az = parentUILanguage === 'az';
+  // Лицо персонажа повторяет, что происходит: слушает запись, думает над ответом.
+  const boboMood = mood === 'recording' ? 'listening' : mood === 'thinking' ? 'thinking' : 'happy';
 
   const moodLabel = {
     idle: language === 'en' ? 'Tap to talk' : 'Нажми и говори',
@@ -666,57 +646,125 @@ export default function TalkScreen() {
     playing: language === 'en' ? `${bot} is talking` : `${bot} говорит`,
   }[mood];
 
-  const statusDotColor = mood === 'recording' ? colors.berry : mood === 'thinking' ? colors.butter : colors.accent;
+  const statusDotColor = mood === 'recording' ? colors.berry : mood === 'thinking' ? colors.butterDeep : accent.bottom;
+
+  const bannerView = (() => {
+    if (!banner) return null;
+    const close = () => setBanner(null);
+    const closeLabel = az ? 'Bağla' : 'Закрыть';
+    switch (banner.kind) {
+      case 'failure':
+        return (
+          <InlineBanner
+            tone={banner.msg.tone}
+            icon={banner.msg.icon}
+            title={banner.msg.title}
+            text={banner.msg.text}
+            onClose={close}
+            closeLabel={closeLabel}
+          />
+        );
+      case 'consent':
+        return (
+          <InlineBanner
+            tone="warning"
+            icon="lock"
+            title={az ? 'Səs razılığı lazımdır' : 'Нужно согласие на голос'}
+            text={
+              az
+                ? `${bot} ilə danışmaq üçün valideyn səsin AI partnyorlarına göndərilməsinə razılıq verməlidir.`
+                : `Чтобы говорить с ${bot}, родитель должен согласиться на отправку голоса AI-партнёрам.`
+            }
+            action={{ label: az ? 'Razılıq ver' : 'Дать согласие', onPress: () => router.push('/auth/consent' as any) }}
+            onClose={close}
+            closeLabel={closeLabel}
+          />
+        );
+      case 'mic':
+        return (
+          <InlineBanner
+            tone="danger"
+            icon="mic-off"
+            title={az ? 'Mikrofon bağlıdır' : 'Микрофон выключен'}
+            text={
+              az
+                ? `${bot} səni eşitsin deyə, telefon ayarlarında Söz üçün mikrofona icazə ver.`
+                : `Чтобы ${bot} тебя слышал, разреши Söz доступ к микрофону в настройках телефона.`
+            }
+            onClose={close}
+            closeLabel={closeLabel}
+          />
+        );
+      case 'reported':
+        return (
+          <InlineBanner
+            tone="success"
+            text={az ? 'Bildiriş göndərildi — bu cavabı yoxlayacağıq.' : 'Жалоба отправлена — мы проверим этот ответ.'}
+            onClose={close}
+            closeLabel={closeLabel}
+          />
+        );
+    }
+  })();
 
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <PaperBackground>
-        <View style={styles.container}>
-          {/* ── Header ── */}
-          <View style={styles.header}>
-            {/* Выход. В уроке это «×» — уйти без награды; засчитывает урок только
-                «Завершить урок» после настоящего разговора (раньше тут стояла «✓»,
-                которая засчитывала урок без единого слова). */}
-            <Pressable
-              onPress={() => router.replace('/home')}
-              accessibilityRole="button"
-              accessibilityLabel={parentUILanguage === 'az' ? 'Çıx' : 'Выйти'}
-              style={[styles.homeBtn, shadow.sm]}
-            >
-              <Icon name={fromLesson ? 'x' : 'chevron-left'} size={20} color={colors.ink} strokeWidth={2.5} />
-            </Pressable>
-
-            <Animated.View style={[styles.headerCenter, glowStyle]}>
-              <Animated.View style={[styles.petAvatar, shadow.sm]}>
-                <ReactingPet ref={petRef} size={32} eyes={false} mood={boboMood === 'happy' ? 'happy' : 'curious'} talking={mood === 'playing'} />
-              </Animated.View>
-              <View style={{ minWidth: 0 }}>
-                <Text style={styles.headerName}>{bot}</Text>
+        {/* Выход. В уроке это «×» — уйти без награды; засчитывает урок только
+            «Завершить урок» после настоящего разговора (раньше тут стояла «✓»,
+            которая засчитывала урок без единого слова). */}
+        <ScreenHeader
+          backIcon={fromLesson ? 'x' : 'chevron-left'}
+          backLabel={az ? 'Çıx' : 'Выйти'}
+          onBack={() => router.replace('/home')}
+          center={
+            <View style={styles.headerCenter}>
+              <View style={[styles.petAvatar, { backgroundColor: accent.soft }]}>
+                <ReactingPet
+                  ref={petRef}
+                  size={38}
+                  still={false}
+                  idleGestures={false}
+                  mood={boboMood}
+                  talking={mood === 'playing'}
+                />
+              </View>
+              <View style={styles.headerText}>
+                <Text variant="headline" numberOfLines={1} style={styles.headerName}>
+                  {bot}
+                </Text>
                 <View style={styles.statusRow}>
                   <View style={[styles.statusDot, { backgroundColor: statusDotColor }]} />
-                  <Text style={styles.statusText}>{moodLabel}</Text>
+                  <Text variant="caption" tone="secondary" numberOfLines={1}>
+                    {moodLabel}
+                  </Text>
                 </View>
               </View>
-            </Animated.View>
-
+            </View>
+          }
+          right={
             <Pressable
               onPress={switchLanguage}
               disabled={!canSwitchLang}
-              style={[styles.langPill, !canSwitchLang && { opacity: 0.7 }, shadow.sm]}
+              accessibilityRole="button"
+              accessibilityLabel={az ? 'Dil' : 'Язык'}
+              style={styles.langPill}
             >
-              <Text style={{ fontSize: fontSize.sm }}>{langConfig.flag}</Text>
+              <Icon name="globe" size={14} color={colors.inkSoft} strokeWidth={2.25} />
               <Text style={styles.langLabel}>{language.toUpperCase()}</Text>
             </Pressable>
-          </View>
+          }
+        />
 
-          {/* ── Conversation-lesson progress (time bar toward the finish) ── */}
+        <View style={[styles.container, { paddingHorizontal: t.density.padX }]}>
+          {/* ── Прогресс урока: фразы или время ── */}
           {canFinish && !finishBanner ? (
             <View style={styles.finishRow}>
               <HBButton
                 size="sm"
                 icon="circle-check"
-                label={parentUILanguage === 'az' ? 'Dərsi bitir' : 'Завершить урок'}
+                label={az ? 'Dərsi bitir' : 'Завершить урок'}
                 onPress={finishLesson}
               />
             </View>
@@ -726,12 +774,12 @@ export default function TalkScreen() {
                 <View
                   style={[
                     styles.convoBarFill,
-                    { width: `${Math.min(100, (spoken / MIN_LESSON_TALK_TURNS) * 100)}%` },
+                    { backgroundColor: accent.bottom, width: `${Math.min(100, (spoken / MIN_LESSON_TALK_TURNS) * 100)}%` },
                   ]}
                 />
               </View>
-              <Text style={styles.convoProgressText}>
-                {parentUILanguage === 'az'
+              <Text variant="caption" tone="secondary">
+                {az
                   ? `Deyilən cümlə: ${Math.min(spoken, MIN_LESSON_TALK_TURNS)} / ${MIN_LESSON_TALK_TURNS}`
                   : `Фраз сказано: ${Math.min(spoken, MIN_LESSON_TALK_TURNS)} из ${MIN_LESSON_TALK_TURNS}`}
               </Text>
@@ -742,72 +790,46 @@ export default function TalkScreen() {
                 <View
                   style={[
                     styles.convoBarFill,
-                    { width: `${Math.min(100, (convoElapsed / convoTargetSec) * 100)}%` },
+                    { backgroundColor: accent.bottom, width: `${Math.min(100, (convoElapsed / convoTargetSec) * 100)}%` },
                   ]}
                 />
               </View>
-              <Text style={styles.convoProgressText}>
+              <Text variant="caption" tone="secondary">
                 {convoElapsed < 5
-                  ? (language === 'en' ? `Chat with ${bot}` : parentUILanguage === 'az' ? `${bot} ilə söhbət` : `Поболтай с ${bot}`)
+                  ? (language === 'en' ? `Chat with ${bot}` : az ? `${bot} ilə söhbət` : `Поболтай с ${bot}`)
                   : formatMinSec(convoElapsed)}
               </Text>
             </View>
           ) : null}
 
-          {/* ── Topic goals checklist ── */}
+          {/* ── Цели темы ── */}
           {goals?.length ? (
             <ObjectiveChips
-              labels={goals.map((g) => (parentUILanguage === 'az' ? g.az : g.ru))}
+              labels={goals.map((g) => (az ? g.az : g.ru))}
               done={objDone}
             />
           ) : null}
 
-          {/* ── All goals done banner ── */}
+          {/* ── Все цели темы выполнены ── */}
           {goalsBanner ? (
-            <Animated.View entering={FadeInDown.duration(400).springify()} style={[styles.goalsBanner, shadow.md]}>
-              <Text style={styles.goalsBannerTitle}>
-                {parentUILanguage === 'az' ? '🎉 Bütün məqsədlər yerinə yetirildi!' : '🎉 Все цели выполнены!'}
-              </Text>
-              <View style={styles.goalsBannerRow}>
-                <Pressable onPress={() => setGoalsBanner(false)} style={styles.goalsBannerBtn}>
-                  <Text style={styles.goalsBannerBtnText}>
-                    {parentUILanguage === 'az' ? 'Davam edək?' : 'Ещё поговорим?'}
-                  </Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => { setGoalsBanner(false); router.replace('/home'); }}
-                  style={[styles.goalsBannerBtn, styles.goalsBannerBtnPrimary]}
-                >
-                  <Text style={[styles.goalsBannerBtnText, { color: colors.white }]}>
-                    {parentUILanguage === 'az' ? 'Hazır ✓' : 'Готово ✓'}
-                  </Text>
-                </Pressable>
-              </View>
-            </Animated.View>
+            <Celebration
+              title={az ? 'Bütün məqsədlər yerinə yetirildi!' : 'Все цели выполнены!'}
+              stayLabel={az ? 'Davam edək' : 'Ещё поговорим'}
+              doneLabel={az ? 'Hazır' : 'Готово'}
+              onStay={() => setGoalsBanner(false)}
+              onDone={() => { setGoalsBanner(false); router.replace('/home'); }}
+            />
           ) : null}
 
-          {/* ── Conversation-lesson finish banner ── */}
+          {/* ── Урок-разговор можно завершить ── */}
           {finishBanner ? (
-            <Animated.View entering={FadeInDown.duration(400).springify()} style={[styles.goalsBanner, shadow.md]}>
-              <Text style={styles.goalsBannerTitle}>
-                {parentUILanguage === 'az' ? `🎉 ${bot} ilə əla söhbət!` : `🎉 Отличная беседа с ${bot}!`}
-              </Text>
-              <View style={styles.goalsBannerRow}>
-                <Pressable onPress={() => setFinishBanner(false)} style={styles.goalsBannerBtn}>
-                  <Text style={styles.goalsBannerBtnText}>
-                    {parentUILanguage === 'az' ? 'Bir az da' : 'Ещё немного'}
-                  </Text>
-                </Pressable>
-                <Pressable
-                  onPress={finishLesson}
-                  style={[styles.goalsBannerBtn, styles.goalsBannerBtnPrimary]}
-                >
-                  <Text style={[styles.goalsBannerBtnText, { color: colors.white }]}>
-                    {parentUILanguage === 'az' ? 'Bitir ✓' : 'Завершить ✓'}
-                  </Text>
-                </Pressable>
-              </View>
-            </Animated.View>
+            <Celebration
+              title={az ? `${bot} ilə əla söhbət!` : `Отличная беседа с ${bot}!`}
+              stayLabel={az ? 'Bir az da' : 'Ещё немного'}
+              doneLabel={az ? 'Dərsi bitir' : 'Завершить урок'}
+              onStay={() => setFinishBanner(false)}
+              onDone={finishLesson}
+            />
           ) : null}
 
           {/* particle layer */}
@@ -817,59 +839,44 @@ export default function TalkScreen() {
             ))}
           </View>
 
-          {/* ── Chat history ── */}
+          {/* ── Переписка ── */}
           <ScrollView
             ref={scrollRef}
             style={styles.history}
             contentContainerStyle={styles.historyContent}
             showsVerticalScrollIndicator={false}
           >
-            {/* Previous conversation recap — proof that Бобо remembers */}
+            {/* Прошлый разговор приглушённо сверху — видно, что персонаж помнит */}
             {pastTurns.length > 0 ? (
               <View style={styles.pastWrap}>
-                <View style={styles.pastDivider}>
-                  <View style={styles.pastLine} />
-                  <Text style={styles.pastLabel}>
-                    {parentUILanguage === 'az' ? `${bot} xatırlayır` : `${bot} помнит`}
-                  </Text>
-                  <View style={styles.pastLine} />
-                </View>
-                {pastTurns.map((t, i) => (
-                  <View
-                    key={`past-${i}`}
-                    style={t.role === 'bobo' ? styles.boboRow : styles.childRow}
-                  >
-                    {t.role === 'bobo' ? (
+                <Divider label={az ? `${bot} xatırlayır` : `${bot} помнит`} />
+                {pastTurns.map((turn, i) => (
+                  <View key={`past-${i}`} style={turn.role === 'bobo' ? styles.boboRow : styles.childRow}>
+                    {turn.role === 'bobo' ? (
                       <>
-                        <HBPet size={28} eyes={false} mood="happy" still />
-                        <View style={[styles.bubble, styles.bubbleBobo, styles.bubblePast]}>
-                          <Text style={[styles.bubbleText, styles.bubblePastText]}>{t.text}</Text>
+                        <HBPet size={28} mood="happy" still />
+                        <View style={[styles.bubble, styles.bubbleBobo]}>
+                          <Text style={[styles.bubbleText, styles.bubblePastText]}>{turn.text}</Text>
                         </View>
                       </>
                     ) : (
-                      <View style={[styles.bubble, styles.bubbleChild, styles.bubbleChildPast]}>
-                        <Text style={[styles.bubbleText, styles.bubblePastText]}>{t.text}</Text>
+                      <View style={[styles.bubble, styles.bubbleChild, { backgroundColor: accent.soft }]}>
+                        <Text style={[styles.bubbleText, styles.bubblePastText]}>{turn.text}</Text>
                       </View>
                     )}
                   </View>
                 ))}
-                <View style={styles.pastDivider}>
-                  <View style={styles.pastLine} />
-                  <Text style={styles.pastLabel}>
-                    {parentUILanguage === 'az' ? 'Bu gün' : 'Сегодня'}
-                  </Text>
-                  <View style={styles.pastLine} />
-                </View>
+                <Divider label={az ? 'Bu gün' : 'Сегодня'} />
               </View>
             ) : null}
 
             {history.length === 0 ? (
               <Animated.View entering={FadeIn.duration(500)} style={styles.emptyState}>
-                <HBPet size={88} mood="happy" />
-                <Text style={styles.emptyText}>
+                <HBPet size={Math.round(t.mascot.hero * 0.75)} mood={boboMood} talking={mood === 'playing'} />
+                <Text variant="bodyBold" tone="secondary" align="center" style={styles.emptyText}>
                   {language === 'en'
-                    ? `Tap the mic and talk to ${bot} ✨`
-                    : `Нажми на микрофон и поговори с ${bot} ✨`}
+                    ? `Tap the mic and talk to ${bot}`
+                    : `Нажми на микрофон и поговори с ${bot}`}
                 </Text>
               </Animated.View>
             ) : null}
@@ -882,80 +889,90 @@ export default function TalkScreen() {
               >
                 {turn.role === 'bobo' ? (
                   <>
-                    <HBPet size={36} eyes={false} mood="happy" />
-                    <View style={[styles.bubble, styles.bubbleBobo, shadow.sm]}>
+                    <HBPet size={32} mood="happy" still />
+                    <View style={[styles.bubble, styles.bubbleBobo]}>
                       <Text style={styles.bubbleText}>{turn.text}</Text>
-                      <View style={styles.bubbleTailBobo} />
                     </View>
                     <Pressable
                       onPress={() => reportMessage(turn.text)}
                       hitSlop={10}
+                      accessibilityRole="button"
+                      accessibilityLabel={az ? 'Cavabı bildir' : 'Пожаловаться на ответ'}
                       style={styles.reportBtn}
                     >
-                      <Text style={styles.reportIcon}>⚐</Text>
+                      <Icon name="flag" size={14} color={colors.textMuted} strokeWidth={2} />
                     </Pressable>
                   </>
                 ) : (
-                  <View style={[styles.bubble, styles.bubbleChild]}>
+                  <View style={[styles.bubble, styles.bubbleChild, { backgroundColor: accent.soft }]}>
                     <ChildTranscript text={turn.text} unclearWords={turn.unclearWords ?? []} />
                     {typeof turn.confidence === 'number' && turn.confidence < 0.7 && turn.unclearWords && turn.unclearWords.length > 0 && (
                       <View style={styles.pronChip}>
+                        <Icon name="target" size={12} color={colors.berryDeep} strokeWidth={2.5} />
                         <Text style={styles.pronChipText}>
-                          {language === 'en' ? '🎯 Try again clearly' : '🎯 Скажи чётче'}
+                          {language === 'en' ? 'Try again clearly' : 'Скажи чётче'}
                         </Text>
                       </View>
                     )}
-                    <View style={styles.bubbleTailChild} />
                   </View>
                 )}
               </Animated.View>
             ))}
 
-            {mood === 'thinking' && (
+            {mood === 'thinking' && history.length > 0 && (
               <Animated.View
                 entering={FadeIn.duration(300)}
                 exiting={FadeOut.duration(200)}
                 style={styles.boboRow}
               >
-                <HBPet size={36} eyes={false} mood="curious" />
-                <View style={[styles.bubble, styles.bubbleBobo, styles.thinkingBubble, shadow.sm]}>
-                  <Text style={{ fontSize: 20 }}>💭</Text>
-                  <Text style={styles.bubbleText}>
-                    {language === 'en' ? 'thinking...' : 'думаю...'}
-                  </Text>
+                <HBPet size={32} mood="thinking" still />
+                <View
+                  style={[styles.bubble, styles.bubbleBobo, styles.thinkingBubble]}
+                  accessibilityLabel={language === 'en' ? 'thinking' : 'думаю'}
+                >
+                  <TypingDots color={colors.inkSoft} size={8} />
                 </View>
               </Animated.View>
             )}
           </ScrollView>
 
-          {/* ── Hint pill (when idle) ── */}
-          {mood === 'idle' && (
+          {bannerView ? <View style={styles.bannerRow}>{bannerView}</View> : null}
+
+          {/* ── Подсказка (пока тишина) ── */}
+          {mood === 'idle' && !bannerView && (
             <View style={styles.hintRow}>
               {hint ? (
-                <Animated.View entering={FadeIn.duration(300)} style={[styles.hintBubble, shadow.sm]}>
-                  <Text style={styles.hintLabelText}>💡</Text>
+                <Animated.View entering={FadeIn.duration(300)} style={styles.hintBubble}>
+                  <Icon name="lightbulb" size={18} color="#7F6628" />
                   <Text style={styles.hintText}>{hint}</Text>
-                  <Pressable onPress={() => setHint(null)} hitSlop={8}>
-                    <Text style={styles.hintClose}>✕</Text>
+                  <Pressable
+                    onPress={() => setHint(null)}
+                    hitSlop={10}
+                    accessibilityRole="button"
+                    accessibilityLabel={az ? 'Bağla' : 'Закрыть'}
+                  >
+                    <Icon name="x" size={16} color={colors.inkSoft} />
                   </Pressable>
                 </Animated.View>
               ) : (
                 <Pressable
                   onPress={requestHint}
                   disabled={hintLoading}
-                  style={[styles.hintBtn, shadow.sm, hintLoading && { opacity: 0.6 }]}
+                  accessibilityRole="button"
+                  style={[styles.hintBtn, hintLoading && { opacity: 0.6 }]}
                 >
+                  <Icon name="lightbulb" size={16} color={accent.ink} />
                   <Text style={styles.hintBtnText}>
                     {hintLoading
                       ? (language === 'en' ? 'Thinking…' : 'Думаю…')
-                      : (language === 'en' ? '💡 Need a hint?' : '💡 Нужна подсказка?')}
+                      : (language === 'en' ? 'Need a hint?' : 'Нужна подсказка?')}
                   </Text>
                 </Pressable>
               )}
             </View>
           )}
 
-          {/* ── Mic area ── */}
+          {/* ── Микрофон ── */}
           <View style={styles.micArea}>
             {__DEV__ && latest ? (
               <HBChip
@@ -978,83 +995,103 @@ export default function TalkScreen() {
               state={mood}
               onPress={handleMicPress}
               disabled={mood === 'thinking' || mood === 'playing'}
+              accessibilityLabel={moodLabel}
             />
           </View>
           {/* Место под плавающие вкладки — иначе они закрывали половину микрофона. */}
           {!fromLesson && <BottomTabsSpacer />}
-
-          {!fromLesson && <BottomTabs />}
         </View>
+
+        {!fromLesson && <BottomTabs />}
       </PaperBackground>
     </>
+  );
+}
+
+function Divider({ label }: { label: string }) {
+  return (
+    <View style={styles.pastDivider}>
+      <View style={styles.pastLine} />
+      <Text style={styles.pastLabel}>{label}</Text>
+      <View style={styles.pastLine} />
+    </View>
+  );
+}
+
+/** Карточка «получилось»: остаться в разговоре или закончить. */
+function Celebration({
+  title,
+  stayLabel,
+  doneLabel,
+  onStay,
+  onDone,
+}: {
+  title: string;
+  stayLabel: string;
+  doneLabel: string;
+  onStay: () => void;
+  onDone: () => void;
+}) {
+  const { accent } = useTheme();
+  return (
+    <Animated.View entering={FadeInDown.duration(400).springify()}>
+      <HBCard style={styles.celebration}>
+        <View style={styles.celebrationHead}>
+          <HBIconBox icon="party-popper" tint={accent.soft} iconColor={accent.ink} size={40} />
+          <Text variant="bodyBold" style={styles.celebrationTitle}>
+            {title}
+          </Text>
+        </View>
+        <View style={styles.celebrationRow}>
+          <HBButton size="sm" variant="soft" label={stayLabel} onPress={onStay} style={styles.celebrationBtn} />
+          <HBButton size="sm" icon="circle-check" label={doneLabel} onPress={onDone} style={styles.celebrationBtn} />
+        </View>
+      </HBCard>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 50,
-    paddingHorizontal: spacing[4],
   },
 
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[2],
-    paddingBottom: spacing[2],
-  },
-  homeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   headerCenter: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing[2],
-    flex: 1,
     minWidth: 0,
   },
   petAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.card,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
-  headerName: {
-    fontFamily: fontFamily.display,
-    fontSize: fontSize.base,
-    color: colors.ink,
-  },
+  headerText: { flex: 1, minWidth: 0 },
+  headerName: { fontSize: fontSize.lg, lineHeight: Math.round(fontSize.lg * 1.25) },
   statusRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginTop: 1,
+    gap: 5,
   },
-  statusDot: { width: 6, height: 6, borderRadius: 3 },
-  statusText: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize['2xs'],
-    color: colors.inkSoft,
-  },
+  statusDot: { width: 7, height: 7, borderRadius: 4 },
   langPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: colors.card,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
     paddingHorizontal: spacing[2],
     paddingVertical: 6,
     borderRadius: radius.full,
   },
   langLabel: {
     fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize['2xs'],
+    fontSize: fontSize.xs,
     color: colors.ink,
     letterSpacing: 0.5,
   },
@@ -1075,14 +1112,7 @@ const styles = StyleSheet.create({
     gap: spacing[3],
     paddingHorizontal: spacing[4],
   },
-  emptyText: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize.sm,
-    color: colors.inkSoft,
-    textAlign: 'center',
-    maxWidth: 240,
-    lineHeight: 20,
-  },
+  emptyText: { maxWidth: 260 },
 
   boboRow: {
     flexDirection: 'row',
@@ -1097,19 +1127,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[2],
     borderRadius: radius.lg,
-    maxWidth: '78%',
-    position: 'relative',
+    maxWidth: '80%',
   },
   bubbleBobo: {
-    backgroundColor: colors.card,
-    borderBottomLeftRadius: 4,
-    flex: 1,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
+    borderBottomLeftRadius: 6,
+    flexShrink: 1,
   },
   bubbleChild: {
-    backgroundColor: colors.primary,
-    borderBottomRightRadius: 4,
-    borderBottomWidth: 3,
-    borderBottomColor: colors.primaryDeep,
+    borderBottomRightRadius: 6,
   },
   bubbleText: {
     color: colors.ink,
@@ -1118,18 +1146,21 @@ const styles = StyleSheet.create({
     lineHeight: 21,
   },
   unclearWord: {
-    // Underline + tinted background — kid-friendly way to flag "say this clearer"
+    // Подчёркнутое слово на розовом — «скажи это чётче», по-детски понятно
     backgroundColor: 'rgba(229,92,115,0.18)',
-    color: '#B73E55',
+    color: colors.berryDeep,
     textDecorationLine: 'underline',
     textDecorationStyle: 'dotted',
-    textDecorationColor: '#B73E55',
+    textDecorationColor: colors.berryDeep,
     borderRadius: 3,
   },
   pronChip: {
     marginTop: spacing[2],
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(229,92,115,0.12)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: colors.surface,
     borderRadius: radius.full,
     paddingHorizontal: spacing[2],
     paddingVertical: 3,
@@ -1137,52 +1168,18 @@ const styles = StyleSheet.create({
   pronChipText: {
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize['2xs'],
-    color: '#B73E55',
-  },
-  bubbleTailBobo: {
-    position: 'absolute',
-    bottom: 6,
-    left: -6,
-    width: 0,
-    height: 0,
-    borderTopWidth: 6,
-    borderBottomWidth: 6,
-    borderRightWidth: 6,
-    borderTopColor: 'transparent',
-    borderBottomColor: 'transparent',
-    borderRightColor: colors.card,
-  },
-  bubbleTailChild: {
-    position: 'absolute',
-    bottom: 6,
-    right: -6,
-    width: 0,
-    height: 0,
-    borderTopWidth: 6,
-    borderBottomWidth: 6,
-    borderLeftWidth: 6,
-    borderTopColor: 'transparent',
-    borderBottomColor: 'transparent',
-    borderLeftColor: colors.primary,
+    color: colors.berryDeep,
   },
   thinkingBubble: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[2],
-    opacity: 0.9,
+    paddingVertical: spacing[3],
   },
   reportBtn: {
     alignSelf: 'flex-end',
     paddingHorizontal: 2,
-    paddingBottom: 4,
-  },
-  reportIcon: {
-    fontSize: fontSize.caption,
-    color: colors.inkSoft,
-    opacity: 0.45,
+    paddingBottom: 6,
   },
 
-  // Previous-conversation recap (muted)
+  // Прошлый разговор (приглушённо)
   pastWrap: { gap: spacing[3], opacity: 0.6 },
   pastDivider: {
     flexDirection: 'row',
@@ -1201,17 +1198,12 @@ const styles = StyleSheet.create({
     color: colors.inkSoft,
     letterSpacing: 0.6,
   },
-  bubblePast: {
-    backgroundColor: colors.bgDeep,
-  },
   bubblePastText: {
     color: colors.inkSoft,
     fontFamily: fontFamily.bodyMedium,
   },
-  bubbleChildPast: {
-    backgroundColor: colors.primarySoft,
-    borderBottomColor: colors.primary,
-  },
+
+  bannerRow: { paddingBottom: spacing[2] },
 
   micArea: {
     alignItems: 'center',
@@ -1219,61 +1211,32 @@ const styles = StyleSheet.create({
     paddingTop: spacing[2],
   },
   waveformOverlay: {
-    // Sits just above the 110px mic button, centered in its 160px wrapper
+    // Над кнопкой 110 dp в её обёртке 160 dp
     position: 'absolute',
     bottom: 166,
     alignSelf: 'center',
     zIndex: 5,
   },
-  goalsBanner: {
-    backgroundColor: colors.card,
-    borderRadius: radius.lg,
-    padding: spacing[3],
-    marginTop: spacing[2],
-    gap: spacing[2],
-    borderWidth: 2,
-    borderColor: colors.accent,
-  },
-  goalsBannerTitle: {
-    fontFamily: fontFamily.display,
-    fontSize: fontSize.base,
-    color: colors.ink,
-    textAlign: 'center',
-  },
-  goalsBannerRow: {
-    flexDirection: 'row',
-    gap: spacing[2],
-  },
-  goalsBannerBtn: {
-    flex: 1,
-    borderRadius: radius.md,
-    paddingVertical: spacing[2],
-    alignItems: 'center',
-    backgroundColor: colors.bgDeep,
-  },
-  goalsBannerBtnPrimary: {
-    backgroundColor: colors.accent,
-  },
-  goalsBannerBtnText: {
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize.sm,
-    color: colors.ink,
-  },
+
+  celebration: { marginTop: spacing[2], gap: spacing[3] },
+  celebrationHead: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
+  celebrationTitle: { flex: 1, color: colors.ink },
+  celebrationRow: { flexDirection: 'row', gap: spacing[2] },
+  celebrationBtn: { flex: 1 },
 
   finishRow: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
     paddingVertical: spacing[1],
   },
   convoProgress: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 5,
+    gap: spacing[2],
     paddingVertical: spacing[1],
   },
   convoBarTrack: {
     flex: 1,
-    maxWidth: 160,
+    maxWidth: 180,
     height: 6,
     borderRadius: 3,
     backgroundColor: colors.border,
@@ -1282,13 +1245,6 @@ const styles = StyleSheet.create({
   convoBarFill: {
     height: '100%',
     borderRadius: 3,
-    backgroundColor: colors.accent,
-  },
-  convoProgressText: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize['2xs'],
-    color: colors.inkSoft,
-    marginLeft: spacing[1],
   },
 
   hintRow: {
@@ -1298,7 +1254,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   hintBtn: {
-    backgroundColor: colors.card,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[1],
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[2],
     borderRadius: radius.full,
@@ -1312,23 +1273,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing[2],
-    backgroundColor: colors.butter,
+    backgroundColor: '#FFF6D6',
+    borderWidth: 1,
+    borderColor: '#F0DC92',
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[2],
     borderRadius: radius.lg,
-    maxWidth: '90%',
+    maxWidth: '100%',
   },
-  hintLabelText: { fontSize: fontSize.base },
   hintText: {
     flex: 1,
     color: colors.ink,
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize.caption,
-  },
-  hintClose: {
-    color: colors.ink,
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize.sm,
-    paddingHorizontal: 4,
   },
 });

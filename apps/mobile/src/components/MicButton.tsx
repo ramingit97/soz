@@ -9,9 +9,11 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import Svg, { Path, Rect } from 'react-native-svg';
 
-import { colors, radius, shadow } from '@/theme';
+import { Icon } from '@/components/Icon';
+import { TypingDots } from '@/components/TypingDots';
+import { useAccent } from '@/hooks/useAccent';
+import { colors, radius } from '@/theme';
 
 interface MicButtonProps {
   state: 'idle' | 'recording' | 'thinking' | 'playing';
@@ -22,9 +24,17 @@ interface MicButtonProps {
    */
   onPress: () => void;
   disabled?: boolean;
+  /** Подпись для экранного диктора. */
+  accessibilityLabel?: string;
 }
 
-export function MicButton({ state, onPress, disabled }: MicButtonProps) {
+/**
+ * Цвет кнопки — цвет питомца (акцент приложения): у ребёнка с голубым роботом
+ * голубой микрофон. Запись — всегда ягодный, чтобы «я слушаю» не путалось с
+ * «нажми». Пока персонаж думает или говорит, кнопка бледнеет и не нажимается.
+ */
+export function MicButton({ state, onPress, disabled, accessibilityLabel }: MicButtonProps) {
+  const accent = useAccent();
   const scale = useSharedValue(1);
   const pulse = useSharedValue(0);
 
@@ -50,44 +60,31 @@ export function MicButton({ state, onPress, disabled }: MicButtonProps) {
   }, [state, pulse, scale]);
 
   const aStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
-
   const ringStyle = useAnimatedStyle(() => ({
-    opacity: pulse.value * 0.5,
+    opacity: pulse.value * 0.35,
     transform: [{ scale: 1 + pulse.value * 0.3 }],
   }));
-
   const ring2Style = useAnimatedStyle(() => ({
-    opacity: pulse.value * 0.3,
+    opacity: pulse.value * 0.2,
     transform: [{ scale: 1 + pulse.value * 0.55 }],
   }));
 
-  const buttonColor =
-    state === 'recording'
-      ? colors.accentPink
-      : state === 'thinking'
-        ? colors.accentYellow
-        : state === 'playing'
-          ? colors.accent
-          : colors.primary;
+  const busy = state === 'thinking' || state === 'playing';
+  const fill = state === 'recording' ? colors.berry : busy ? accent.soft : accent.bottom;
+  const ink = state === 'recording' ? colors.white : busy ? accent.ink : accent.text;
 
   return (
     <View style={styles.wrapper}>
-      <Animated.View
-        style={[
-          styles.ring,
-          ring2Style,
-          { backgroundColor: buttonColor, opacity: 0.15 },
-        ]}
-      />
-      <Animated.View
-        style={[
-          styles.ring,
-          ringStyle,
-          { backgroundColor: buttonColor, opacity: 0.25 },
-        ]}
-      />
+      <Animated.View style={[styles.ring, ring2Style, { backgroundColor: fill }]} />
+      <Animated.View style={[styles.ring, ringStyle, { backgroundColor: fill }]} />
       {/* Скругление обязательно: в браузере тень рисуется по рамке блока — был квадрат. */}
-      <Animated.View style={[aStyle, shadow.glow, styles.glow]}>
+      <Animated.View
+        style={[
+          aStyle,
+          styles.glow,
+          { shadowColor: state === 'recording' ? colors.berry : accent.bottom },
+        ]}
+      >
         <Pressable
           disabled={disabled}
           onPress={() => {
@@ -95,51 +92,19 @@ export function MicButton({ state, onPress, disabled }: MicButtonProps) {
             onPress();
           }}
           accessibilityRole="button"
+          accessibilityLabel={accessibilityLabel}
           accessibilityState={{ disabled: !!disabled, busy: state === 'recording' }}
-          style={[styles.button, { backgroundColor: buttonColor, opacity: disabled ? 0.4 : 1 }]}
+          style={[styles.button, { backgroundColor: fill }, disabled && !busy && styles.disabled]}
         >
-          {state === 'thinking' ? <ThinkingDots /> : <MicIcon />}
+          {state === 'thinking' ? (
+            <TypingDots color={ink} />
+          ) : state === 'playing' ? (
+            <Icon name="volume-2" size={40} color={ink} strokeWidth={2.5} />
+          ) : (
+            <Icon name="mic" size={42} color={ink} strokeWidth={2.5} />
+          )}
         </Pressable>
       </Animated.View>
-    </View>
-  );
-}
-
-function MicIcon() {
-  return (
-    <Svg width={42} height={42} viewBox="0 0 24 24" fill="none">
-      <Rect x="9" y="3" width="6" height="11" rx="3" fill="white" />
-      <Path
-        d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"
-        stroke="white"
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
-
-function ThinkingDots() {
-  const a = useSharedValue(0);
-  const b = useSharedValue(0);
-  const cc = useSharedValue(0);
-
-  useEffect(() => {
-    a.value = withRepeat(withTiming(1, { duration: 600 }), -1, true);
-    b.value = withRepeat(withTiming(1, { duration: 600 }), -1, true);
-    cc.value = withRepeat(withTiming(1, { duration: 600 }), -1, true);
-  }, [a, b, cc]);
-
-  const dotA = useAnimatedStyle(() => ({ opacity: 0.4 + a.value * 0.6 }));
-  const dotB = useAnimatedStyle(() => ({ opacity: 0.3 + b.value * 0.7 }));
-  const dotC = useAnimatedStyle(() => ({ opacity: 0.4 + cc.value * 0.6 }));
-
-  return (
-    <View style={{ flexDirection: 'row', gap: 8 }}>
-      <Animated.View style={[styles.dot, dotA]} />
-      <Animated.View style={[styles.dot, dotB]} />
-      <Animated.View style={[styles.dot, dotC]} />
     </View>
   );
 }
@@ -161,6 +126,10 @@ const styles = StyleSheet.create({
   },
   glow: {
     borderRadius: radius.full,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.28,
+    shadowRadius: 20,
+    elevation: 10,
   },
   button: {
     width: 110,
@@ -169,10 +138,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: 'white',
-  },
+  disabled: { opacity: 0.45 },
 });

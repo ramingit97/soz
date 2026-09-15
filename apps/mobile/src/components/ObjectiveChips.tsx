@@ -8,8 +8,10 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 
+import { Icon } from '@/components/Icon';
 import { Text } from '@/components/Text';
-import { colors, fontFamily, fontSize, radius, shadow, spacing, tints } from '@/theme';
+import { useAccent } from '@/hooks/useAccent';
+import { colors, fontFamily, fontSize, radius, spacing } from '@/theme';
 
 interface ObjectiveChipsProps {
   labels: string[];
@@ -17,6 +19,7 @@ interface ObjectiveChipsProps {
 }
 
 function Chip({ label, isDone, onPress }: { label: string; isDone: boolean; onPress: () => void }) {
+  const accent = useAccent();
   const scale = useSharedValue(1);
   const wasDone = useRef(isDone);
 
@@ -33,8 +36,18 @@ function Chip({ label, isDone, onPress }: { label: string; isDone: boolean; onPr
 
   return (
     <Animated.View style={[styles.chipWrap, aStyle]}>
-      <Pressable onPress={onPress} style={[styles.chip, shadow.sm, isDone && styles.chipDone]}>
-        <Text style={[styles.mark, isDone && styles.markDone]}>{isDone ? '✓' : '○'}</Text>
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityState={{ checked: isDone }}
+        style={[styles.chip, isDone && { backgroundColor: accent.soft, borderColor: accent.bottom }]}
+      >
+        <Icon
+          name={isDone ? 'circle-check' : 'circle'}
+          size={14}
+          color={isDone ? accent.ink : colors.textMuted}
+          strokeWidth={2.5}
+        />
         <Text style={[styles.label, isDone && styles.labelDone]} numberOfLines={1}>
           {label}
         </Text>
@@ -80,23 +93,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: colors.card,
+    backgroundColor: colors.surface,
     borderRadius: radius.full,
     paddingHorizontal: spacing[2],
     paddingVertical: 6,
-    borderWidth: 1.5,
-    borderColor: colors.border,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
   },
-  chipDone: {
-    backgroundColor: tints.sage,
-    borderColor: colors.accent,
-  },
-  mark: {
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize.xs,
-    color: colors.textMuted,
-  },
-  markDone: { color: colors.accent },
   label: {
     flex: 1,
     fontFamily: fontFamily.bodyBold,
@@ -105,7 +108,9 @@ const styles = StyleSheet.create({
   },
   labelDone: { color: colors.ink },
   peek: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
     borderRadius: radius.md,
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[2],

@@ -3,9 +3,11 @@
  * Acts as the "drawer replacement" for settings-level navigation.
  */
 
+import Constants from 'expo-constants';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { useRef } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 
@@ -41,6 +43,18 @@ export default function ProfileScreen() {
   const isAz = lang === 'az';
   const parentalGate = useParentalGate();
   const bot = useCompanionName();
+
+  // Скрытый вход в проверку маскота: пять нажатий по версии за три секунды.
+  const versionTaps = useRef<number[]>([]);
+  const onVersionTap = () => {
+    const now = Date.now();
+    versionTaps.current = [...versionTaps.current.filter((t) => now - t < 3000), now];
+    if (versionTaps.current.length >= 5) {
+      versionTaps.current = [];
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      router.push('/dev/mascot' as any); // типы маршрутов обновятся при следующем expo start
+    }
+  };
 
   const initial = childName.charAt(0).toUpperCase() || 'B';
   const color = avatarColor(childName || 'B');
@@ -217,6 +231,10 @@ export default function ProfileScreen() {
             : 'Söz создан для детей 5+. С родительским контролем.'}
         </Text>
 
+        <Pressable onPress={onVersionTap} hitSlop={8} style={styles.versionTap}>
+          <Text style={styles.versionText}>Söz · {Constants.expoConfig?.version ?? '1.0.0'}</Text>
+        </Pressable>
+
         <BottomTabsSpacer />
       </ScrollView>
 
@@ -365,6 +383,12 @@ const styles = StyleSheet.create({
   legalDot: {
     color: colors.inkSoft,
     fontSize: fontSize.base,
+  },
+  versionTap: { alignSelf: 'center', paddingVertical: spacing[2], marginTop: spacing[2] },
+  versionText: {
+    fontFamily: fontFamily.bodyMedium,
+    fontSize: fontSize['2xs'],
+    color: colors.textMuted,
   },
   coppaNote: {
     textAlign: 'center',

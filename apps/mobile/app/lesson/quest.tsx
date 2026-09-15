@@ -201,8 +201,9 @@ export default function QuestScreen() {
   const boboMood =
     status === 'success' || status === 'skipped' ? 'happy'
     : status === 'fail' ? 'sad'
-    : status === 'recording' ? 'curious'
-    : 'sleepy';
+    : status === 'recording' ? 'listening'
+    : status === 'thinking' ? 'thinking'
+    : 'curious';
 
   const bot = useCompanionName();
   const questIntro = isRu

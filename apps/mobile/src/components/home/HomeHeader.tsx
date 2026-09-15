@@ -42,7 +42,7 @@ export function HomeHeader(p: Props) {
           style={styles.avatar}
           hitSlop={6}
         >
-          <HBPet size={34} hue={p.petHue} eyes={false} mood={p.petMood} />
+          <HBPet size={34} hue={p.petHue} mood={p.petMood} />
         </Pressable>
         <Text variant="headline" numberOfLines={2} style={styles.greeting}>
           {p.isAz ? `Salam, ${p.childName}!` : `Привет, ${p.childName}!`}

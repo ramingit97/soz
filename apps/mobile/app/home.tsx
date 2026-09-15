@@ -105,7 +105,7 @@ function AdultHome() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         <Animated.View entering={FadeInDown.duration(500)} style={styles.topBar}>
           <View style={[styles.petAvatar, shadow.sm]}>
-            <HBPet size={32} eyes={false} hue={175} mood="happy" />
+            <HBPet size={32} hue={175} mood="happy" />
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={styles.tbGreeting}>

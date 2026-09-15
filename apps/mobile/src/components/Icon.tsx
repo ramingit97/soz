@@ -16,6 +16,7 @@ import Backpack from 'lucide-react-native/icons/backpack';
 import Bell from 'lucide-react-native/icons/bell';
 import Book from 'lucide-react-native/icons/book';
 import BookOpen from 'lucide-react-native/icons/book-open';
+import BookmarkPlus from 'lucide-react-native/icons/bookmark-plus';
 import Bot from 'lucide-react-native/icons/bot';
 import Brain from 'lucide-react-native/icons/brain';
 import Calendar from 'lucide-react-native/icons/calendar';
@@ -24,13 +25,17 @@ import ChartColumn from 'lucide-react-native/icons/chart-column';
 import Check from 'lucide-react-native/icons/check';
 import ChevronLeft from 'lucide-react-native/icons/chevron-left';
 import ChevronRight from 'lucide-react-native/icons/chevron-right';
+import Circle from 'lucide-react-native/icons/circle';
 import CircleAlert from 'lucide-react-native/icons/circle-alert';
 import CircleCheck from 'lucide-react-native/icons/circle-check';
+import Clapperboard from 'lucide-react-native/icons/clapperboard';
 import ClipboardList from 'lucide-react-native/icons/clipboard-list';
 import Crown from 'lucide-react-native/icons/crown';
 import Drama from 'lucide-react-native/icons/drama';
 import Dumbbell from 'lucide-react-native/icons/dumbbell';
+import Flag from 'lucide-react-native/icons/flag';
 import Flame from 'lucide-react-native/icons/flame';
+import Gamepad2 from 'lucide-react-native/icons/gamepad-2';
 import Gift from 'lucide-react-native/icons/gift';
 import Globe from 'lucide-react-native/icons/globe';
 import GraduationCap from 'lucide-react-native/icons/graduation-cap';
@@ -45,9 +50,13 @@ import MessageCircle from 'lucide-react-native/icons/message-circle';
 import MessageCircleDashed from 'lucide-react-native/icons/message-circle-dashed';
 import MessagesSquare from 'lucide-react-native/icons/messages-square';
 import Mic from 'lucide-react-native/icons/mic';
+import MicOff from 'lucide-react-native/icons/mic-off';
 import Moon from 'lucide-react-native/icons/moon';
 import Music from 'lucide-react-native/icons/music';
+import Palette from 'lucide-react-native/icons/palette';
 import PartyPopper from 'lucide-react-native/icons/party-popper';
+import PawPrint from 'lucide-react-native/icons/paw-print';
+import Plane from 'lucide-react-native/icons/plane';
 import Play from 'lucide-react-native/icons/play';
 import Plus from 'lucide-react-native/icons/plus';
 import RefreshCw from 'lucide-react-native/icons/refresh-cw';
@@ -55,14 +64,20 @@ import Repeat from 'lucide-react-native/icons/repeat';
 import Rocket from 'lucide-react-native/icons/rocket';
 import Save from 'lucide-react-native/icons/save';
 import Scale from 'lucide-react-native/icons/scale';
+import School from 'lucide-react-native/icons/school';
 import Settings from 'lucide-react-native/icons/settings';
 import Snowflake from 'lucide-react-native/icons/snowflake';
 import Sparkles from 'lucide-react-native/icons/sparkles';
 import Star from 'lucide-react-native/icons/star';
+import Sun from 'lucide-react-native/icons/sun';
 import Target from 'lucide-react-native/icons/target';
 import Trophy from 'lucide-react-native/icons/trophy';
 import User from 'lucide-react-native/icons/user';
+import Users from 'lucide-react-native/icons/users';
+import Utensils from 'lucide-react-native/icons/utensils';
+import Volleyball from 'lucide-react-native/icons/volleyball';
 import Volume2 from 'lucide-react-native/icons/volume-2';
+import WifiOff from 'lucide-react-native/icons/wifi-off';
 import Wrench from 'lucide-react-native/icons/wrench';
 import X from 'lucide-react-native/icons/x';
 import Zap from 'lucide-react-native/icons/zap';
@@ -79,6 +94,7 @@ const ICONS = {
   bell: Bell,
   book: Book,
   'book-open': BookOpen,
+  'bookmark-plus': BookmarkPlus,
   bot: Bot,
   brain: Brain,
   calendar: Calendar,
@@ -87,13 +103,17 @@ const ICONS = {
   check: Check,
   'chevron-left': ChevronLeft,
   'chevron-right': ChevronRight,
+  circle: Circle,
   'circle-alert': CircleAlert,
   'circle-check': CircleCheck,
+  clapperboard: Clapperboard,
   'clipboard-list': ClipboardList,
   crown: Crown,
   drama: Drama,
   dumbbell: Dumbbell,
+  flag: Flag,
   flame: Flame,
+  'gamepad-2': Gamepad2,
   gift: Gift,
   globe: Globe,
   'graduation-cap': GraduationCap,
@@ -108,9 +128,13 @@ const ICONS = {
   'message-circle-dashed': MessageCircleDashed,
   'messages-square': MessagesSquare,
   mic: Mic,
+  'mic-off': MicOff,
   moon: Moon,
   music: Music,
+  palette: Palette,
   'party-popper': PartyPopper,
+  'paw-print': PawPrint,
+  plane: Plane,
   play: Play,
   plus: Plus,
   'refresh-cw': RefreshCw,
@@ -118,14 +142,20 @@ const ICONS = {
   rocket: Rocket,
   save: Save,
   scale: Scale,
+  school: School,
   settings: Settings,
   snowflake: Snowflake,
   sparkles: Sparkles,
   star: Star,
+  sun: Sun,
   target: Target,
   trophy: Trophy,
   user: User,
+  users: Users,
+  utensils: Utensils,
+  volleyball: Volleyball,
   'volume-2': Volume2,
+  'wifi-off': WifiOff,
   wrench: Wrench,
   x: X,
   zap: Zap,

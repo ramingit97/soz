@@ -28,13 +28,14 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
 
-import { HBPet } from '@/components/HBPet';
+import { HBPet, type CompanionKind } from '@/components/HBPet';
 import { PaperBackground } from '@/components/PaperBackground';
 import { ParentalGateModal, useParentalGate } from '@/components/ParentalGate';
 import { Text } from '@/components/Text';
 import { getChildren, type ChildProfile } from '@/services/api';
 import { todayISO, useSettings } from '@/store/settings';
 import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing, tints } from '@/theme';
+import { KID_MAX_AGE } from '@/theme/mode';
 
 const PET_HUES = [55, 175, 300, 90] as const;
 
@@ -49,11 +50,13 @@ function petHueFor(childId: string, localId: string | null, storedHue: number): 
 
 function RingAvatar({
   hue,
+  kind,
   progress,
   todayDone,
   size = 96,
 }: {
   hue: number;
+  kind: CompanionKind;
   progress: number;
   todayDone: boolean;
   size?: number;
@@ -84,7 +87,7 @@ function RingAvatar({
         />
       </Svg>
       <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }]}>
-        <HBPet size={size * 0.54} hue={hue} mood="happy" />
+        <HBPet size={size * 0.54} hue={hue} kind={kind} mood="happy" />
       </View>
       {todayDone && (
         <View style={ring.checkBadge}>
@@ -147,6 +150,8 @@ function ChildCard({
   }));
 
   const hue = petHueFor(child.id, localChildId, storedHue);
+  // У каждого ребёнка свой персонаж: семилетнему медвежонок, брату 13 лет робот.
+  const kind: CompanionKind = child.ageBand === 'adult' || child.age > KID_MAX_AGE ? 'robot' : 'bear';
   const progress = Math.min(1, child.currentDay / 30);
   const todayDone = child.lastCompletedDate === todayISO();
 
@@ -156,7 +161,7 @@ function ChildCard({
         style={({ pressed }) => [styles.card, pressed && { transform: [{ scale: 0.96 }] }]}
         onPress={onPress}
       >
-        <RingAvatar hue={hue} progress={progress} todayDone={todayDone} size={96} />
+        <RingAvatar hue={hue} kind={kind} progress={progress} todayDone={todayDone} size={96} />
 
         <Text style={styles.childName} numberOfLines={1}>{child.name}</Text>
 

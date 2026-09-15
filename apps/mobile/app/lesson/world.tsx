@@ -209,7 +209,7 @@ export default function WorldScreen() {
     if (isLast) { setDone(true); } else { setPromptIndex((i) => i + 1); setBoboReply(null); }
   };
 
-  const boboMood = mood === 'playing' ? 'happy' : mood === 'recording' ? 'curious' : 'happy';
+  const boboMood = mood === 'playing' ? 'happy' : mood === 'recording' ? 'listening' : mood === 'thinking' ? 'thinking' : 'happy';
 
   return (
     <View style={styles.root}>

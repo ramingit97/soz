@@ -212,7 +212,7 @@ export default function PretendScreen() {
     router.push(`/lesson/word-game?lang=${lang}&day=${day}` as any);
   };
 
-  const boboMood = mood === 'playing' ? 'happy' : mood === 'thinking' ? 'sleepy' : mood === 'recording' ? 'curious' : 'happy';
+  const boboMood = mood === 'playing' ? 'happy' : mood === 'thinking' ? 'thinking' : mood === 'recording' ? 'listening' : 'happy';
   const lastBoboLine = [...history].reverse().find((t) => t.role === 'bobo')?.text;
   const turnProgress = Math.min(childTurns / MAX_TURNS, 1);
 

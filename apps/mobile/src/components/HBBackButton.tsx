@@ -22,10 +22,19 @@ interface Props {
   icon?: IconName;
   /** Extra top offset for the floating variant (safe-area). Defaults to 50. */
   top?: number;
+  /** Подпись для экранного диктора, по умолчанию «Back». */
+  accessibilityLabel?: string;
   style?: ViewStyle;
 }
 
-export function HBBackButton({ onPress, inline = false, icon = 'chevron-left', top = 50, style }: Props) {
+export function HBBackButton({
+  onPress,
+  inline = false,
+  icon = 'chevron-left',
+  top = 50,
+  accessibilityLabel = 'Back',
+  style,
+}: Props) {
   const router = useRouter();
   const handle = () => {
     Haptics.selectionAsync().catch(() => {});
@@ -38,7 +47,7 @@ export function HBBackButton({ onPress, inline = false, icon = 'chevron-left', t
       onPress={handle}
       hitSlop={10}
       accessibilityRole="button"
-      accessibilityLabel="Back"
+      accessibilityLabel={accessibilityLabel}
       style={({ pressed }) => [
         styles.btn,
         shadow.sm,
