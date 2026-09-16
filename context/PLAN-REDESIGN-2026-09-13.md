@@ -201,14 +201,22 @@
 ```bash
 corepack pnpm typecheck
 corepack pnpm test
-cd apps/mobile && ../../node_modules/.bin/expo export --platform android
-strings -n 10 dist/_expo/static/js/android/*.hbc | grep -c soz-api.fly.dev   # >= 1
-strings -n 10 dist/_expo/static/js/android/*.hbc | grep -c localhost:3000    # 0
+# Metro — по одной сборке за раз и с ограничением: на машине параллельно работает
+# другой проект владельца, и при нехватке памяти сессия обрывается (ловушка 16).
+cd apps/mobile && NODE_OPTIONS=--max-old-space-size=2048 \
+  ../../node_modules/.bin/expo export --platform android --max-workers 2
+# `strings` на этой машине нет — grep по бандлу:
+grep -ao soz-api.fly.dev dist/_expo/static/js/android/*.hbc | wc -l          # >= 1
+grep -ao localhost:3000 dist/_expo/static/js/android/*.hbc | wc -l           # 0
 npx expo-updates fingerprint:generate --platform android                     # 1a02f26809db28d65c05866f86f7c217a7b57f52
-node scripts/check-ui.mjs --check
-corepack pnpm --filter @soz/mobile exec eas update --branch preview -m "B<n>: …"
+node scripts/check-ui.mjs --check      # при снижении метрик потом --update
+# Публикуется уже собранный dist — второй прогон Metro не нужен:
+../../node_modules/.bin/eas update --branch preview --platform android \
+  --skip-bundler -m "B<n>: …"
 ```
 
 Владелец: дважды перезапустить приложение (обновление применяется со второго старта), прислать скриншоты из списка батча с A21s и с одного широкого телефона. Правки по скриншотам идут в тот же батч до следующего.
 
-**Первый шаг после одобрения:** скопировать этот план в `context/PLAN-REDESIGN-2026-09-13.md`, затем B0.
+**Состояние плана:** B0–B5 сделаны и опубликованы (таблица прогресса в разделе F
+выше). Следующий батч — B6, затем B7. Точка входа для новой сессии —
+`context/STATUS.md`, блок «Редизайн».
