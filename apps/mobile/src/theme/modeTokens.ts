@@ -35,6 +35,8 @@ export interface ModeTokens {
   /** Тёплая виньетка сверху фона. */
   vignette: boolean;
   iconStroke: number;
+  /** Сколько конфетти на празднике урока: малышам больше, подростку сдержаннее. */
+  confetti: number;
 }
 
 export const MODE_TOKENS: Record<UIMode, ModeTokens> = {
@@ -52,6 +54,7 @@ export const MODE_TOKENS: Record<UIMode, ModeTokens> = {
     density: { padX: spacing[5], cardPad: spacing[4], gap: spacing[3] },
     vignette: true,
     iconStroke: 2.25,
+    confetti: 24,
   },
   teen: {
     mode: 'teen',
@@ -67,6 +70,7 @@ export const MODE_TOKENS: Record<UIMode, ModeTokens> = {
     density: { padX: spacing[4], cardPad: spacing[3], gap: spacing[2] },
     vignette: false,
     iconStroke: 1.75,
+    confetti: 10,
   },
 };
 

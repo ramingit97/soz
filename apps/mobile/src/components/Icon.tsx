@@ -36,6 +36,7 @@ import Dumbbell from 'lucide-react-native/icons/dumbbell';
 import Flag from 'lucide-react-native/icons/flag';
 import Flame from 'lucide-react-native/icons/flame';
 import Gamepad2 from 'lucide-react-native/icons/gamepad-2';
+import Gem from 'lucide-react-native/icons/gem';
 import Gift from 'lucide-react-native/icons/gift';
 import Globe from 'lucide-react-native/icons/globe';
 import GraduationCap from 'lucide-react-native/icons/graduation-cap';
@@ -66,6 +67,7 @@ import Save from 'lucide-react-native/icons/save';
 import Scale from 'lucide-react-native/icons/scale';
 import School from 'lucide-react-native/icons/school';
 import Settings from 'lucide-react-native/icons/settings';
+import Share2 from 'lucide-react-native/icons/share-2';
 import Snowflake from 'lucide-react-native/icons/snowflake';
 import Sparkles from 'lucide-react-native/icons/sparkles';
 import Star from 'lucide-react-native/icons/star';
@@ -114,6 +116,7 @@ const ICONS = {
   flag: Flag,
   flame: Flame,
   'gamepad-2': Gamepad2,
+  gem: Gem,
   gift: Gift,
   globe: Globe,
   'graduation-cap': GraduationCap,
@@ -144,6 +147,7 @@ const ICONS = {
   scale: Scale,
   school: School,
   settings: Settings,
+  'share-2': Share2,
   snowflake: Snowflake,
   sparkles: Sparkles,
   star: Star,

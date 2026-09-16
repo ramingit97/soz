@@ -1,10 +1,10 @@
 {
-  "rawFontSize": 99,
-  "textAlignCenter": 140,
-  "emojiOnlyText": 55,
+  "rawFontSize": 73,
+  "textAlignCenter": 115,
+  "emojiOnlyText": 43,
   "deepShadow": 8,
-  "bobo": 16,
-  "alert": 5,
-  "paddingTopLarge": 21,
+  "bobo": 10,
+  "alert": 4,
+  "paddingTopLarge": 20,
   "modeBranch": 1
 }

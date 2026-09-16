@@ -1,19 +1,23 @@
 /**
- * Honeybear · Lesson Complete (Reward).
+ * Урок выполнен — награда.
  *
- * Soft confetti on the warm-cream surface, Бобо basking in a butter-halo,
- * stats card (stars / words / accuracy), new-badge callout, tomorrow's
- * preview, and a primary "Talk with Bobo" CTA.
+ * Звёзды начисляются один раз на (ребёнок, язык, день); прогресс уходит на
+ * сервер, при сбое — в очередь. Экран: персонаж, счётчик звёзд, итоги урока,
+ * после первого дня — вопрос про напоминания, значок для дома персонажа, что
+ * будет завтра, и дальше разговор или главный.
+ *
+ * Язык — интерфейса (RU/AZ): раньше для изучающих английский здесь было
+ * «LESSON COMPLETE!». Прокручивается: на 320×712 содержимое не влезало.
  */
 
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useMemo } from 'react';
-import { Dimensions, Pressable, StyleSheet, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { Dimensions, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, {
-  FadeIn,
   FadeInDown,
   FadeInUp,
+  FadeOut,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
@@ -21,19 +25,23 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as StoreReview from 'expo-store-review';
 
 import { AnimatedCount } from '@/components/AnimatedCount';
 import { DieCutBadge } from '@/components/DieCutBadge';
 import { HBButton } from '@/components/HBButton';
 import { HBCard } from '@/components/HBCard';
+import { HBIconBox } from '@/components/HBIconBox';
 import { HBPet } from '@/components/HBPet';
+import { Icon, type IconName } from '@/components/Icon';
 import { PaperBackground } from '@/components/PaperBackground';
 import { Text } from '@/components/Text';
 
 import { localOffsetMinutes } from '@soz/shared-types';
 
 import { getLesson } from '@/data/lessons';
+import { useTheme } from '@/hooks/useTheme';
 import { recordProgress } from '@/services/api';
 import { track } from '@/services/analytics';
 import { HOUSE_ITEMS } from '@/services/boboHouse';
@@ -41,16 +49,23 @@ import {
   ensureWeekCached,
   triggerWeekGeneration,
 } from '@/services/generatedLessons';
-import { notifyWeekReady, scheduleParentEveningDigest } from '@/services/notifications';
+import {
+  canAskNotificationPermission,
+  notifyWeekReady,
+  requestNotificationPermission,
+  scheduleLessonReminders,
+  scheduleParentEveningDigest,
+} from '@/services/notifications';
 import { playSfx } from '@/services/sfx';
 import { enqueueProgress } from '@/services/progressQueue';
 import { useSettings } from '@/store/settings';
-import { isMatureLearner } from '@/utils/lessonFlow';
+import { isMatureLearner, kidModeForDay } from '@/utils/lessonFlow';
+import { kidModeLabel } from '@/utils/lessonModes';
 import { useCompanionName } from '@/utils/companion';
-import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing, tints } from '@/theme';
+import { colors, fontFamily, fontSize, scaleFont, spacing, tints } from '@/theme';
 
 const { width: SW, height: SH } = Dimensions.get('window');
-const CONFETTI_COLORS = ['#E8945A', '#7AC9B5', '#F5D466', '#E55C73'];
+const CONFETTI_COLORS = [colors.primary, colors.accent, colors.butter, colors.berry];
 
 interface ConfettiProps {
   x: number;
@@ -122,11 +137,25 @@ export default function LessonCompleteScreen() {
   const bot = useCompanionName();
   const currentLessonErrors = useSettings((s) => s.currentLessonErrors);
 
-  const isRu = lang === 'ru';
+  const az = parentLang === 'az';
+  const scheduleHour = useSettings((s) => s.scheduleHour);
+  const scheduleDays = useSettings((s) => s.scheduleDays);
+  const { t, accent } = useTheme();
+  const insets = useSafeAreaInsets();
+
+  // Уведомления спрашиваем после первого урока: экран разрешения из онбординга
+  // убран, а после урока понятно, о чём напоминать.
+  const [askNotify, setAskNotify] = useState(false);
+  useEffect(() => {
+    if (Number(day) !== 1) return;
+    let alive = true;
+    canAskNotificationPermission().then((can) => { if (alive) setAskNotify(can); });
+    return () => { alive = false; };
+  }, [day]);
 
   const confetti = useMemo(
     () =>
-      Array.from({ length: 24 }, (_, i) => ({
+      Array.from({ length: t.confetti }, (_, i) => ({
         id: i,
         x: Math.random() * SW,
         delay: i * 90 + Math.random() * 200,
@@ -134,6 +163,8 @@ export default function LessonCompleteScreen() {
         rotation: Math.random() * 360,
         size: 10 + Math.random() * 8,
       })),
+    // Количество — из режима при открытии экрана; менять его на ходу незачем.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
 
@@ -227,304 +258,188 @@ export default function LessonCompleteScreen() {
   const handleHome = () => router.replace('/home');
   const handleTalkMore = () => router.push(`/talk?lang=${lang}&day=${day}`);
 
+  const handleAllowNotify = async () => {
+    Haptics.selectionAsync().catch(() => {});
+    setAskNotify(false);
+    try {
+      if (await requestNotificationPermission()) {
+        await scheduleLessonReminders(childName || (az ? 'Uşaq' : 'Ребёнок'), scheduleHour, scheduleDays, az);
+      }
+    } catch {
+      /* отказ или сбой — просто не напоминаем */
+    }
+  };
+
   const wordsLearned = lesson?.vocabulary.length ?? 5;
   const accuracy = currentLessonErrors.length === 0 ? 100 : Math.max(50, 100 - currentLessonErrors.length * 8);
 
-  const collectible = (() => {
-    const completedDay = Number(day);
-    return HOUSE_ITEMS.find((it) => it.unlockDay === completedDay);
-  })();
+  const collectible = HOUSE_ITEMS.find((it) => it.unlockDay === Number(day));
 
-  const tomorrow = (() => {
+  const tomorrow: { icon: IconName; name: string } | null = (() => {
     const nextDay = Number(day) + 1;
     if (nextDay > 30) return null;
-    // Teens/B1+ follow the text-first flow — tease that, not kid game modes.
+    // Старшие идут по тексту — это и показываем, а не игровые режимы малышей.
     const s = useSettings.getState();
     if (isMatureLearner(s.childLevel, s.childAgeBand)) {
-      return isRu
-        ? { emoji: '📚', name: `Текст и разговор с ${bot}` }
-        : { emoji: '📚', name: `Reading & talk with ${bot}` };
+      return { icon: 'book-open', name: az ? `Mətn və ${bot} ilə söhbət` : `Текст и разговор с ${bot}` };
     }
-    const LESSON_MODES = ['quest', 'tpr', 'pretend', 'world'] as const;
-    const LABELS_RU = {
-      quest: { emoji: '🗺️', name: 'Приключение' },
-      tpr: { emoji: '⚡', name: `Двигайся с ${bot}` },
-      pretend: { emoji: '🎭', name: 'Ролевая игра' },
-      world: { emoji: '🌍', name: 'Покажи свой мир' },
-    };
-    const LABELS_EN = {
-      quest: { emoji: '🗺️', name: 'Quest' },
-      tpr: { emoji: '⚡', name: `Move with ${bot}` },
-      pretend: { emoji: '🎭', name: 'Pretend Play' },
-      world: { emoji: '🌍', name: 'Show Your World' },
-    };
-    const mode = LESSON_MODES[(nextDay - 1) % 4]!;
-    const labels = isRu ? LABELS_RU : LABELS_EN;
-    return labels[mode];
+    return kidModeLabel(kidModeForDay(nextDay), az, bot);
   })();
 
   return (
-    <PaperBackground variant="honey">
-      {/* confetti layer */}
+    <PaperBackground>
+      {/* конфетти */}
       <View style={StyleSheet.absoluteFill} pointerEvents="none">
         {confetti.map((c) => (
           <Confetti key={c.id} {...c} />
         ))}
       </View>
 
-      <View style={styles.content}>
-        {/* Бобо with butter halo */}
-        <Animated.View entering={FadeInDown.duration(700)} style={styles.petWrap}>
-          <View style={styles.halo}>
-            <HBPet size={150} mood="happy" />
+      <ScrollView
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: insets.top + spacing[6], paddingHorizontal: t.density.padX, gap: t.density.gap },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        <Animated.View entering={FadeInDown.duration(600)} style={styles.petWrap}>
+          <View style={[styles.halo, { backgroundColor: accent.soft }]}>
+            <HBPet size={t.mascot.hero} mood="happy" />
           </View>
         </Animated.View>
 
-        {/* Counter */}
         <Animated.View style={[styles.counterWrap, counterStyle]}>
-          <Text style={styles.plusText}>+</Text>
-          <AnimatedCount value={stars} delay={600} duration={900} tickSound style={styles.counterText} />
-          <Text style={styles.starIcon}>⭐</Text>
+          <Text style={[styles.plusText, { color: accent.ink }]}>+</Text>
+          <AnimatedCount value={stars} delay={600} duration={900} tickSound style={[styles.counterText, { color: accent.ink }]} />
+          <Icon name="star" size={40} color={colors.butterDeep} fill={colors.butter} strokeWidth={2} />
         </Animated.View>
 
-        {/* Title */}
-        <Animated.View entering={FadeInUp.duration(600).delay(400)} style={styles.titleArea}>
-          <Text style={styles.kicker}>
-            {isRu ? 'УРОК ЗАВЕРШЁН!' : 'LESSON COMPLETE!'}
+        <Animated.View entering={FadeInUp.duration(500).delay(400)} style={styles.titleArea}>
+          <Text variant="label" style={{ color: accent.ink }}>
+            {az ? 'Dərs bitdi' : 'Урок выполнен'}
           </Text>
-          <Text style={styles.title}>
-            {isRu ? 'Великолепно!' : 'Great job!'}
+          <Text variant="title" align="center">
+            {az ? 'Əla!' : 'Великолепно!'}
           </Text>
-          {reward.message ? <Text style={styles.message}>{reward.message}</Text> : null}
+          {/* Подпись награды написана на языке урока: показываем, только если
+              ребёнок её прочитает (русский урок при русском интерфейсе). */}
+          {reward.message && lang === 'ru' && !az ? (
+            <Text variant="caption" tone="secondary" align="center" style={styles.message}>
+              {reward.message}
+            </Text>
+          ) : null}
         </Animated.View>
 
-        {/* Stats card */}
-        <Animated.View entering={FadeInUp.duration(500).delay(600)} style={{ width: '100%' }}>
-          <HBCard style={styles.statsCard} depth="md">
-            <View style={styles.statCol}>
-              <Text style={[styles.statIcon, { color: colors.butter }]}>⭐</Text>
-              <Text style={[styles.statValue, { color: colors.butterDeep }]}>+{stars}</Text>
-              <Text style={styles.statLabel}>
-                {isRu ? 'Звёзды' : 'Stars'}
-              </Text>
-            </View>
-            <View style={styles.dashedRule} />
-            <View style={styles.statCol}>
-              <Text style={styles.statIcon}>📖</Text>
-              <Text style={[styles.statValue, { color: colors.accent }]}>{wordsLearned}</Text>
-              <Text style={styles.statLabel}>
-                {isRu ? 'Слова' : 'Words'}
-              </Text>
-            </View>
-            <View style={styles.dashedRule} />
-            <View style={styles.statCol}>
-              <Text style={styles.statIcon}>✓</Text>
-              <Text style={[styles.statValue, { color: colors.primary }]}>{accuracy}%</Text>
-              <Text style={styles.statLabel}>
-                {isRu ? 'Точность' : 'Accuracy'}
-              </Text>
-            </View>
+        <Animated.View entering={FadeInUp.duration(450).delay(550)}>
+          <HBCard style={styles.statsCard}>
+            <Stat icon="star" color={colors.butterDeep} fill={colors.butter} value={`+${stars}`} label={az ? 'Ulduz' : 'Звёзды'} />
+            <View style={styles.rule} />
+            <Stat icon="book-open" color={accent.ink} value={String(wordsLearned)} label={az ? 'Söz' : 'Слова'} />
+            <View style={styles.rule} />
+            <Stat icon="target" color={colors.accentDeep} value={`${accuracy}%`} label={az ? 'Dəqiqlik' : 'Точность'} />
           </HBCard>
         </Animated.View>
 
-        {/* Collectible badge */}
-        {collectible ? (
-          <Animated.View entering={FadeInUp.duration(500).delay(700)} style={{ width: '100%' }}>
-            <HBCard style={styles.collectibleCard} depth="sm" bg={tints.butter}>
-              <DieCutBadge size={46} tilt={-6} edge={3} bg={colors.butter} delay={750}>
-                <Text style={{ fontSize: 22 }}>{collectible.emoji}</Text>
-              </DieCutBadge>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.collectibleTitle}>
-                  {isRu ? 'Новый значок!' : 'New badge!'}
-                </Text>
-                <Pressable onPress={() => router.push('/bobo-house' as any)}>
-                  <Text style={styles.collectibleSub}>
-                    {collectible.nameRu} · {isRu ? 'смотреть дом →' : 'see house →'}
+        {askNotify ? (
+          <Animated.View entering={FadeInUp.duration(450).delay(650)} exiting={FadeOut.duration(150)}>
+            <HBCard bg={accent.soft} style={styles.notifyCard}>
+              <View style={styles.row}>
+                <HBIconBox icon="bell" tint={colors.surface} iconColor={accent.ink} size={40} />
+                <View style={styles.flex}>
+                  <Text variant="bodyBold">
+                    {az ? `${bot} dərsi xatırlatsın?` : `${bot} будет напоминать про урок?`}
                   </Text>
-                </Pressable>
+                  <Text variant="caption" style={{ color: colors.ink }}>
+                    {az
+                      ? `Hər gün saat ${scheduleHour}:00-da — seriya qırılmasın.`
+                      : `Каждый день в ${scheduleHour}:00 — чтобы не терять серию.`}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.row}>
+                <HBButton size="sm" variant="soft" label={az ? 'Sonra' : 'Не сейчас'} onPress={() => setAskNotify(false)} style={styles.flex} />
+                <HBButton size="sm" icon="bell" label={az ? 'İcazə ver' : 'Разрешить'} onPress={handleAllowNotify} style={styles.flex} />
               </View>
             </HBCard>
           </Animated.View>
         ) : null}
 
-        {/* Tomorrow */}
+        {collectible ? (
+          <Animated.View entering={FadeInUp.duration(450).delay(700)}>
+            <Pressable onPress={() => router.push('/bobo-house' as any)} accessibilityRole="button">
+              <HBCard bg={tints.butter} style={styles.row}>
+                <DieCutBadge size={46} tilt={-6} edge={3} bg={colors.butter} delay={750}>
+                  <Text style={styles.collectibleEmoji}>{collectible.emoji}</Text>
+                </DieCutBadge>
+                <View style={styles.flex}>
+                  <Text variant="bodyBold">{az ? 'Yeni nişan!' : 'Новый значок!'}</Text>
+                  <Text variant="caption" tone="secondary">
+                    {az ? collectible.nameAz : collectible.nameRu}
+                  </Text>
+                </View>
+                <Icon name="chevron-right" size={20} color={colors.inkSoft} />
+              </HBCard>
+            </Pressable>
+          </Animated.View>
+        ) : null}
+
         {tomorrow ? (
-          <Animated.View entering={FadeInUp.duration(500).delay(800)} style={{ width: '100%' }}>
-            <HBCard style={styles.tomorrowCard} depth="sm">
-              <Text style={styles.tomorrowLabel}>
-                {isRu ? 'ЗАВТРА' : 'TOMORROW'}
-              </Text>
-              <View style={styles.tomorrowRow}>
-                <Text style={{ fontSize: 22 }}>{tomorrow.emoji}</Text>
-                <Text style={styles.tomorrowName}>{tomorrow.name}</Text>
+          <Animated.View entering={FadeInUp.duration(450).delay(800)}>
+            <HBCard style={styles.row}>
+              <HBIconBox icon={tomorrow.icon} tint={accent.soft} iconColor={accent.ink} size={40} />
+              <View style={styles.flex}>
+                <Text variant="label" tone="secondary">
+                  {az ? 'Sabah' : 'Завтра'}
+                </Text>
+                <Text variant="bodyBold">{tomorrow.name}</Text>
               </View>
             </HBCard>
           </Animated.View>
         ) : null}
 
-        {/* CTAs */}
-        <Animated.View entering={FadeInUp.duration(500).delay(900)} style={styles.buttons}>
-          <HBButton
-            full
-            variant="primary"
-            label={isRu ? `Поговорить с ${bot} →` : `Talk with ${bot} →`}
-            onPress={handleTalkMore}
-          />
-          <Pressable onPress={handleHome} style={styles.ghostBtn}>
-            <Text style={styles.ghostBtnText}>
-              {isRu ? 'На главную' : 'Go home'}
-            </Text>
-          </Pressable>
+        <Animated.View entering={FadeInUp.duration(450).delay(900)} style={styles.buttons}>
+          <HBButton full icon="message-circle" label={az ? `${bot} ilə danış` : `Поговорить с ${bot}`} onPress={handleTalkMore} />
+          <HBButton full variant="ghost" label={az ? 'Ana səhifəyə' : 'На главную'} onPress={handleHome} />
         </Animated.View>
-      </View>
+      </ScrollView>
     </PaperBackground>
   );
 }
 
+function Stat({ icon, color, fill, value, label }: { icon: IconName; color: string; fill?: string; value: string; label: string }) {
+  return (
+    <View style={styles.statCol}>
+      <Icon name={icon} size={20} color={color} fill={fill} strokeWidth={2.25} />
+      <Text style={[styles.statValue, { color }]}>{value}</Text>
+      <Text variant="caption" tone="secondary">
+        {label}
+      </Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  content: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacing[6],
-    paddingTop: spacing[12],
-    paddingBottom: spacing[8],
-    gap: spacing[3],
-  },
+  content: { paddingBottom: spacing[8] },
 
   petWrap: { alignItems: 'center' },
-  halo: {
-    padding: spacing[5],
-    borderRadius: 999,
-    backgroundColor: 'rgba(245, 212, 102, 0.4)',
-  },
+  halo: { padding: spacing[4], borderRadius: 999 },
 
-  counterWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[1],
-  },
-  plusText: {
-    fontFamily: fontFamily.display,
-    fontSize: fontSize['4xl'],
-    color: colors.primaryDeep,
-    lineHeight: 48,
-  },
-  counterText: {
-    fontFamily: fontFamily.display,
-    fontSize: scaleFont(64),
-    color: colors.primary,
-    lineHeight: 72,
-  },
-  starIcon: { fontSize: 36, lineHeight: 44 },
+  counterWrap: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing[1] },
+  plusText: { fontFamily: fontFamily.display, fontSize: fontSize['4xl'], lineHeight: scaleFont(48) },
+  counterText: { fontFamily: fontFamily.display, fontSize: scaleFont(56), lineHeight: scaleFont(64) },
 
   titleArea: { alignItems: 'center', gap: spacing[1] },
-  kicker: {
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize['2xs'],
-    color: colors.primaryDeep,
-    letterSpacing: 1.6,
-  },
-  title: {
-    fontFamily: fontFamily.display,
-    fontSize: fontSize['3xl'],
-    color: colors.ink,
-    textAlign: 'center',
-  },
-  message: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.sm,
-    color: colors.inkSoft,
-    textAlign: 'center',
-    lineHeight: 20,
-    maxWidth: 280,
-  },
+  message: { maxWidth: 300 },
 
-  statsCard: {
-    flexDirection: 'row',
-    paddingVertical: spacing[3],
-  },
+  statsCard: { flexDirection: 'row', paddingVertical: spacing[3] },
   statCol: { flex: 1, alignItems: 'center', gap: 2 },
-  statIcon: { fontSize: 18 },
-  statValue: {
-    fontFamily: fontFamily.display,
-    fontSize: fontSize.xl,
-  },
-  statLabel: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize['3xs'],
-    color: colors.inkSoft,
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-  },
-  dashedRule: {
-    width: 1,
-    backgroundColor: colors.bgDeep,
-    marginVertical: spacing[1],
-  },
+  statValue: { fontFamily: fontFamily.display, fontSize: fontSize.xl },
+  rule: { width: 1, backgroundColor: colors.bgDeep, marginVertical: spacing[1] },
 
-  collectibleCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[3],
-    paddingVertical: spacing[3],
-    paddingHorizontal: spacing[4],
-  },
-  collectibleIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.lg,
-    backgroundColor: colors.butter,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  collectibleTitle: {
-    fontFamily: fontFamily.display,
-    fontSize: fontSize.sm,
-    color: colors.ink,
-  },
-  collectibleSub: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.xs,
-    color: colors.inkSoft,
-    marginTop: 2,
-  },
+  notifyCard: { gap: spacing[3] },
+  row: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
+  flex: { flex: 1 },
+  collectibleEmoji: { fontSize: scaleFont(22), lineHeight: scaleFont(28) },
 
-  tomorrowCard: {
-    alignItems: 'center',
-    gap: spacing[1],
-    paddingVertical: spacing[3],
-  },
-  tomorrowLabel: {
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize['3xs'],
-    color: colors.inkSoft,
-    letterSpacing: 1.5,
-  },
-  tomorrowRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[2],
-  },
-  tomorrowName: {
-    fontFamily: fontFamily.display,
-    fontSize: fontSize.lg,
-    color: colors.ink,
-  },
-
-  buttons: {
-    width: '100%',
-    gap: spacing[2],
-    marginTop: spacing[2],
-  },
-  ghostBtn: {
-    paddingVertical: spacing[2],
-    alignItems: 'center',
-  },
-  ghostBtnText: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize.sm,
-    color: colors.inkSoft,
-  },
+  buttons: { gap: spacing[1], marginTop: spacing[2] },
 });

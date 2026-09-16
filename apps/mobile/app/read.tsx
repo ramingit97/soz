@@ -24,16 +24,17 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 
-import { HBBackButton } from '@/components/HBBackButton';
 import { HBButton } from '@/components/HBButton';
 import { HBCard } from '@/components/HBCard';
 import { HBPet } from '@/components/HBPet';
+import { Icon } from '@/components/Icon';
+import { LessonHeader } from '@/components/LessonHeader';
 import { PaperBackground } from '@/components/PaperBackground';
 import { Text } from '@/components/Text';
 import { getLesson } from '@/data/lessons';
 import { useSettings } from '@/store/settings';
 import { afterReadingRoute, isMatureLearner } from '@/utils/lessonFlow';
-import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing, tints } from '@/theme';
+import { colors, fontFamily, fontSize, radius, shadow, spacing, tints } from '@/theme';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
@@ -86,7 +87,6 @@ export default function ReadScreen() {
   const scenes = lesson?.story ?? [];
   const vocab = lesson?.vocabulary ?? [];
   const theme = lesson?.theme ?? '';
-  const themeEmoji = lesson?.themeEmoji ?? '📖';
 
   // Lesson route after reading: kids → playful mode rotation; teens/B1+ →
   // straight to level-appropriate grammar, then talk (text-first flow).
@@ -137,29 +137,12 @@ export default function ReadScreen() {
 
   return (
     <PaperBackground>
-      {/* Top bar */}
-      <View style={styles.topBar}>
-        <HBBackButton inline />
-        <View style={styles.topCenter}>
-          <Text style={styles.topEmoji}>{themeEmoji}</Text>
-          <Text style={styles.topTitle}>{theme}</Text>
-        </View>
-        <View style={{ width: 36 }} />
-      </View>
-
-      {/* Progress dots */}
-      <Animated.View entering={FadeIn.duration(400)} style={styles.dotsRow}>
-        {scenes.map((_, i) => (
-          <View
-            key={i}
-            style={[
-              styles.dot,
-              i === sceneIdx && styles.dotActive,
-              i < sceneIdx && styles.dotDone,
-            ]}
-          />
-        ))}
-      </Animated.View>
+      <LessonHeader
+        title={theme || (isAz ? 'Hekayə' : 'История')}
+        icon="book-open"
+        step={sceneIdx + 1}
+        total={scenes.length}
+      />
 
       {/* Main story card */}
       <View style={styles.storyArea}>
@@ -170,13 +153,6 @@ export default function ReadScreen() {
           style={{ flex: 1 }}
         >
           <HBCard depth="deep" ringColor={ring} style={styles.storyCard}>
-            {/* Scene number chip */}
-            <View style={styles.sceneChip}>
-              <Text style={styles.sceneChipText}>
-                {sceneIdx + 1} / {scenes.length}
-              </Text>
-            </View>
-
             {/* Big emoji illustration */}
             <Animated.View style={[styles.emojiHalo, { backgroundColor: tint }, emojiStyle]}>
               <Text style={styles.sceneEmoji}>{scene.emoji}</Text>
@@ -211,33 +187,43 @@ export default function ReadScreen() {
           <Pressable
             style={[styles.navBtn, sceneIdx === 0 && styles.navBtnDisabled]}
             onPress={sceneIdx > 0 ? goPrev : undefined}
+            disabled={sceneIdx === 0}
+            accessibilityRole="button"
+            accessibilityLabel={isAz ? 'Geri' : 'Назад'}
           >
-            <Text style={[styles.navBtnText, sceneIdx === 0 && { opacity: 0.3 }]}>‹</Text>
+            <Icon name="chevron-left" size={22} color={colors.ink} strokeWidth={2.5} />
           </Pressable>
 
           {/* Center: pet or start lesson */}
           <View style={styles.navCenter}>
             {isLast ? (
               <HBButton
-                label={isAz ? 'Dərsi başlat 🚀' : 'Начать урок 🚀'}
+                label={isAz ? 'Dərsi başlat' : 'Начать урок'}
+                icon="play"
                 variant="primary"
                 onPress={startLesson}
                 full
               />
             ) : (
-              <Pressable style={styles.nextBtn} onPress={goNext}>
-                <Text style={styles.nextBtnText}>
-                  {isAz ? 'Davam et' : 'Дальше'}
-                </Text>
-                <Text style={styles.nextBtnArrow}>›</Text>
-              </Pressable>
+              <HBButton
+                label={isAz ? 'Davam et' : 'Дальше'}
+                iconRight="chevron-right"
+                variant="soft"
+                onPress={goNext}
+                full
+              />
             )}
           </View>
 
           {/* Next button (hidden on last to avoid double CTA) */}
           {!isLast ? (
-            <Pressable style={styles.navBtn} onPress={goNext}>
-              <Text style={styles.navBtnText}>›</Text>
+            <Pressable
+              style={styles.navBtn}
+              onPress={goNext}
+              accessibilityRole="button"
+              accessibilityLabel={isAz ? 'İrəli' : 'Вперёд'}
+            >
+              <Icon name="chevron-right" size={22} color={colors.ink} strokeWidth={2.5} />
             </Pressable>
           ) : (
             <View style={{ width: 44 }} />
@@ -254,7 +240,7 @@ export default function ReadScreen() {
           <HBCard depth="sm" style={styles.petBubble}>
             <Text style={styles.petBubbleText}>
               {isLast
-                ? (isAz ? 'Əla! İndi dərsi başlayaq! 🎉' : 'Отлично! Теперь начнём урок! 🎉')
+                ? (isAz ? 'Əla! İndi dərsi başlayaq!' : 'Отлично! Теперь начнём урок!')
                 : sceneIdx === 0
                 ? (isAz ? 'Hekayəni oxu!' : 'Читай историю!')
                 : (isAz ? 'Davam et!' : 'Продолжай!')}
@@ -267,43 +253,6 @@ export default function ReadScreen() {
 }
 
 const styles = StyleSheet.create({
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing[5],
-    paddingTop: 52,
-    paddingBottom: spacing[3],
-  },
-  topCenter: { flexDirection: 'row', alignItems: 'center', gap: spacing[2] },
-  topEmoji: { fontSize: 20 },
-  topTitle: {
-    fontFamily: fontFamily.display,
-    fontSize: fontSize.base,
-    color: colors.ink,
-  },
-
-  // Progress dots
-  dotsRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: spacing[2],
-    paddingBottom: spacing[3],
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.bgDeep,
-  },
-  dotActive: {
-    width: 24,
-    backgroundColor: colors.primary,
-  },
-  dotDone: {
-    backgroundColor: colors.accent,
-  },
-
   // Story area
   storyArea: {
     flex: 1,
@@ -316,20 +265,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing[4],
     paddingVertical: spacing[6],
-  },
-
-  sceneChip: {
-    backgroundColor: colors.bgDeep,
-    borderRadius: radius.full,
-    paddingHorizontal: spacing[3],
-    paddingVertical: spacing[1],
-    alignSelf: 'flex-start',
-  },
-  sceneChipText: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize['2xs'],
-    color: colors.inkSoft,
-    letterSpacing: 0.5,
   },
 
   emojiHalo: {
@@ -390,42 +325,14 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.card,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
     alignItems: 'center',
     justifyContent: 'center',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.8)',
-    borderBottomWidth: 2,
-    borderBottomColor: 'rgba(125,90,42,0.08)',
-    ...shadow.sm,
   },
   navBtnDisabled: { opacity: 0.4 },
-  navBtnText: {
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: scaleFont(22),
-    color: colors.ink,
-    lineHeight: 26,
-  },
   navCenter: { flex: 1 },
-  nextBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.bgDeep,
-    borderRadius: radius.xl,
-    paddingVertical: spacing[3],
-    gap: spacing[1],
-  },
-  nextBtnText: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize.base,
-    color: colors.inkSoft,
-  },
-  nextBtnArrow: {
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize.xl,
-    color: colors.inkSoft,
-  },
 
   // Pet row
   petRow: {

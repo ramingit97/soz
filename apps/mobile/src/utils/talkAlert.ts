@@ -2,12 +2,9 @@
  * Реплика не дошла до Бобо — сказать об этом, а не молча вернуть кнопку
  * микрофона: ребёнок думает, что его не слышат, и говорит в пустоту.
  *
- * Экран разговора показывает это полоской (`talkFailureMessage` +
- * `InlineBanner`), уроки «Покажи мир» и ролевая игра пока — системным диалогом
- * (`alertTalkFailure`, до их батча B5).
+ * Экраны показывают это полоской: `talkFailureMessage` + `InlineBanner`
+ * («Говорить», «Покажи мир», ролевая игра).
  */
-import { Alert } from 'react-native';
-
 import type { IconName } from '@/components/Icon';
 import { isRateLimitError } from '@/services/api';
 import { useSettings } from '@/store/settings';
@@ -42,9 +39,4 @@ export function talkFailureMessage(e: unknown, bot: string): TalkFailureMessage 
       ? 'Bağlantı alınmadı. İnterneti yoxla və yenidən danış.'
       : 'Не получилось связаться. Проверь интернет и скажи ещё раз.',
   };
-}
-
-export function alertTalkFailure(e: unknown, bot: string): void {
-  const m = talkFailureMessage(e, bot);
-  Alert.alert(m.title, m.text);
 }

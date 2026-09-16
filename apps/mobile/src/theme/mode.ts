@@ -35,3 +35,17 @@ export function uiModeFor(
   if (childAgeRange) return childAgeRange === '5-7' || childAgeRange === '8-10' ? 'kid' : 'teen';
   return 'kid';
 }
+
+/**
+ * Персонаж профиля: медвежонок в режиме kid, робот в teen. Тот же порог у
+ * сервера (`apps/api/src/ai/persona.ts`), чтобы на экране и в разговоре был один
+ * персонаж. Считается по профилю, а не по принудительному режиму экрана: в
+ * родительской зоне персонаж шестилетки остаётся медвежонком.
+ */
+export function companionKindFor(
+  profileType: ProfileType | null | undefined,
+  childAge: number | null | undefined,
+  childAgeRange: AgeRange | null | undefined,
+): 'bear' | 'robot' {
+  return uiModeFor(profileType, childAge, childAgeRange) === 'kid' ? 'bear' : 'robot';
+}

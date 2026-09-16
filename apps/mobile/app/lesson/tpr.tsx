@@ -1,16 +1,15 @@
 /**
- * TPR mode — Total Physical Response.
+ * «Двигайся с Бобо» — TPR (Total Physical Response).
  *
- * Bobo gives a physical action command tied to each vocabulary word.
- * Child performs the action, then taps "Done!" to advance.
- * On the final word → navigate to word-game.
+ * Персонаж даёт команду-движение со словом урока: прыгни и скажи «cat».
+ * Ребёнок делает и нажимает «Я сделал!». После последнего слова — игра со
+ * словами. Команда на языке интерфейса (RU/AZ), слово — на изучаемом.
  */
 
 import * as Haptics from 'expo-haptics';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, SafeAreaView, StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, {
   FadeIn,
   FadeInDown,
@@ -18,41 +17,37 @@ import Animated, {
   FadeOut,
   useAnimatedStyle,
   useSharedValue,
-  withDelay,
-  withRepeat,
   withSequence,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
 
-import { Bobo } from '@/components/Bobo';
+import { HBButton } from '@/components/HBButton';
+import { HBCard } from '@/components/HBCard';
+import { HBPet } from '@/components/HBPet';
+import { Icon } from '@/components/Icon';
+import { LessonHeader } from '@/components/LessonHeader';
+import { PaperBackground } from '@/components/PaperBackground';
 import { Text } from '@/components/Text';
 import { getLesson } from '@/data/lessons';
-import { colors, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { useTheme } from '@/hooks/useTheme';
+import { useSettings } from '@/store/settings';
+import { fontFamily, scaleFont, spacing } from '@/theme';
 import { useCompanionName } from '@/utils/companion';
+import { kidModeLabel } from '@/utils/lessonModes';
 
-type Status = 'idle' | 'doing' | 'done';
+type Status = 'idle' | 'done';
 
-const ACTIONS_EN = [
-  { action: 'Jump and say', emoji: '🦘' },
-  { action: 'Clap and say', emoji: '👏' },
-  { action: 'Spin around and shout', emoji: '🌀' },
-  { action: 'Touch your nose and say', emoji: '👃' },
-  { action: 'Wave both hands and say', emoji: '👋' },
-  { action: 'Stomp your feet and say', emoji: '🦶' },
-  { action: 'Reach for the sky and say', emoji: '🙌' },
-  { action: 'Do a silly dance and say', emoji: '🕺' },
-];
-
-const ACTIONS_RU = [
-  { action: 'Прыгни и скажи', emoji: '🦘' },
-  { action: 'Похлопай и скажи', emoji: '👏' },
-  { action: 'Покружись и крикни', emoji: '🌀' },
-  { action: 'Потрогай нос и скажи', emoji: '👃' },
-  { action: 'Помаши руками и скажи', emoji: '👋' },
-  { action: 'Потопай и скажи', emoji: '🦶' },
-  { action: 'Потянись вверх и скажи', emoji: '🙌' },
-  { action: 'Потанцуй и скажи', emoji: '🕺' },
+/** Эмодзи здесь — картинка движения (контент), а не иконка интерфейса. */
+const ACTIONS: { ru: string; az: string; emoji: string }[] = [
+  { ru: 'Прыгни и скажи', az: 'Tullan və de', emoji: '🦘' },
+  { ru: 'Похлопай и скажи', az: 'Əl çal və de', emoji: '👏' },
+  { ru: 'Покружись и крикни', az: 'Fırlan və qışqır', emoji: '🌀' },
+  { ru: 'Потрогай нос и скажи', az: 'Burnuna toxun və de', emoji: '👃' },
+  { ru: 'Помаши руками и скажи', az: 'Əllərini yellə və de', emoji: '👋' },
+  { ru: 'Потопай и скажи', az: 'Ayaqlarını döy və de', emoji: '🦶' },
+  { ru: 'Потянись вверх и скажи', az: 'Yuxarı uzan və de', emoji: '🙌' },
+  { ru: 'Потанцуй и скажи', az: 'Rəqs et və de', emoji: '🕺' },
 ];
 
 export default function TPRScreen() {
@@ -60,38 +55,24 @@ export default function TPRScreen() {
   const { lang = 'en', day = '1' } = useLocalSearchParams<{ lang: string; day: string }>();
   const lesson = getLesson(lang, Number(day));
   const vocabulary = lesson?.vocabulary ?? [];
-  const isRu = lang === 'ru';
-  const actions = isRu ? ACTIONS_RU : ACTIONS_EN;
+  const az = useSettings((s) => s.parentUILanguage) === 'az';
+  const bot = useCompanionName();
+  const { t, accent } = useTheme();
 
   const [wordIndex, setWordIndex] = useState(0);
   const [status, setStatus] = useState<Status>('idle');
 
-  const isLast = wordIndex === vocabulary.length - 1;
+  const isLast = wordIndex >= vocabulary.length - 1;
   const currentWord = vocabulary[wordIndex] ?? '';
-  const currentAction = actions[wordIndex % actions.length];
+  const action = ACTIONS[wordIndex % ACTIONS.length]!;
 
-  const boboScale = useSharedValue(1);
-  const boboY = useSharedValue(0);
-  const starBurst = useSharedValue(0);
-  const buttonScale = useSharedValue(1);
+  const jump = useSharedValue(0);
 
-  // Bobo idle pulse
-  useEffect(() => {
-    boboScale.value = withRepeat(
-      withSequence(withTiming(1.06, { duration: 900 }), withTiming(1, { duration: 900 })),
-      -1,
-      true,
-    );
-  }, []);
-
-  // On word change: reset status + play Bobo bounce
+  // Новое слово — персонаж подпрыгивает, показывая, что команда сменилась.
   useEffect(() => {
     setStatus('idle');
-    boboY.value = withSequence(
-      withTiming(-18, { duration: 220 }),
-      withSpring(0, { damping: 5 }),
-    );
-  }, [wordIndex]);
+    jump.value = withSequence(withTiming(-16, { duration: 220 }), withSpring(0, { damping: 5 }));
+  }, [wordIndex, jump]);
 
   const advance = useCallback(() => {
     if (isLast) {
@@ -99,312 +80,99 @@ export default function TPRScreen() {
     } else {
       setWordIndex((i) => i + 1);
     }
-  }, [isLast, lang, day]);
+  }, [isLast, lang, day, router]);
 
   const handleDone = useCallback(() => {
     if (status !== 'idle') return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-
-    // Bobo jump celebration
-    boboY.value = withSequence(
-      withTiming(-30, { duration: 200 }),
-      withSpring(0, { damping: 4 }),
-    );
-    buttonScale.value = withSequence(withSpring(0.92), withDelay(120, withSpring(1)));
-    starBurst.value = withSequence(withTiming(1, { duration: 300 }), withTiming(0, { duration: 200 }));
-
+    jump.value = withSequence(withTiming(-28, { duration: 200 }), withSpring(0, { damping: 4 }));
     setStatus('done');
     setTimeout(advance, 900);
-  }, [status, advance]);
-
-  const boboAnimStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: boboScale.value }, { translateY: boboY.value }],
-  }));
-
-  const buttonAnimStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: buttonScale.value }],
-  }));
+  }, [status, advance, jump]);
 
   const skipWord = () => {
     Haptics.selectionAsync().catch(() => {});
     advance();
   };
 
-  const boboMood = status === 'done' ? 'happy' : 'curious';
-
-  const bot = useCompanionName();
-  const doneLabel = isRu ? 'Я сделал! 🎉' : 'I did it! 🎉';
-  const boboSaysLabel = isRu ? `${bot} говорит:` : `${bot} says:`;
+  const petStyle = useAnimatedStyle(() => ({ transform: [{ translateY: jump.value }] }));
+  const mode = kidModeLabel('tpr', az, bot);
 
   return (
-    <View style={styles.root}>
-      <LinearGradient
-        colors={['#FF8C00', '#FF5F1F', '#E63946']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0.4, y: 1 }}
-        style={StyleSheet.absoluteFill}
+    <PaperBackground>
+      <LessonHeader
+        title={mode.name}
+        icon={mode.icon}
+        step={wordIndex + 1}
+        total={vocabulary.length}
+        right={<HBButton size="sm" variant="ghost" label={az ? 'Keç' : 'Пропустить'} onPress={skipWord} />}
       />
-      {/* Overlay to soften gradient */}
-      <View style={styles.overlay} />
 
-      <SafeAreaView style={styles.safe}>
-
-        {/* Top bar */}
-        <Animated.View entering={FadeIn.duration(400)} style={styles.topBar}>
-          <Pressable onPress={() => router.back()} style={styles.closeBtn}>
-            <Text style={{ fontSize: 18, color: 'rgba(255,255,255,0.8)' }}>✕</Text>
-          </Pressable>
-
-          <View style={styles.titlePill}>
-            <Text style={{ fontSize: 14 }}>⚡</Text>
-            <Text style={styles.titleText}>
-              {isRu ? `Двигайся с ${bot}!` : `Move with ${bot}!`}
-            </Text>
-          </View>
-
-          <Pressable onPress={skipWord} style={styles.skipBtn}>
-            <Text style={styles.skipText}>{isRu ? 'Пропустить' : 'Skip'}</Text>
-          </Pressable>
+      <ScrollView
+        style={styles.middle}
+        contentContainerStyle={[styles.middleContent, { paddingHorizontal: t.density.padX, gap: t.density.gap }]}
+        showsVerticalScrollIndicator={false}
+      >
+        <Animated.View style={[styles.petArea, petStyle]}>
+          <HBPet size={Math.round(t.mascot.hero * 0.7)} mood={status === 'done' ? 'happy' : 'curious'} />
         </Animated.View>
 
-        {/* Progress dots */}
-        <View style={styles.progressRow}>
-          {vocabulary.map((_, i) => (
-            <View
-              key={i}
-              style={[
-                styles.dot,
-                i === wordIndex && styles.dotActive,
-                i < wordIndex && styles.dotDone,
-              ]}
-            />
-          ))}
-        </View>
-
-        {/* Bobo */}
-        <View style={styles.boboArea}>
-          <Animated.View style={boboAnimStyle}>
-            <Bobo size={120} mood={boboMood} />
-          </Animated.View>
-        </View>
-
-        {/* Command card */}
-        <Animated.View
-          key={`cmd-${wordIndex}`}
-          entering={FadeInDown.duration(400)}
-          exiting={FadeOut.duration(180)}
-          style={styles.cardArea}
-        >
-          <View style={[styles.commandCard, shadow.lg]}>
-            <Text style={styles.boboSays}>{boboSaysLabel}</Text>
-
-            <Text style={styles.actionEmoji}>{currentAction?.emoji ?? '⚡'}</Text>
-
-            <Text style={styles.actionText}>
-              {currentAction?.action}
+        <Animated.View key={`cmd-${wordIndex}`} entering={FadeInDown.duration(350)} exiting={FadeOut.duration(150)}>
+          <HBCard style={styles.commandCard}>
+            <Text variant="caption" tone="secondary">
+              {az ? `${bot} deyir:` : `${bot} говорит:`}
             </Text>
-
-            <View style={styles.wordBubble}>
-              <Text style={styles.wordText}>{currentWord.toUpperCase()}</Text>
+            <Text style={styles.actionEmoji}>{action.emoji}</Text>
+            <Text variant="headline" align="center">
+              {az ? action.az : action.ru}
+            </Text>
+            <View style={[styles.wordBubble, { backgroundColor: accent.soft }]}>
+              <Text style={[styles.wordText, { color: accent.ink }]}>{currentWord.toUpperCase()}</Text>
             </View>
-          </View>
+          </HBCard>
         </Animated.View>
+      </ScrollView>
 
-        {/* "I did it!" button */}
-        <View style={styles.buttonArea}>
-          {status === 'done' ? (
-            <Animated.View entering={FadeIn.duration(250)}>
-              <Text style={styles.celebrateText}>
-                {isRu ? '🌟 Потрясающе!' : '🌟 Amazing!'}
-              </Text>
-            </Animated.View>
-          ) : (
-            <Animated.View style={buttonAnimStyle} entering={FadeInUp.duration(400).delay(200)}>
-              <Pressable
-                style={styles.doneButton}
-                onPress={handleDone}
-                android_ripple={{ color: 'rgba(255,255,255,0.2)', borderless: false }}
-              >
-                <Text style={styles.doneButtonText}>{doneLabel}</Text>
-              </Pressable>
-            </Animated.View>
-          )}
-        </View>
-
-        {/* Hint text */}
-        <Animated.View entering={FadeInUp.duration(400).delay(350)} style={styles.hintArea}>
-          <Text style={styles.hintText}>
-            {isRu
-              ? `Выполни задание, потом нажми кнопку`
-              : `Do the action, then tap the button`}
-          </Text>
-        </Animated.View>
-
-      </SafeAreaView>
-    </View>
+      <View style={[styles.bottom, { paddingHorizontal: t.density.padX }]}>
+        {status === 'done' ? (
+          <Animated.View entering={FadeIn.duration(250)} style={styles.doneRow}>
+            <Icon name="sparkles" size={20} color={accent.ink} strokeWidth={2.5} />
+            <Text variant="headline" style={{ color: accent.ink }}>
+              {az ? 'Möhtəşəm!' : 'Потрясающе!'}
+            </Text>
+          </Animated.View>
+        ) : (
+          <Animated.View entering={FadeInUp.duration(350).delay(150)} style={styles.buttonCol}>
+            <HBButton full icon="check" label={az ? 'Etdim!' : 'Я сделал!'} onPress={handleDone} />
+            <Text variant="caption" tone="secondary" align="center">
+              {az ? 'Tapşırığı et, sonra düyməni bas' : 'Выполни задание, потом нажми кнопку'}
+            </Text>
+          </Animated.View>
+        )}
+      </View>
+    </PaperBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#FF5F1F' },
-  safe: { flex: 1 },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.18)',
-  },
-
-  topBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing[4],
-    paddingTop: spacing[2],
-    paddingBottom: spacing[1],
-  },
-  closeBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.full,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  titlePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[2],
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[2],
-    borderRadius: radius.full,
-  },
-  titleText: {
-    color: colors.white,
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize.sm,
-  },
-  skipBtn: {
-    paddingHorizontal: spacing[3],
-    paddingVertical: spacing[2],
-  },
-  skipText: {
-    color: 'rgba(255,255,255,0.5)',
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.xs,
-  },
-
-  progressRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: spacing[2],
-    paddingVertical: spacing[2],
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-  },
-  dotActive: {
-    backgroundColor: colors.white,
-    width: 24,
-    borderRadius: 4,
-  },
-  dotDone: {
-    backgroundColor: 'rgba(255,255,255,0.7)',
-  },
-
-  boboArea: {
-    alignItems: 'center',
-    paddingVertical: spacing[3],
-  },
-
-  cardArea: {
-    paddingHorizontal: spacing[5],
-    marginBottom: spacing[5],
-  },
-  commandCard: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: radius['2xl'],
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.35)',
-    padding: spacing[6],
-    alignItems: 'center',
-    gap: spacing[2],
-  },
-  boboSays: {
-    color: 'rgba(255,255,255,0.7)',
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.sm,
-    letterSpacing: 0.5,
-  },
-  actionEmoji: {
-    fontSize: fontSize['5xl'],
-    lineHeight: 60,
-  },
-  actionText: {
-    color: colors.white,
-    fontFamily: fontFamily.display,
-    fontSize: fontSize['2xl'],
-    textAlign: 'center',
-    lineHeight: 32,
-  },
+  middle: { flex: 1 },
+  middleContent: { flexGrow: 1, justifyContent: 'center', paddingVertical: spacing[2] },
+  petArea: { alignItems: 'center' },
+  commandCard: { alignItems: 'center', gap: spacing[2] },
+  actionEmoji: { fontSize: scaleFont(48), lineHeight: scaleFont(58) },
   wordBubble: {
-    marginTop: spacing[2],
-    backgroundColor: 'rgba(255,255,255,0.25)',
-    paddingVertical: spacing[3],
-    paddingHorizontal: spacing[6],
-    borderRadius: radius.xl,
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.5)',
+    marginTop: spacing[1],
+    paddingVertical: spacing[2],
+    paddingHorizontal: spacing[5],
+    borderRadius: 20,
   },
   wordText: {
-    color: colors.white,
     fontFamily: fontFamily.display,
-    fontSize: fontSize['4xl'],
-    letterSpacing: 5,
-    textAlign: 'center',
+    fontSize: scaleFont(32),
+    lineHeight: scaleFont(40),
+    letterSpacing: 3,
   },
-
-  buttonArea: {
-    alignItems: 'center',
-    paddingHorizontal: spacing[6],
-    marginBottom: spacing[3],
-  },
-  doneButton: {
-    backgroundColor: colors.white,
-    borderRadius: radius.full,
-    paddingVertical: spacing[4],
-    paddingHorizontal: spacing[10],
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 8,
-  },
-  doneButtonText: {
-    color: '#FF5F1F',
-    fontFamily: fontFamily.display,
-    fontSize: fontSize.xl,
-    letterSpacing: 0.5,
-  },
-  celebrateText: {
-    color: colors.white,
-    fontFamily: fontFamily.display,
-    fontSize: fontSize.xl,
-    textAlign: 'center',
-  },
-
-  hintArea: {
-    alignItems: 'center',
-    paddingHorizontal: spacing[6],
-    paddingBottom: spacing[4],
-  },
-  hintText: {
-    color: 'rgba(255,255,255,0.45)',
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.xs,
-    textAlign: 'center',
-  },
+  bottom: { paddingTop: spacing[2], paddingBottom: spacing[5], minHeight: 96, justifyContent: 'center' },
+  buttonCol: { gap: spacing[2] },
+  doneRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing[2] },
 });

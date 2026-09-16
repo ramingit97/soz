@@ -1,3 +1,5 @@
+import { asBearLesson } from './bearLessons';
+
 export interface GrammarExerciseData {
   kind: 'fill_blank' | 'order_words';
   prompt: string;
@@ -1218,6 +1220,13 @@ export function setCompanionNameProvider(fn: () => string | null | undefined): v
   companionNameProvider = fn;
 }
 
+/** Медвежонок или робот у текущего профиля — для встроенных уроков про персонажа. */
+let companionKindProvider: (() => 'bear' | 'robot') | null = null;
+
+export function setCompanionKindProvider(fn: () => 'bear' | 'robot'): void {
+  companionKindProvider = fn;
+}
+
 /** Deep-replace the default companion name with the child's pet name across all
  * displayed lesson text (theme, story, prompt, quiz, reward). */
 function renameCompanion(lesson: LessonData, name: string): LessonData {
@@ -1232,7 +1241,11 @@ export function getLesson(lang: string, day: number): LessonData | null {
   if (day <= STATIC_MAX_DAY) {
     // Try the personalized curriculum first; fall back to bundled defaults
     // (offline-safety / no-auth / pre-cache cases).
-    lesson = resolveCurriculumLesson?.(lang, day) ?? LESSONS[lang]?.[day] ?? null;
+    const planned = resolveCurriculumLesson?.(lang, day) ?? null;
+    lesson = planned ?? LESSONS[lang]?.[day] ?? null;
+    // Встроенные уроки написаны про робота; малышам их пересказываем про
+    // медвежонка. План с сервера уже написан под персонажа ребёнка.
+    if (!planned && lesson && companionKindProvider?.() === 'bear') lesson = asBearLesson(lesson, lang);
   } else {
     lesson = resolveAiLesson ? resolveAiLesson(lang, day) : null;
   }

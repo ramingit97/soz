@@ -25,6 +25,21 @@ const DAY_TO_WEEKDAY: Record<ScheduleDay, number> = {
   sun: 1, mon: 2, tue: 3, wed: 4, thu: 5, fri: 6, sat: 7,
 };
 
+/**
+ * Имеет ли смысл спросить про уведомления: разрешение ещё не выдано и система
+ * позволяет спросить. Экран `setup/notify` из онбординга убран, поэтому просим
+ * после первого урока — когда ребёнок уже увидел, ради чего напоминать.
+ */
+export async function canAskNotificationPermission(): Promise<boolean> {
+  if (Platform.OS === 'web') return false;
+  try {
+    const { status, canAskAgain } = await Notifications.getPermissionsAsync();
+    return status !== 'granted' && canAskAgain;
+  } catch {
+    return false;
+  }
+}
+
 export async function requestNotificationPermission(): Promise<boolean> {
   const { status: existing } = await Notifications.getPermissionsAsync();
   if (existing === 'granted') return true;

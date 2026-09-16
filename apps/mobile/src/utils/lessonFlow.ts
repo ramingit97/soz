@@ -24,9 +24,14 @@ export function isMatureLearner(
   );
 }
 
+/** Режим дня в ротации малышей. День 0 или отрицательный не роняет маршрут в `undefined`. */
+export function kidModeForDay(day: number): (typeof KID_LESSON_MODES)[number] {
+  const n = KID_LESSON_MODES.length;
+  return KID_LESSON_MODES[(((day - 1) % n) + n) % n]!;
+}
+
 function kidModeRoute(day: number, lang: string): string {
-  const mode = KID_LESSON_MODES[(day - 1) % KID_LESSON_MODES.length]!;
-  return `/lesson/${mode}?lang=${lang}&day=${day}`;
+  return `/lesson/${kidModeForDay(day)}?lang=${lang}&day=${day}`;
 }
 
 /** Entry route for today's main lesson («Урок дня» / the path node). */

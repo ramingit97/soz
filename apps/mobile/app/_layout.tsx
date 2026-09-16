@@ -22,7 +22,12 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { SplashIntro } from '@/components/SplashIntro';
-import { setAiLessonResolver, setCompanionNameProvider, setCurriculumLessonResolver } from '@/data/lessons';
+import {
+  setAiLessonResolver,
+  setCompanionKindProvider,
+  setCompanionNameProvider,
+  setCurriculumLessonResolver,
+} from '@/data/lessons';
 import { track } from '@/services/analytics';
 import { setSessionExpiredHandler } from '@/services/api';
 import {
@@ -37,6 +42,7 @@ import { flushProgressQueue } from '@/services/progressQueue';
 import { initPurchases, checkPremium, identifyPurchaser } from '@/services/subscriptions';
 import { useSettings } from '@/store/settings';
 import { colors } from '@/theme';
+import { companionKindFor } from '@/theme/mode';
 import { installWebAlert } from '@/utils/webAlert';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -115,6 +121,10 @@ export default function RootLayout() {
       return getCachedCurriculumLesson(cid, lang, day);
     });
     setCompanionNameProvider(() => useSettings.getState().petName);
+    setCompanionKindProvider(() => {
+      const st = useSettings.getState();
+      return companionKindFor(st.profileType, st.childAge, st.childAgeRange);
+    });
 
     // The server can revoke a session now (a password reset invalidates every
     // older token). Without this the app keeps a dead token forever and every

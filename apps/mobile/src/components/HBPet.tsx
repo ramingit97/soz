@@ -40,7 +40,7 @@ import {
 } from '@/components/mascot/art';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { useSettings } from '@/store/settings';
-import { uiModeFor } from '@/theme/mode';
+import { companionKindFor } from '@/theme/mode';
 import { petPaletteFor } from '@/theme/petPalette';
 
 export type HBPetMood = PetMood;
@@ -68,9 +68,7 @@ export interface HBPetProps {
 /** Персонаж профиля. Не через `useUIMode`: в родительской зоне режим принудительно
  * взрослый, а персонаж ребёнка там остаётся его медвежонком. */
 export function useCompanionKind(): CompanionKind {
-  return useSettings((s) =>
-    uiModeFor(s.profileType, s.childAge, s.childAgeRange) === 'kid' ? 'bear' : 'robot',
-  );
+  return useSettings((s) => companionKindFor(s.profileType, s.childAge, s.childAgeRange));
 }
 
 const VB = 120;

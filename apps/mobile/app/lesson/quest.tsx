@@ -1,17 +1,18 @@
 /**
- * Quest mode — replaces the passive "listen" story screen.
+ * «Приключение» — первый шаг урока малышей в дни квеста.
  *
- * Each story scene has a magic word the child must SAY to advance.
- * The keyword is drawn from the lesson's vocabulary list.
- * On the final scene → navigate to word-game (same as listen.tsx).
+ * В каждой сцене истории есть волшебное слово из словаря урока: ребёнок говорит
+ * его вслух, чтобы идти дальше. Три честные попытки — и можно дальше, промах
+ * записывается в отчёт. После последней сцены — игра со словами.
+ *
+ * Инструкции на языке интерфейса (RU/AZ), история и слово — на изучаемом.
  */
 
 import { useVoiceRecorder } from '@/hooks/useVoiceRecorder';
 import * as Haptics from 'expo-haptics';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, SafeAreaView, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, {
   FadeIn,
   FadeInDown,
@@ -29,15 +30,23 @@ import {
   setAudioModeAsync,
 } from 'expo-audio';
 
-import { Bobo } from '@/components/Bobo';
+import { HBButton } from '@/components/HBButton';
+import { HBCard } from '@/components/HBCard';
+import { HBPet } from '@/components/HBPet';
+import { Icon } from '@/components/Icon';
+import { InlineBanner } from '@/components/InlineBanner';
+import { LessonHeader } from '@/components/LessonHeader';
 import { MicButton } from '@/components/MicButton';
+import { PaperBackground } from '@/components/PaperBackground';
 import { Text } from '@/components/Text';
 import { getLesson } from '@/data/lessons';
+import { useTheme } from '@/hooks/useTheme';
 import { postWordCheck } from '@/services/api';
 import { playSfx } from '@/services/sfx';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
+import { colors, fontFamily, radius, scaleFont, spacing } from '@/theme';
 import { useCompanionName } from '@/utils/companion';
+import { kidModeLabel } from '@/utils/lessonModes';
 
 type Status = 'idle' | 'recording' | 'thinking' | 'success' | 'fail' | 'skipped';
 
@@ -53,9 +62,9 @@ export default function QuestScreen() {
   const recordLessonError = useSettings((s) => s.recordLessonError);
   const childId = useSettings((s) => s.childId);
   const authToken = useSettings((s) => s.authToken);
-  const isRu = lang === 'ru';
-  // Низкий экран (iPhone SE, Safari с панелями): иначе микрофон уезжал за край.
-  const compact = useWindowDimensions().height < 760;
+  const az = useSettings((s) => s.parentUILanguage) === 'az';
+  const bot = useCompanionName();
+  const { t, accent } = useTheme();
 
   const [sceneIndex, setSceneIndex] = useState(0);
   const [status, setStatus] = useState<Status>('idle');
@@ -71,8 +80,6 @@ export default function QuestScreen() {
 
   const successScale = useSharedValue(1);
   const failShake = useSharedValue(0);
-  const starOpacity1 = useSharedValue(0.4);
-  const starOpacity2 = useSharedValue(0.7);
 
   useEffect(() => {
     clearLessonErrors();
@@ -81,11 +88,6 @@ export default function QuestScreen() {
       setPermissionGranted(granted);
       if (granted) await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: true });
     })();
-    // Twinkle stars
-    starOpacity1.value = withSequence(
-      withTiming(1, { duration: 2000 }),
-      withTiming(0.3, { duration: 2000 }),
-    );
   }, []);
 
   useEffect(() => {
@@ -177,18 +179,17 @@ export default function QuestScreen() {
       // экран делал вид, что ничего не было. Не засчитываем как попытку, но
       // говорим, что случилось.
       setErrorNote(
-        isRu ? 'Не получилось отправить запись. Попробуй ещё раз.' : "Couldn't send your voice. Try again.",
+        az ? 'Səsini göndərmək alınmadı. Yenidən cəhd et.' : 'Не получилось отправить запись. Попробуй ещё раз.',
       );
       setStatus('idle');
     }
-  }, [status, voice, childId, lang, keyword, authToken, attempts, advance, recordLessonError, isRu]);
+  }, [status, voice, childId, lang, keyword, authToken, attempts, advance, recordLessonError, az]);
 
   const stopRecordingRef = useRef<(() => void) | null>(null);
   stopRecordingRef.current = () => { void stopRecording(); };
 
-  // Escape hatch only when the mic is unavailable (permission denied) — otherwise
-  // the child must actually attempt the word (strict mode). They are never trapped:
-  // 3 honest tries auto-advances (and records the miss).
+  // Выход без микрофона — только если разрешения нет. Иначе ребёнок пробует
+  // сказать слово (строгий режим); застрять нельзя: после трёх попыток дальше.
   const skipNoMic = () => {
     Haptics.selectionAsync().catch(() => {});
     advance();
@@ -205,340 +206,138 @@ export default function QuestScreen() {
     : status === 'thinking' ? 'thinking'
     : 'curious';
 
-  const bot = useCompanionName();
-  const questIntro = isRu
-    ? `Миссия ${sceneIndex + 1}: помоги ${bot}!`
-    : `Quest ${sceneIndex + 1}: help ${bot}!`;
-
-  const keywordLabel = isRu ? 'Скажи волшебное слово:' : 'Say the magic word:';
+  const mode = kidModeLabel('quest', az, bot);
 
   return (
-    <View style={styles.root}>
-      <LinearGradient
-        colors={['#0F0A24', '#1A1040', '#1C1845']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0.3, y: 1 }}
-        style={StyleSheet.absoluteFill}
+    <PaperBackground>
+      <LessonHeader
+        title={mode.name}
+        icon={mode.icon}
+        step={sceneIndex + 1}
+        total={scenes.length}
+        right={
+          permissionGranted === false ? (
+            <HBButton size="sm" variant="ghost" label={az ? 'Növbəti' : 'Дальше'} onPress={skipNoMic} />
+          ) : undefined
+        }
       />
 
-      {/* Ambient star dots */}
-      <Animated.View style={[styles.star, { top: 70, left: 24 }]}>
-        <Text style={[styles.starGlyph, { fontSize: 14 }]}>✦</Text>
-      </Animated.View>
-      <Animated.View style={[styles.star, { top: 130, right: 40 }]}>
-        <Text style={[styles.starGlyph, { fontSize: 8 }]}>✦</Text>
-      </Animated.View>
-      <Animated.View style={[styles.star, { top: 220, left: 60 }]}>
-        <Text style={[styles.starGlyph, { fontSize: 11 }]}>✦</Text>
-      </Animated.View>
-      <Animated.View style={[styles.star, { top: 50, right: 90 }]}>
-        <Text style={[styles.starGlyph, { fontSize: 7 }]}>✦</Text>
-      </Animated.View>
-
-      <SafeAreaView style={styles.safe}>
-
-        {/* Top bar */}
-        <Animated.View entering={FadeIn.duration(400)} style={styles.topBar}>
-          <Pressable onPress={() => router.back()} style={styles.closeBtn}>
-            <Text style={{ fontSize: 18, color: 'rgba(255,255,255,0.7)' }}>✕</Text>
-          </Pressable>
-
-          <View style={styles.questPill}>
-            <Text style={{ fontSize: 14 }}>🗺️</Text>
-            <Text style={styles.questPillText}>{questIntro}</Text>
-          </View>
-
-          {/* No free skip in strict mode — only an escape when the mic can't be used */}
-          {permissionGranted === false ? (
-            <Pressable onPress={skipNoMic} style={styles.skipBtn}>
-              <Text style={styles.skipText}>{isRu ? 'Дальше' : 'Next'}</Text>
-            </Pressable>
-          ) : (
-            <View style={styles.skipBtn} />
-          )}
+      {/* Персонаж, сцена и слово прокручиваются, если не влезли, — микрофон и
+          подсказка под ними всегда на экране. */}
+      <ScrollView
+        style={styles.middle}
+        contentContainerStyle={[styles.middleContent, { paddingHorizontal: t.density.padX, gap: t.density.gap }]}
+        showsVerticalScrollIndicator={false}
+      >
+        <Animated.View entering={FadeInDown.duration(500)} style={[styles.petArea, successStyle]}>
+          <HBPet size={Math.round(t.mascot.hero * 0.7)} mood={boboMood} />
         </Animated.View>
 
-        {/* Progress dots */}
-        <View style={styles.progressRow}>
-          {scenes.map((_, i) => (
-            <View
-              key={i}
-              style={[
-                styles.dot,
-                i === sceneIndex && styles.dotActive,
-                i < sceneIndex && styles.dotDone,
-              ]}
-            />
-          ))}
-        </View>
-
-        {/* Bobo + story card + keyword. Прокручиваются, если не влезли, — микрофон
-            и подсказка под ними всегда на экране. */}
-        <ScrollView
-          style={styles.middle}
-          contentContainerStyle={styles.middleContent}
-          showsVerticalScrollIndicator={false}
-        >
-        <Animated.View entering={FadeInDown.duration(600)} style={styles.boboArea}>
-          <Animated.View style={successStyle}>
-            <View style={[styles.boboGlow, compact && { padding: spacing[2] }]}>
-              <Bobo size={compact ? 72 : 110} mood={boboMood} />
-            </View>
-          </Animated.View>
-        </Animated.View>
-
-        <Animated.View
-          key={`scene-${sceneIndex}`}
-          entering={FadeInUp.duration(450)}
-          exiting={FadeOut.duration(180)}
-          style={styles.cardArea}
-        >
-          <View style={[styles.storyCard, compact && styles.storyCardCompact, shadow.lg]}>
-            <Text style={{ fontSize: scaleFont(34), marginBottom: spacing[3] }}>
-              {currentScene?.emoji ?? '📖'}
-            </Text>
-            <Text style={styles.storyText}>
+        <Animated.View key={`scene-${sceneIndex}`} entering={FadeInUp.duration(400)} exiting={FadeOut.duration(160)}>
+          <HBCard style={styles.storyCard}>
+            <Text style={styles.sceneEmoji}>{currentScene?.emoji ?? ''}</Text>
+            <Text variant="headline" style={styles.storyText}>
               {currentScene?.text ?? ''}
             </Text>
-          </View>
+          </HBCard>
         </Animated.View>
 
-        {/* Keyword prompt */}
-        <Animated.View entering={FadeInUp.duration(500).delay(200)} style={styles.keywordArea}>
-          <View style={styles.keywordCard}>
-            <Text style={styles.keywordLabel}>{keywordLabel}</Text>
-            <Text style={styles.keywordWord}>{keyword.toUpperCase()}</Text>
-          </View>
+        <Animated.View entering={FadeInUp.duration(400).delay(150)}>
+          <HBCard bg={accent.soft} style={styles.keywordCard}>
+            <Text variant="caption" style={{ color: accent.ink }}>
+              {az ? 'Sehrli sözü de:' : 'Скажи волшебное слово:'}
+            </Text>
+            <Text style={[styles.keywordWord, { color: accent.ink }]}>{keyword.toUpperCase()}</Text>
+          </HBCard>
         </Animated.View>
-        </ScrollView>
+      </ScrollView>
 
-        {/* Feedback */}
-        <View style={styles.feedbackArea}>
-          {status === 'success' && (
-            <Animated.View entering={FadeIn.duration(300)}>
-              <Text style={styles.feedbackSuccess}>
-                {isRu ? `✨ Отлично! Ты помог ${bot}!` : `✨ Amazing! You helped ${bot}!`}
-              </Text>
-            </Animated.View>
-          )}
-          {status === 'skipped' && (
-            <Animated.View entering={FadeIn.duration(300)}>
-              <Text style={styles.feedbackSkip}>
-                {isRu ? '👍 Ничего страшного, двигаемся дальше!' : "👍 No worries, moving on!"}
-              </Text>
-            </Animated.View>
-          )}
-          {status === 'fail' && heard && (
-            <Animated.View entering={FadeIn.duration(300)} exiting={FadeOut.duration(200)}>
-              <Text style={styles.feedbackFail}>
-                {isRu
-                  ? `Бобо услышал: «${heard}». Попробуй ещё раз!`
-                  : `Bobo heard: "${heard}". Try again!`}
-              </Text>
-              <Text style={styles.feedbackHint}>
-                {isRu ? `Скажи: ${keyword}` : `Say: ${keyword}`}
-              </Text>
-            </Animated.View>
-          )}
-          {status === 'idle' && (
-            <Text style={errorNote ? styles.feedbackFail : styles.holdHint}>
-              {errorNote ?? (isRu ? '🎤 Нажми и скажи слово' : '🎤 Tap and say the word')}
-            </Text>
-          )}
-          {status === 'thinking' && (
-            <Text style={styles.holdHint}>
-              {isRu ? 'Бобо слушает...' : 'Bobo is listening...'}
-            </Text>
-          )}
-        </View>
-
-        {/* Mic button */}
-        <View style={[styles.micArea, compact && { paddingBottom: spacing[3] }]}>
-          <MicButton
-            state={status === 'recording' ? 'recording' : status === 'thinking' ? 'thinking' : 'idle'}
-            onPress={() => (status === 'recording' ? stopRecording() : startRecording())}
-            disabled={status === 'success' || status === 'skipped' || status === 'thinking'}
+      {/* Что произошло */}
+      <View style={[styles.feedbackArea, { paddingHorizontal: t.density.padX }]}>
+        {permissionGranted === false ? (
+          <InlineBanner
+            tone="danger"
+            icon="mic-off"
+            text={
+              az
+                ? 'Mikrofon bağlıdır. Telefon ayarlarında icazə ver və ya «Növbəti» düyməsini bas.'
+                : 'Микрофон выключен. Разреши его в настройках телефона или нажми «Дальше».'
+            }
           />
-        </View>
+        ) : status === 'success' ? (
+          <Feedback icon="circle-check" color={colors.accentDeep} text={az ? `Əla! ${bot} sevinir!` : `Отлично! Ты помог ${bot}!`} />
+        ) : status === 'skipped' ? (
+          <Feedback icon="arrow-right" color={colors.inkSoft} text={az ? 'Heç nə, davam edirik!' : 'Ничего страшного, идём дальше!'} />
+        ) : status === 'fail' && heard ? (
+          <Animated.View entering={FadeIn.duration(250)} exiting={FadeOut.duration(150)} style={styles.feedbackCol}>
+            <Text variant="bodyBold" align="center" style={{ color: colors.berryDeep }}>
+              {az ? `${bot} eşitdi: «${heard}»` : `${bot} услышал: «${heard}»`}
+            </Text>
+            <Text variant="caption" tone="secondary" align="center">
+              {az ? `Yenidən de: ${keyword}` : `Скажи ещё раз: ${keyword}`}
+            </Text>
+          </Animated.View>
+        ) : errorNote && status === 'idle' ? (
+          <InlineBanner tone="danger" text={errorNote} onClose={() => setErrorNote(null)} />
+        ) : (
+          <Text variant="caption" tone="secondary" align="center">
+            {status === 'thinking'
+              ? (az ? `${bot} dinləyir…` : `${bot} слушает…`)
+              : status === 'recording'
+                ? (az ? 'De sözü!' : 'Говори!')
+                : (az ? 'Bas və sözü de' : 'Нажми и скажи слово')}
+          </Text>
+        )}
+      </View>
 
-      </SafeAreaView>
-    </View>
+      <View style={styles.micArea}>
+        <MicButton
+          state={status === 'recording' ? 'recording' : status === 'thinking' ? 'thinking' : 'idle'}
+          onPress={() => (status === 'recording' ? stopRecording() : startRecording())}
+          disabled={status === 'success' || status === 'skipped' || status === 'thinking' || permissionGranted === false}
+          accessibilityLabel={az ? 'Mikrofon' : 'Микрофон'}
+        />
+      </View>
+    </PaperBackground>
+  );
+}
+
+function Feedback({ icon, color, text }: { icon: 'circle-check' | 'arrow-right'; color: string; text: string }) {
+  return (
+    <Animated.View entering={FadeIn.duration(250)} style={styles.feedbackRow}>
+      <Icon name={icon} size={18} color={color} strokeWidth={2.5} />
+      <Text variant="bodyBold" style={{ color }}>
+        {text}
+      </Text>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#0F0A24' },
-  safe: { flex: 1 },
-
-  topBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing[4],
-    paddingTop: spacing[2],
-    paddingBottom: spacing[1],
-  },
-  closeBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.full,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  questPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[2],
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[2],
-    borderRadius: radius.full,
-  },
-  questPillText: {
-    color: 'rgba(255,255,255,0.9)',
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize.sm,
-  },
-  skipBtn: {
-    paddingHorizontal: spacing[3],
-    paddingVertical: spacing[2],
-  },
-  skipText: {
-    color: 'rgba(255,255,255,0.4)',
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.xs,
-  },
-
-  progressRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: spacing[2],
-    paddingVertical: spacing[2],
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-  },
-  dotActive: {
-    backgroundColor: colors.primary,
-    width: 24,
-    borderRadius: 4,
-  },
-  dotDone: {
-    backgroundColor: colors.accent,
-  },
-
-  boboArea: {
-    alignItems: 'center',
-    paddingVertical: spacing[2],
-  },
-  boboGlow: {
-    padding: spacing[3],
-    borderRadius: radius.full,
-    backgroundColor: 'rgba(124, 92, 255, 0.18)',
-  },
-
   middle: { flex: 1 },
-  middleContent: { flexGrow: 1, justifyContent: 'center' },
+  middleContent: { flexGrow: 1, justifyContent: 'center', paddingVertical: spacing[2] },
 
-  cardArea: {
-    paddingHorizontal: spacing[5],
-    marginBottom: spacing[3],
-  },
-  storyCard: {
-    backgroundColor: 'rgba(255,255,255,0.07)',
-    borderRadius: radius['2xl'],
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.14)',
-    padding: spacing[5],
-    minHeight: 130,
-    justifyContent: 'center',
-  },
-  storyCardCompact: {
-    minHeight: 0,
-    padding: spacing[4],
-  },
-  storyText: {
-    fontFamily: fontFamily.display,
-    fontSize: scaleFont(22),
-    color: colors.cream,
-    lineHeight: 32,
-    letterSpacing: -0.2,
-  },
+  petArea: { alignItems: 'center' },
 
-  keywordArea: {
-    paddingHorizontal: spacing[5],
-    marginBottom: spacing[4],
-  },
-  keywordCard: {
-    backgroundColor: 'rgba(124, 92, 255, 0.22)',
-    borderRadius: radius.xl,
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-    paddingVertical: spacing[4],
-    paddingHorizontal: spacing[6],
-    alignItems: 'center',
-    gap: spacing[1],
-  },
-  keywordLabel: {
-    color: 'rgba(255,255,255,0.55)',
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.sm,
-  },
+  storyCard: { gap: spacing[2] },
+  sceneEmoji: { fontSize: scaleFont(32), lineHeight: scaleFont(40) },
+  storyText: { color: colors.ink },
+
+  keywordCard: { alignItems: 'center', gap: spacing[1], borderRadius: radius.xl },
   keywordWord: {
-    color: colors.white,
     fontFamily: fontFamily.display,
-    fontSize: scaleFont(34),
-    letterSpacing: 4,
+    fontSize: scaleFont(32),
+    lineHeight: scaleFont(40),
+    letterSpacing: 3,
   },
 
   feedbackArea: {
-    height: 56,
-    alignItems: 'center',
+    minHeight: 56,
     justifyContent: 'center',
-    paddingHorizontal: spacing[5],
-    marginBottom: spacing[2],
+    paddingVertical: spacing[1],
   },
-  feedbackSuccess: {
-    color: colors.accent,
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize.base,
-    textAlign: 'center',
-  },
-  feedbackSkip: {
-    color: colors.accentYellow,
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.sm,
-    textAlign: 'center',
-  },
-  feedbackFail: {
-    color: colors.accentPink,
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.sm,
-    textAlign: 'center',
-  },
-  feedbackHint: {
-    color: 'rgba(255,255,255,0.5)',
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.xs,
-    textAlign: 'center',
-    marginTop: spacing[1],
-  },
-  holdHint: {
-    color: 'rgba(255,255,255,0.35)',
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.sm,
-    textAlign: 'center',
-  },
+  feedbackRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing[2] },
+  feedbackCol: { alignItems: 'center', gap: 2 },
 
-  micArea: {
-    alignItems: 'center',
-    paddingBottom: spacing[8],
-  },
-
-  star: { position: 'absolute' },
-  starGlyph: { color: 'rgba(255,255,255,0.5)' },
+  micArea: { alignItems: 'center', paddingBottom: spacing[4] },
 });
