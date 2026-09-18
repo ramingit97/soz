@@ -1,12 +1,12 @@
 /**
- * Honeybear · Weekly Quiz / Daily Test.
+ * Контрольная: слова последней недели — выбрать картинку к слову.
  *
- * Top bar: close + progress chip + hearts.
- * Prompt centered with kicker + word + sound chip.
- * 4 image-option tiles in pastel colors with selected ring.
- * Encouragement banner with badge.
+ * Картинки без подписей: раньше под каждой было её слово, и ответ находился
+ * совпадением надписей. Картинка варианта берётся из его собственного раунда —
+ * раньше искалась в раунде, где слово было лишь одним из вариантов, и у
+ * неверного ответа могла оказаться картинка верного. Тексты — на языке
+ * интерфейса (RU/AZ).
  */
-
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
@@ -25,6 +25,8 @@ import Animated, {
 import { HBButton } from '@/components/HBButton';
 import { HBCard } from '@/components/HBCard';
 import { HBPet } from '@/components/HBPet';
+import { Icon } from '@/components/Icon';
+import { LessonHeader } from '@/components/LessonHeader';
 import { PaperBackground } from '@/components/PaperBackground';
 import { ReactingPet, type ReactingPetHandle } from '@/components/ReactingPet';
 import { StarParticle } from '@/components/StarParticle';
@@ -32,12 +34,18 @@ import { Text } from '@/components/Text';
 import { getLesson } from '@/data/lessons';
 import { playSfx } from '@/services/sfx';
 import { useSettings } from '@/store/settings';
+import { useTheme } from '@/hooks/useTheme';
 import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing, tints } from '@/theme';
+
+interface Choice {
+  word: string;
+  emoji: string;
+}
 
 interface QuizRound {
   emoji: string;
   correct: string;
-  options: string[];
+  choices: Choice[];
   fromDay: number;
 }
 
@@ -45,34 +53,38 @@ const OPTION_TINTS = [tints.primary, tints.butter, tints.sage, tints.berry];
 
 function buildQuiz(lang: string, currentDay: number): QuizRound[] {
   const startDay = Math.max(1, currentDay - 7);
-  const allRounds: QuizRound[] = [];
-  const allCorrectWords: string[] = [];
+  const allRounds: { emoji: string; correct: string; fromDay: number }[] = [];
+  // Картинка каждого слова — из ЕГО раунда.
+  const emojiOf = new Map<string, string>();
 
   for (let d = startDay; d < currentDay; d++) {
     const lesson = getLesson(lang, d);
     if (!lesson?.wordGame) continue;
     for (const r of lesson.wordGame) {
-      allRounds.push({ ...r, fromDay: d });
-      if (!allCorrectWords.includes(r.correct)) allCorrectWords.push(r.correct);
+      allRounds.push({ emoji: r.emoji, correct: r.correct, fromDay: d });
+      if (!emojiOf.has(r.correct)) emojiOf.set(r.correct, r.emoji);
     }
   }
 
+  const words = [...emojiOf.keys()];
   const picked = [...allRounds].sort(() => Math.random() - 0.5).slice(0, 7);
 
   return picked.map((r) => {
-    const distractors = allCorrectWords
-      .filter((w) => w !== r.correct)
+    const distractors = words
+      .filter((w) => w !== r.correct && emojiOf.get(w) !== r.emoji)
       .sort(() => Math.random() - 0.5)
-      .slice(0, 3);
-    const options = [r.correct, ...distractors].sort(() => Math.random() - 0.5);
-    return { ...r, options };
+      .slice(0, 3)
+      .map((w) => ({ word: w, emoji: emojiOf.get(w)! }));
+    const choices = [{ word: r.correct, emoji: r.emoji }, ...distractors].sort(() => Math.random() - 0.5);
+    return { ...r, choices };
   });
 }
 
 export default function QuizScreen() {
   const router = useRouter();
   const { lang = 'en', endDay = '7' } = useLocalSearchParams<{ lang: string; endDay: string }>();
-  const isRu = lang === 'ru';
+  const az = useSettings((s) => s.parentUILanguage) === 'az';
+  const { t, accent } = useTheme();
   const addStars = useSettings((s) => s.addStars);
 
   const rounds = useMemo(() => buildQuiz(lang, Number(endDay) + 1), [lang, endDay]);
@@ -139,13 +151,17 @@ export default function QuizScreen() {
     }, 900);
   };
 
+  const title = az ? 'Yoxlama' : 'Контрольная';
+
   if (rounds.length === 0) {
     return (
-      <PaperBackground>
-        <View style={styles.emptyRoot}>
-          <Text style={styles.emptyText}>
-            {isRu ? 'Нет слов для теста' : 'No words for the quiz'}
+      <PaperBackground edges={['top', 'bottom']}>
+        <View style={[styles.center, { paddingHorizontal: t.density.padX }]}>
+          <HBPet size={t.mascot.hero} mood="curious" />
+          <Text variant="body" tone="secondary" align="center">
+            {az ? 'Yoxlama üçün hələ söz yoxdur.' : 'Для контрольной пока нет слов.'}
           </Text>
+          <HBButton icon="house" label={az ? 'Ana səhifəyə' : 'На главную'} onPress={() => router.replace('/home')} />
         </View>
       </PaperBackground>
     );
@@ -155,34 +171,28 @@ export default function QuizScreen() {
     const total = rounds.length;
     const percentage = Math.round((score / total) * 100);
     return (
-      <PaperBackground variant="honey">
-        <View style={styles.doneContent}>
-          <Animated.View entering={FadeInDown.duration(700)}>
-            <HBPet size={140} mood="happy" />
+      <PaperBackground edges={['top', 'bottom']}>
+        <View style={[styles.center, { paddingHorizontal: t.density.padX }]}>
+          <Animated.View entering={FadeInDown.duration(600)}>
+            <HBPet size={t.mascot.hero} mood="happy" />
           </Animated.View>
-          <Animated.Text entering={FadeIn.duration(500).delay(300)} style={styles.scoreText}>
-            {score} / {total}
-          </Animated.Text>
-          <Animated.View entering={FadeInUp.duration(500).delay(500)} style={{ alignItems: 'center', gap: spacing[1] }}>
-            <Text style={styles.completeTitle}>
-              {isRu ? '🎉 Тест пройден!' : '🎉 Quiz complete!'}
+          <Animated.View entering={FadeIn.duration(500).delay(250)} style={styles.scoreRow}>
+            <Text style={[styles.scoreText, { color: accent.ink }]}>
+              {score} / {total}
             </Text>
-            <Text style={styles.completeSub}>
+            <Icon name="star" size={32} color={colors.butterDeep} fill={colors.butter} strokeWidth={2} />
+          </Animated.View>
+          <Animated.View entering={FadeInUp.duration(500).delay(400)} style={styles.doneText}>
+            <Text variant="title" align="center">{az ? 'Yoxlama bitdi!' : 'Контрольная пройдена!'}</Text>
+            <Text variant="body" tone="secondary" align="center">
               {percentage >= 80
-                ? (isRu ? 'Отличная память!' : 'Great memory!')
+                ? az ? 'Əla yaddaş!' : 'Отличная память!'
                 : percentage >= 50
-                ? (isRu ? 'Хорошая работа!' : 'Good job!')
-                : (isRu ? 'Так держать!' : 'Keep going!')}
+                  ? az ? 'Yaxşı iş!' : 'Хорошая работа!'
+                  : az ? 'Belə davam et!' : 'Так держать!'}
             </Text>
           </Animated.View>
-          <Animated.View entering={FadeInUp.duration(500).delay(700)} style={{ width: '100%', paddingHorizontal: spacing[6] }}>
-            <HBButton
-              full
-              variant="primary"
-              label={isRu ? 'На главную 🏠' : 'Go home 🏠'}
-              onPress={() => router.replace('/home')}
-            />
-          </Animated.View>
+          <HBButton full icon="house" label={az ? 'Ana səhifəyə' : 'На главную'} onPress={() => router.replace('/home')} />
         </View>
       </PaperBackground>
     );
@@ -192,39 +202,22 @@ export default function QuizScreen() {
 
   return (
     <PaperBackground>
-      <View style={styles.container}>
-        {/* top bar */}
-        <Animated.View entering={FadeIn.duration(400)} style={styles.topBar}>
-          <Pressable onPress={() => router.back()} style={[styles.iconBtn, shadow.sm]}>
-            <Text style={styles.iconBtnText}>✕</Text>
-          </Pressable>
-          <View style={[styles.testChip, shadow.sm]}>
-            <Text style={{ fontSize: 14 }}>🔥</Text>
-            <Text style={styles.testChipText}>
-              {isRu ? `Тест · ${roundIndex + 1} / ${rounds.length}` : `Quiz · ${roundIndex + 1} / ${rounds.length}`}
-            </Text>
-          </View>
-          <View style={[styles.heartsChip, shadow.sm]}>
-            <Text style={{ fontSize: 14 }}>❤️</Text>
+      <LessonHeader
+        title={title}
+        icon="graduation-cap"
+        step={roundIndex + 1}
+        total={rounds.length}
+        onClose={() => router.back()}
+        right={
+          <View style={styles.hearts} accessibilityLabel={az ? `Ürəklər: ${hearts}` : `Сердечки: ${hearts}`}>
+            <Icon name="heart" size={16} color={colors.berry} fill={colors.berry} strokeWidth={2} />
             <Text style={styles.heartsText}>{hearts}</Text>
           </View>
-        </Animated.View>
+        }
+      />
 
-        {/* progress bar */}
-        <View style={styles.progressRow}>
-          {rounds.map((_, i) => (
-            <View
-              key={i}
-              style={[
-                styles.progressBar,
-                i < roundIndex && { backgroundColor: colors.accent },
-                i === roundIndex && { backgroundColor: colors.primary },
-              ]}
-            />
-          ))}
-        </View>
-
-        {/* companion cheerleader — absolute so the quiz layout never shifts */}
+      <View style={[styles.body, { paddingHorizontal: t.density.padX }]}>
+        {/* персонаж подбадривает — поверх, чтобы раскладка не прыгала */}
         <View pointerEvents="none" style={styles.petCorner}>
           <ReactingPet ref={petRef} size={56} hue={petHue} mood="curious" />
           {petStars.map((id) => (
@@ -232,291 +225,104 @@ export default function QuizScreen() {
           ))}
         </View>
 
-        {/* prompt */}
-        <Animated.View entering={FadeInDown.duration(500).delay(100)} style={styles.promptArea}>
-          <Text style={styles.kicker}>
-            {isRu ? 'ВЫБЕРИ КАРТИНКУ' : 'CHOOSE THE PICTURE'}
-          </Text>
+        <Animated.View entering={FadeInDown.duration(450).delay(80)} style={styles.prompt}>
+          <Text variant="label" tone="secondary">{az ? 'Şəkli seç' : 'Выбери картинку'}</Text>
           <Text style={styles.word}>{currentRound.correct}</Text>
-          <View style={styles.soundChip}>
-            <Text style={{ fontSize: fontSize.xs, color: colors.primary }}>🔊</Text>
-            <Text style={styles.soundText}>
-              {isRu ? 'прослушать' : 'listen'}
-            </Text>
-          </View>
         </Animated.View>
 
-        {/* options grid */}
-        <Animated.View entering={FadeInUp.duration(600).delay(200)} style={styles.optionsGrid}>
-          {currentRound.options.map((option, i) => {
-            const isSelected = selected === option;
+        <Animated.View entering={FadeInUp.duration(500).delay(160)} style={styles.grid}>
+          {currentRound.choices.map((choice, i) => {
+            const isSelected = selected === choice.word;
             const isCorrect = isSelected && answerState === 'correct';
             const isWrong = isSelected && answerState === 'wrong';
-            const tint = OPTION_TINTS[i % OPTION_TINTS.length] ?? colors.bg;
-            const ringColor = isCorrect ? colors.accent : isWrong ? colors.berry : isSelected ? colors.primary : undefined;
-            const matchedRound = rounds.find(r => r.correct === option || r.options.includes(option));
-            const emoji = option === currentRound.correct
-              ? currentRound.emoji
-              : (matchedRound?.emoji ?? '🔤');
+            const ring = isCorrect ? colors.accentDeep : isWrong ? colors.berry : undefined;
             return (
               <Pressable
-                key={`${roundIndex}-${option}`}
-                onPress={() => handleOption(option)}
+                key={`${roundIndex}-${choice.word}`}
+                onPress={() => handleOption(choice.word)}
                 disabled={answerState !== 'idle'}
+                accessibilityRole="button"
+                accessibilityLabel={choice.emoji}
                 style={({ pressed }) => [
-                  styles.optionTile,
-                  { backgroundColor: tint },
-                  ringColor ? { borderColor: ringColor, borderWidth: 3 } : null,
-                  shadow.md,
-                  pressed && { transform: [{ scale: 0.97 }] },
+                  styles.tile,
+                  { backgroundColor: OPTION_TINTS[i % OPTION_TINTS.length] },
+                  ring ? { borderColor: ring, borderWidth: 3 } : null,
+                  pressed && styles.pressed,
                 ]}
               >
                 <Animated.View style={cardStyle}>
-                  <Text style={styles.optionEmoji}>{emoji}</Text>
+                  <Text style={styles.tileEmoji}>{choice.emoji}</Text>
                 </Animated.View>
-                <Text style={styles.optionText}>{option}</Text>
-                {isCorrect && (
-                  <View style={[styles.optionBadge, { backgroundColor: colors.accent }]}>
-                    <Text style={styles.optionBadgeText}>✓</Text>
+                {isCorrect || isWrong ? (
+                  <View style={[styles.badge, { backgroundColor: isCorrect ? colors.accentDeep : colors.berry }]}>
+                    <Icon name={isCorrect ? 'check' : 'x'} size={14} color={colors.white} strokeWidth={3} />
                   </View>
-                )}
+                ) : null}
               </Pressable>
             );
           })}
         </Animated.View>
 
-        {/* footer encouragement */}
-        <View style={styles.encourageWrap}>
-          <HBCard depth="sm" style={styles.encourage}>
-            <View style={styles.encourageIcon}>
-              <Text style={{ fontSize: 18 }}>🏅</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.encourageTitle}>
-                {isRu
-                  ? `${score} из ${roundIndex + (answerState !== 'idle' ? 1 : 0)} правильно`
-                  : `${score} of ${roundIndex + (answerState !== 'idle' ? 1 : 0)} correct`}
-              </Text>
-              <Text style={styles.encourageSub}>
-                {isRu ? `Из дня ${currentRound.fromDay}` : `From day ${currentRound.fromDay}`}
-              </Text>
-            </View>
-          </HBCard>
-        </View>
+        <HBCard style={styles.footer}>
+          <Icon name="medal" size={20} color={accent.ink} />
+          <View style={styles.flex}>
+            <Text variant="bodyBold">
+              {az
+                ? `${roundIndex + (answerState !== 'idle' ? 1 : 0)}-dən ${score} düz`
+                : `${score} из ${roundIndex + (answerState !== 'idle' ? 1 : 0)} правильно`}
+            </Text>
+            <Text variant="caption" tone="secondary">
+              {az ? `${currentRound.fromDay}-ci gündən` : `Из дня ${currentRound.fromDay}`}
+            </Text>
+          </View>
+        </HBCard>
       </View>
     </PaperBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: spacing[5],
-    paddingTop: 50,
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing[4] },
+  scoreRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[2] },
+  scoreText: { fontFamily: fontFamily.display, fontSize: scaleFont(48), lineHeight: scaleFont(56) },
+  doneText: { alignItems: 'center', gap: spacing[1] },
+  hearts: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: spacing[2],
+    paddingVertical: 4,
+    borderRadius: radius.full,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
   },
-  emptyRoot: {
-    flex: 1,
+  heartsText: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize.sm, color: colors.ink },
+  body: { flex: 1, paddingTop: spacing[4], paddingBottom: spacing[6], gap: spacing[5] },
+  petCorner: { position: 'absolute', right: spacing[4], top: 0, zIndex: 5 },
+  prompt: { alignItems: 'center', gap: spacing[1] },
+  word: { fontFamily: fontFamily.display, fontSize: fontSize['4xl'], color: colors.ink },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: spacing[3] },
+  tile: {
+    width: '48.5%',
+    aspectRatio: 1.15,
+    borderRadius: radius['2xl'],
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyText: {
-    color: colors.ink,
-    fontFamily: fontFamily.bodyMedium,
-  },
-
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: spacing[2],
-  },
-  iconBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconBtnText: {
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize.base,
-    color: colors.ink,
-  },
-  testChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[1.5],
-    backgroundColor: colors.card,
-    paddingHorizontal: spacing[3],
-    paddingVertical: 6,
-    borderRadius: radius.full,
-  },
-  testChipText: {
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize.xs,
-    color: colors.ink,
-  },
-  heartsChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: colors.card,
-    paddingHorizontal: spacing[3],
-    paddingVertical: 6,
-    borderRadius: radius.full,
-  },
-  heartsText: {
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize.xs,
-    color: colors.berry,
-  },
-
-  progressRow: {
-    flexDirection: 'row',
-    gap: 4,
-    marginTop: spacing[3],
-  },
-  petCorner: {
-    position: 'absolute',
-    right: spacing[5],
-    top: 96,
-    width: 56,
-    height: 56,
-    zIndex: 10,
-  },
-  progressBar: {
-    flex: 1,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.bgDeep,
-  },
-
-  promptArea: {
-    alignItems: 'center',
-    marginTop: spacing[5],
-    gap: spacing[1],
-  },
-  kicker: {
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize['2xs'],
-    color: colors.inkSoft,
-    letterSpacing: 1.6,
-  },
-  word: {
-    fontFamily: fontFamily.display,
-    fontSize: fontSize['4xl'],
-    color: colors.ink,
-    letterSpacing: -0.5,
-  },
-  soundChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: colors.card,
-    paddingHorizontal: spacing[3],
-    paddingVertical: 5,
-    borderRadius: radius.full,
-    marginTop: spacing[1],
     ...shadow.sm,
   },
-  soundText: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize.xs,
-    color: colors.primary,
-  },
-
-  optionsGrid: {
-    marginTop: spacing[5],
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing[3],
-    justifyContent: 'center',
-  },
-  optionTile: {
-    width: '47%',
-    aspectRatio: 1,
-    borderRadius: radius.xl,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    position: 'relative',
-  },
-  optionEmoji: { fontSize: 56 },
-  optionText: {
-    fontFamily: fontFamily.display,
-    fontSize: fontSize.base,
-    color: colors.ink,
-  },
-  optionBadge: {
+  pressed: { transform: [{ scale: 0.97 }] },
+  tileEmoji: { fontSize: scaleFont(52), lineHeight: scaleFont(64) },
+  badge: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    top: spacing[2],
+    right: spacing[2],
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  optionBadgeText: {
-    color: colors.white,
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize.xs,
-  },
-
-  encourageWrap: {
-    position: 'absolute',
-    left: spacing[5],
-    right: spacing[5],
-    bottom: spacing[6],
-  },
-  encourage: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[2],
-    paddingVertical: spacing[2],
-    paddingHorizontal: spacing[3],
-  },
-  encourageIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.butter,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  encourageTitle: {
-    fontFamily: fontFamily.display,
-    fontSize: fontSize.sm,
-    color: colors.ink,
-  },
-  encourageSub: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize['2xs'],
-    color: colors.inkSoft,
-  },
-
-  doneContent: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing[3],
-  },
-  scoreText: {
-    fontFamily: fontFamily.display,
-    fontSize: scaleFont(72),
-    color: colors.primary,
-  },
-  completeTitle: {
-    fontFamily: fontFamily.display,
-    fontSize: fontSize['2xl'],
-    color: colors.ink,
-    textAlign: 'center',
-  },
-  completeSub: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.base,
-    color: colors.inkSoft,
-    textAlign: 'center',
-  },
+  footer: { flexDirection: 'row', alignItems: 'center', gap: spacing[3], marginTop: 'auto' },
+  flex: { flex: 1, minWidth: 0 },
 });

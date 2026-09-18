@@ -37,6 +37,7 @@ export default function ProfileScreen() {
   const logout = useSettings((s) => s.logout);
   const bedtimeMode = useSettings((s) => s.bedtimeMode);
   const setBedtimeMode = useSettings((s) => s.setBedtimeMode);
+  const setParentUILanguage = useSettings((s) => s.setParentUILanguage);
   const isAz = lang === 'az';
   const parentalGate = useParentalGate();
   const bot = useCompanionName();
@@ -130,6 +131,14 @@ export default function ProfileScreen() {
         const next = bedtimeMode === 'auto' ? 'on' : bedtimeMode === 'on' ? 'off' : 'auto';
         setBedtimeMode(next);
       }),
+    },
+    {
+      icon: 'languages',
+      label: isAz ? 'Tətbiqin dili' : 'Язык приложения',
+      // Переключается на месте. Экран `language` после выбора уводил на
+      // `/welcome`, то есть заново в онбординг, — он удалён.
+      sub: isAz ? 'Azərbaycanca · rus dilinə keç' : 'Русский · перейти на азербайджанский',
+      onPress: () => handleAction(() => setParentUILanguage(isAz ? 'ru' : 'az')),
     },
     ...(isPremium
       ? []

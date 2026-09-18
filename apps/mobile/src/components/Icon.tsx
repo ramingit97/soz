@@ -46,6 +46,7 @@ import GraduationCap from 'lucide-react-native/icons/graduation-cap';
 import Headphones from 'lucide-react-native/icons/headphones';
 import Heart from 'lucide-react-native/icons/heart';
 import House from 'lucide-react-native/icons/house';
+import Languages from 'lucide-react-native/icons/languages';
 import Library from 'lucide-react-native/icons/library';
 import Lightbulb from 'lucide-react-native/icons/lightbulb';
 import Lock from 'lucide-react-native/icons/lock';
@@ -138,6 +139,7 @@ const ICONS = {
   headphones: Headphones,
   heart: Heart,
   house: House,
+  languages: Languages,
   library: Library,
   lightbulb: Lightbulb,
   lock: Lock,

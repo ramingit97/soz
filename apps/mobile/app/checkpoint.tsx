@@ -13,9 +13,14 @@ import {
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 import { HBButton } from '@/components/HBButton';
+import { HBIconBox } from '@/components/HBIconBox';
 import { HBPet } from '@/components/HBPet';
+import { type IconName } from '@/components/Icon';
 import { PaperBackground } from '@/components/PaperBackground';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { Text } from '@/components/Text';
+import { useAccent } from '@/hooks/useAccent';
+import { UIModeProvider } from '@/hooks/useUIMode';
 import { analyzeInterests, updatePreferences, type LessonPrefs } from '@/services/api';
 import { fetchFullCurriculum } from '@/services/curriculum';
 import { useSettings } from '@/store/settings';
@@ -149,11 +154,12 @@ export default function CheckpointScreen() {
   // ── Success state ───────────────────────────────────────────────────────────
   if (done) {
     return (
+      <UIModeProvider force="teen">
       <PaperBackground>
         <View style={styles.successWrap}>
           <Animated.View entering={FadeInDown.duration(500)} style={styles.successInner}>
             <HBPet size={96} hue={storedHue} mood="happy" />
-            <Text style={styles.successTitle}>{isAz ? 'Hazırdır! 🎉' : 'Готово! 🎉'}</Text>
+            <Text style={styles.successTitle}>{isAz ? 'Hazırdır!' : 'Готово!'}</Text>
             <Text style={styles.successBody}>
               {isAz
                 ? `${bot} növbəti dərsləri ${childName} üçün yeniləyəcək.`
@@ -170,12 +176,16 @@ export default function CheckpointScreen() {
           </Animated.View>
         </View>
       </PaperBackground>
+      </UIModeProvider>
     );
   }
 
   // ── Form ────────────────────────────────────────────────────────────────────
   return (
+    // Настройку читает и делает родитель — «взрослый» режим.
+    <UIModeProvider force="teen">
     <PaperBackground>
+      <ScreenHeader title={isAz ? 'Dərsləri tənzimlə' : 'Настроить уроки'} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -227,7 +237,7 @@ export default function CheckpointScreen() {
             <Text style={styles.cardLabel}>{isAz ? 'VALİDEYN TƏNZİMLƏMƏSİ' : 'НАСТРОЙКА РОДИТЕЛЯ'}</Text>
 
             <ToggleRow
-              emoji="💬"
+              icon="message-circle"
               label={isAz ? 'Daha çox söhbət' : 'Больше разговоров'}
               hint={isAz ? `${bot} ilə daha çox danış` : `Больше живого общения с ${bot}`}
               value={moreTalk}
@@ -238,7 +248,7 @@ export default function CheckpointScreen() {
             />
             <View style={styles.rowDivider} />
             <ToggleRow
-              emoji="📚"
+              icon="book-open"
               label={isAz ? 'Daha çox söz' : 'Больше слов'}
               hint={isAz ? 'Hər dərsdə daha çox lüğət' : 'Больше новых слов в уроке'}
               value={moreWords}
@@ -382,32 +392,39 @@ export default function CheckpointScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
     </PaperBackground>
+    </UIModeProvider>
   );
 }
 
 // ── Toggle row ────────────────────────────────────────────────────────────────
 
 function ToggleRow({
-  emoji,
+  icon,
   label,
   hint,
   value,
   onToggle,
 }: {
-  emoji: string;
+  icon: IconName;
   label: string;
   hint: string;
   value: boolean;
   onToggle: () => void;
 }) {
+  const accent = useAccent();
   return (
-    <Pressable onPress={onToggle} style={styles.toggleRow}>
-      <Text style={styles.toggleEmoji}>{emoji}</Text>
+    <Pressable
+      onPress={onToggle}
+      style={styles.toggleRow}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: value }}
+    >
+      <HBIconBox icon={icon} tint={accent.soft} iconColor={accent.ink} size={40} />
       <View style={styles.toggleTextWrap}>
         <Text style={styles.toggleLabel}>{label}</Text>
         <Text style={styles.toggleHint}>{hint}</Text>
       </View>
-      <View style={[styles.switch, value && styles.switchOn]}>
+      <View style={[styles.switch, value && { backgroundColor: accent.bottom }]}>
         <View style={[styles.knob, value && styles.knobOn]} />
       </View>
     </Pressable>
@@ -418,7 +435,7 @@ const styles = StyleSheet.create({
   scroll: {
     flexGrow: 1,
     paddingHorizontal: spacing[5],
-    paddingTop: spacing[6],
+    paddingTop: spacing[2],
     paddingBottom: spacing[10],
     gap: spacing[4],
   },
@@ -495,7 +512,6 @@ const styles = StyleSheet.create({
 
   // Toggle rows
   toggleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
-  toggleEmoji: { fontSize: 24 },
   toggleTextWrap: { flex: 1, gap: 2 },
   toggleLabel: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.base, color: colors.ink },
   toggleHint: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize.xs, color: colors.inkSoft },
@@ -507,7 +523,6 @@ const styles = StyleSheet.create({
     padding: 3,
     justifyContent: 'center',
   },
-  switchOn: { backgroundColor: colors.primary },
   knob: {
     width: 24,
     height: 24,

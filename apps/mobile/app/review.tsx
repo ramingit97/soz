@@ -1,23 +1,26 @@
 /**
- * Review mode — replay past word-game mistakes.
- * Powered by the aggregated /progress/:childId/errors endpoint.
- * Each item is a 4-option multiple-choice (same UX as the word-game step).
+ * Повторение ошибок: прошлые промахи в игре со словами — снова четыре варианта.
+ * Данные — `/progress/:childId/errors`. Оформлено как шаг урока (общая шапка).
  */
 
 import * as Haptics from 'expo-haptics';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp, FadeOut } from 'react-native-reanimated';
 
-import { Bobo } from '@/components/Bobo';
+import { HBButton } from '@/components/HBButton';
+import { HBPet } from '@/components/HBPet';
+import { Icon } from '@/components/Icon';
+import { LessonHeader } from '@/components/LessonHeader';
+import { PaperBackground } from '@/components/PaperBackground';
 import { Skeleton } from '@/components/Skeleton';
 import { Text } from '@/components/Text';
 import { getLesson } from '@/data/lessons';
+import { useTheme } from '@/hooks/useTheme';
 import { getReviewItems, type ReviewItem } from '@/services/api';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, radius, spacing } from '@/theme';
 
 interface Question {
   prompt: string;
@@ -34,6 +37,7 @@ export default function ReviewScreen() {
   const learningLanguages = useSettings((s) => s.learningLanguages);
   const addStars = useSettings((s) => s.addStars);
   const isAz = lang === 'az';
+  const { t } = useTheme();
   const learningLang = learningLanguages[0] ?? 'en';
 
   const [items, setItems] = useState<ReviewItem[]>([]);
@@ -104,141 +108,78 @@ export default function ReviewScreen() {
 
   // ── Render states ──────────────────────────────────────────────────────────
 
+  const title = isAz ? 'Təkrar' : 'Повторение';
+  const close = () => router.back();
+
   if (loading) {
     return (
-      <View style={styles.root}>
-        <LinearGradient colors={['#FFF6EC', '#F5EBFF']} style={StyleSheet.absoluteFill} />
-        <ScrollView contentContainerStyle={styles.scroll}>
-          <View style={styles.progressRow}>
-            {[1, 2, 3, 4, 5].map((i) => (
-              <Skeleton key={i} width={8} height={8} borderRadius={4} />
+      <PaperBackground>
+        <LessonHeader title={title} icon="repeat" step={1} total={5} onClose={close} />
+        <View style={[styles.body, { paddingHorizontal: t.density.padX }]}>
+          <Skeleton width="80%" height={28} style={{ marginBottom: 32 }} />
+          <View style={styles.options}>
+            {[1, 2, 3, 4].map((k) => (
+              <Skeleton key={k} width="48%" height={68} borderRadius={20} />
             ))}
           </View>
-          <Skeleton width={120} height={11} style={{ marginBottom: 12, alignSelf: 'center' }} />
-          <Skeleton width="80%" height={28} style={{ marginBottom: 32, alignSelf: 'center' }} />
-          <View style={styles.optionsGrid}>
-            {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} width="47%" height={68} borderRadius={20} />
-            ))}
-          </View>
-        </ScrollView>
-      </View>
-    );
-  }
-
-  if (questions.length === 0) {
-    return (
-      <View style={styles.root}>
-        <LinearGradient colors={['#FFF6EC', '#F5EBFF']} style={StyleSheet.absoluteFill} />
-        <View style={styles.emptyArea}>
-          <Bobo size={120} mood="happy" />
-          <Text style={styles.emptyTitle}>
-            {isAz ? 'Heç bir səhv yoxdur!' : 'Ошибок нет!'}
-          </Text>
-          <Text style={styles.emptySub}>
-            {isAz
-              ? 'Sən hər şeyi düzgün cavablamışsan. Davam et!'
-              : 'Ты всё отвечал правильно. Так держать!'}
-          </Text>
-          <Pressable onPress={() => router.back()} style={styles.backToHomeBtn}>
-            <Text style={styles.backToHomeText}>
-              {isAz ? 'Geri qayıt' : 'Назад'}
-            </Text>
-          </Pressable>
         </View>
-      </View>
+      </PaperBackground>
     );
   }
 
-  if (done) {
+  if (questions.length === 0 || done) {
     return (
-      <View style={styles.root}>
-        <LinearGradient colors={['#FFF6EC', '#F5EBFF']} style={StyleSheet.absoluteFill} />
-        <Animated.View entering={FadeIn.duration(500)} style={styles.emptyArea}>
-          <Bobo size={120} mood="happy" />
-          <Text style={styles.emptyTitle}>
-            {isAz ? 'Möhtəşəm!' : 'Великолепно!'}
+      <PaperBackground edges={['top', 'bottom']}>
+        <Animated.View entering={FadeIn.duration(400)} style={[styles.center, { paddingHorizontal: t.density.padX }]}>
+          <HBPet size={t.mascot.hero} mood="happy" />
+          <Text variant="title" align="center">
+            {done ? (isAz ? 'Möhtəşəm!' : 'Великолепно!') : isAz ? 'Səhv yoxdur!' : 'Ошибок нет!'}
           </Text>
-          <Text style={styles.scoreText}>
-            {correctCount} / {questions.length} ⭐
+          {done ? (
+            <View style={styles.score}>
+              <Text style={styles.scoreText}>
+                {correctCount} / {questions.length}
+              </Text>
+              <Icon name="star" size={28} color={colors.butterDeep} fill={colors.butter} strokeWidth={2} />
+            </View>
+          ) : null}
+          <Text variant="body" tone="secondary" align="center">
+            {done
+              ? isAz ? 'Sözləri yadda saxlayırsan!' : 'Ты помнишь слова!'
+              : isAz ? 'Hər şeyi düz cavablamısan. Belə davam et!' : 'Ты всё отвечал правильно. Так держать!'}
           </Text>
-          <Text style={styles.emptySub}>
-            {isAz
-              ? 'Sözləri xatırlayırsan!'
-              : 'Ты помнишь слова!'}
-          </Text>
-          <Pressable onPress={() => router.back()} style={styles.backToHomeBtn}>
-            <Text style={styles.backToHomeText}>
-              {isAz ? 'Davam et' : 'Продолжить'}
-            </Text>
-          </Pressable>
+          <HBButton
+            icon={done ? 'check' : 'arrow-left'}
+            label={done ? (isAz ? 'Davam et' : 'Продолжить') : isAz ? 'Geri' : 'Назад'}
+            onPress={close}
+          />
         </Animated.View>
-      </View>
+      </PaperBackground>
     );
   }
 
   return (
-    <View style={styles.root}>
-      <LinearGradient colors={['#FFF6EC', '#F5EBFF']} style={StyleSheet.absoluteFill} />
-
-      <Pressable onPress={() => router.back()} style={styles.closeBtn}>
-        <Text style={styles.closeText}>✕</Text>
-      </Pressable>
-
-      <ScrollView contentContainerStyle={styles.scroll}>
-        {/* Progress dots */}
-        <View style={styles.progressRow}>
-          {questions.map((_, i) => (
-            <View
-              key={i}
-              style={[
-                styles.dot,
-                i === index && styles.dotActive,
-                i < index && styles.dotDone,
-              ]}
-            />
-          ))}
-        </View>
-
-        {/* Question */}
-        <Animated.View
-          key={`q-${index}`}
-          entering={FadeInDown.duration(350)}
-          exiting={FadeOut.duration(150)}
-          style={styles.questionArea}
-        >
-          <Text style={styles.questionLabel}>
-            {isAz ? 'TƏKRAR ET' : 'ПОВТОРИ'}
-          </Text>
-          <Text style={styles.prompt}>
-            {current!.prompt}
-          </Text>
+    <PaperBackground>
+      <LessonHeader title={title} icon="repeat" step={index + 1} total={questions.length} onClose={close} />
+      <ScrollView contentContainerStyle={[styles.body, { paddingHorizontal: t.density.padX }]}>
+        <Animated.View key={`q-${index}`} entering={FadeInDown.duration(350)} exiting={FadeOut.duration(150)} style={styles.question}>
+          <Text variant="label" tone="secondary">{isAz ? 'Xatırla' : 'Вспомни'}</Text>
+          <Text style={styles.prompt}>{current!.prompt}</Text>
         </Animated.View>
 
-        {/* Options */}
-        <Animated.View entering={FadeInUp.duration(400).delay(100)} style={styles.optionsGrid}>
+        <Animated.View entering={FadeInUp.duration(400).delay(100)} style={styles.options}>
           {current!.options.map((opt) => {
-            const isSel = selected === opt;
-            const isCorrect = selected && opt.toLowerCase() === current!.correct.toLowerCase();
-            const isWrong = isSel && opt.toLowerCase() !== current!.correct.toLowerCase();
+            const isRight = !!selected && opt.toLowerCase() === current!.correct.toLowerCase();
+            const isWrong = selected === opt && !isRight;
             return (
               <Pressable
                 key={opt}
                 onPress={() => handleChoose(opt)}
                 disabled={!!selected}
-                style={[
-                  styles.option,
-                  shadow.sm,
-                  isCorrect && styles.optionCorrect,
-                  isWrong && styles.optionWrong,
-                  selected && !isSel && opt.toLowerCase() === current!.correct.toLowerCase() && styles.optionCorrect,
-                ]}
+                accessibilityRole="button"
+                style={[styles.option, isRight && styles.optionRight, isWrong && styles.optionWrong]}
               >
-                <Text style={[
-                  styles.optionText,
-                  (isCorrect || (selected && opt.toLowerCase() === current!.correct.toLowerCase())) && { color: colors.white },
-                  isWrong && { color: colors.white },
-                ]}>
+                <Text style={[styles.optionText, isRight && { color: colors.accentDeep }, isWrong && { color: colors.berryDeep }]}>
                   {opt}
                 </Text>
               </Pressable>
@@ -246,152 +187,34 @@ export default function ReviewScreen() {
           })}
         </Animated.View>
 
-        <Text style={styles.dayTag}>
-          {isAz ? `${current!.day}. gündən` : `Из дня ${current!.day}`}
+        <Text variant="caption" tone="secondary" align="center">
+          {isAz ? `${current!.day}-ci gündən` : `Из дня ${current!.day}`}
         </Text>
       </ScrollView>
-    </View>
+    </PaperBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#FFF6EC' },
-  scroll: {
-    paddingHorizontal: spacing[6],
-    paddingTop: spacing[14],
-    paddingBottom: spacing[10],
-    alignItems: 'center',
-  },
-
-  loaderArea: {
-    flex: 1, alignItems: 'center', justifyContent: 'center',
-  },
-
-  emptyArea: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacing[8],
-    gap: spacing[3],
-  },
-  emptyTitle: {
-    fontFamily: fontFamily.display,
-    fontSize: fontSize['2xl'],
-    color: colors.ink,
-    marginTop: spacing[3],
-    textAlign: 'center',
-  },
-  emptySub: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.base,
-    color: colors.inkSoft,
-    textAlign: 'center',
-    lineHeight: 22,
-    maxWidth: 280,
-  },
-  scoreText: {
-    fontFamily: fontFamily.display,
-    fontSize: fontSize['5xl'],
-    color: colors.primary,
-    marginVertical: spacing[1],
-  },
-  backToHomeBtn: {
-    marginTop: spacing[4],
-    backgroundColor: colors.primary,
-    paddingVertical: spacing[3],
-    paddingHorizontal: spacing[6],
-    borderRadius: radius.full,
-  },
-  backToHomeText: {
-    color: colors.white,
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize.base,
-  },
-
-  closeBtn: {
-    position: 'absolute',
-    top: spacing[14],
-    right: spacing[5],
-    zIndex: 10,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.white,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...shadow.sm,
-  },
-  closeText: {
-    fontSize: fontSize.base,
-    color: colors.inkSoft,
-  },
-
-  progressRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: spacing[2],
-    marginBottom: spacing[8],
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.border,
-  },
-  dotActive: {
-    backgroundColor: colors.primary,
-    width: 24,
-  },
-  dotDone: {
-    backgroundColor: colors.success,
-  },
-
-  questionArea: {
-    alignItems: 'center',
-    marginBottom: spacing[8],
-    gap: spacing[2],
-  },
-  questionLabel: {
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize['2xs'],
-    color: colors.inkSoft,
-    letterSpacing: 1.5,
-  },
-  prompt: {
-    fontFamily: fontFamily.display,
-    fontSize: scaleFont(32),
-    color: colors.ink,
-    textAlign: 'center',
-    letterSpacing: -0.5,
-    maxWidth: 320,
-  },
-
-  optionsGrid: {
-    width: '100%',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: spacing[3],
-  },
+  body: { paddingTop: spacing[4], paddingBottom: spacing[10], gap: spacing[5] },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing[3] },
+  score: { flexDirection: 'row', alignItems: 'center', gap: spacing[2] },
+  scoreText: { fontFamily: fontFamily.display, fontSize: fontSize['3xl'], color: colors.ink },
+  question: { alignItems: 'center', gap: spacing[2] },
+  prompt: { fontFamily: fontFamily.display, fontSize: fontSize['4xl'], color: colors.ink },
+  options: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: spacing[3] },
   option: {
-    width: '47%',
-    paddingVertical: spacing[5],
-    backgroundColor: colors.white,
-    borderRadius: radius.xl,
+    width: '48.5%',
+    minHeight: 68,
     alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.xl,
+    borderWidth: 1.5,
+    borderColor: colors.surfaceBorder,
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing[3],
   },
-  optionCorrect: { backgroundColor: colors.success },
-  optionWrong: { backgroundColor: colors.error },
-  optionText: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize.lg,
-    color: colors.ink,
-  },
-
-  dayTag: {
-    marginTop: spacing[6],
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.xs,
-    color: colors.inkSoft,
-  },
+  optionRight: { backgroundColor: '#E3F7EF', borderColor: '#7AC9B5' },
+  optionWrong: { backgroundColor: '#FDE3E8', borderColor: '#F5A3B2' },
+  optionText: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize.lg, color: colors.ink },
 });
