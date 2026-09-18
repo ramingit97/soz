@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
 import { z } from 'zod';
@@ -13,6 +13,7 @@ import {
   regenerateGeneratedCurriculumFrom,
 } from '../services/generatedCurriculum.js';
 import { invalidateLessonsFrom, personalizeWeek } from '../services/personalize.js';
+import { requireChild } from '../auth/ownership.js';
 
 export const childrenRoute = new Hono();
 
@@ -193,15 +194,19 @@ childrenRoute.put('/:id', zValidator('json', updateChildSchema), async (c) => {
   const body = c.req.valid('json');
   const db = getDb();
 
+  // Владение проверяется ДО записи. Раньше обновление шло по одному id, а
+  // проверка `updated.userId !== userId` стояла после: чужой профиль уже был
+  // перезаписан, и только ответ говорил 404.
+  const denied = await requireChild(c, childId);
+  if (denied) return denied;
+
   const [updated] = await db
     .update(children)
     .set({ ...body, updatedAt: new Date() })
-    .where(eq(children.id, childId))
+    .where(and(eq(children.id, childId), eq(children.userId, userId)))
     .returning();
 
-  if (!updated || updated.userId !== userId) {
-    return c.json({ error: 'not_found' }, 404);
-  }
+  if (!updated) return c.json({ error: 'not_found' }, 404);
 
   return c.json(updated);
 });
