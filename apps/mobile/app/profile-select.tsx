@@ -248,8 +248,7 @@ export default function ProfileSelectScreen() {
   const [apiError, setApiError] = useState(false);
 
   // Refetch the list every time the screen regains focus — covers the
-  // case of returning here after creating a new child via /setup/* or
-  // /parent-add-child.
+  // case of returning here after creating a new child via /setup/*.
   useFocusEffect(
     useCallback(() => {
       if (!authToken) { setLoading(false); return; }

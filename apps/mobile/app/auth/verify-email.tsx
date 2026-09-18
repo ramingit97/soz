@@ -1,22 +1,25 @@
 import * as Haptics from 'expo-haptics';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-  Pressable,
   StyleSheet,
-  TextInput,
   View,
 } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
-import { Bobo } from '@/components/Bobo';
-import { HBBackButton } from '@/components/HBBackButton';
+import { Field } from '@/components/Field';
+import { HBButton } from '@/components/HBButton';
+import { HBPet } from '@/components/HBPet';
+import { InlineBanner } from '@/components/InlineBanner';
 import { KeyboardAvoider } from '@/components/KeyboardAvoider';
+import { PaperBackground } from '@/components/PaperBackground';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { Text } from '@/components/Text';
+import { UIModeProvider } from '@/hooks/useUIMode';
 import { sendVerification, verifyEmail } from '@/services/api';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, gradients, radius, shadow, spacing } from '@/theme';
+import { fontFamily, fontSize, spacing } from '@/theme';
+import { MODE_TOKENS } from '@/theme/modeTokens';
 
 export default function VerifyEmailScreen() {
   const router = useRouter();
@@ -73,135 +76,62 @@ export default function VerifyEmailScreen() {
   };
 
   return (
-    <View style={styles.root}>
-      <LinearGradient
-        colors={['#F7F0FF', '#EFE8FF', '#FFF6EC']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-      <HBBackButton />
-
-      <KeyboardAvoider center contentContainerStyle={{ paddingHorizontal: spacing[5] }}>
-        <Animated.View entering={FadeInDown.duration(600)} style={styles.header}>
-          <Bobo size={88} mood={success ? 'happy' : 'curious'} />
-          <Text style={styles.title}>
-            {success
-              ? (isAz ? '✓ Email təsdiqləndi' : '✓ Email подтверждён')
-              : (isAz ? 'Email-i təsdiqlə' : 'Подтверди email')}
-          </Text>
-          <Text style={styles.subtitle}>
-            {success
-              ? (isAz ? 'Sağ ol!' : 'Спасибо!')
-              : (isAz
-                ? `${userEmail}-ə göndərilən 6-rəqəmli kodu daxil edin`
-                : `Введите 6-значный код, отправленный на ${userEmail}`)}
-          </Text>
-        </Animated.View>
-
-        {!success && (
-          <Animated.View entering={FadeInUp.duration(500).delay(150)} style={styles.form}>
-            <TextInput
-              style={[styles.input, styles.codeInput]}
-              value={code}
-              onChangeText={(v) => setCode(v.replace(/\D/g, '').slice(0, 6))}
-              placeholder="000000"
-              placeholderTextColor={colors.inkSoft}
-              keyboardType="number-pad"
-              maxLength={6}
-              autoFocus
-            />
-            {error && <Text style={styles.errorText}>{error}</Text>}
-            {resent && !error && (
-              <Text style={styles.successText}>
-                {isAz ? '✓ Kod yenidən göndərildi' : '✓ Код отправлен повторно'}
-              </Text>
-            )}
-            <Pressable
-              onPress={handleVerify}
-              disabled={loading || code.length !== 6}
-              style={[styles.btn, (loading || code.length !== 6) && { opacity: 0.5 }]}
-            >
-              <LinearGradient
-                colors={gradients.primary}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.btnGrad}
-              >
-                <Text style={styles.btnText}>
-                  {loading
-                    ? (isAz ? 'Yoxlanılır...' : 'Проверяем...')
-                    : (isAz ? 'Təsdiqlə' : 'Подтвердить')}
-                </Text>
-              </LinearGradient>
-            </Pressable>
-            <Pressable onPress={handleResend} style={{ paddingVertical: spacing[3], alignItems: 'center' }}>
-              <Text style={{ color: colors.primary, fontFamily: fontFamily.bodyBold, fontSize: fontSize.sm }}>
-                {isAz ? 'Kodu yenidən göndər' : 'Отправить код снова'}
-              </Text>
-            </Pressable>
+    // Подтверждение почты — действие родителя: «взрослый» режим.
+    <UIModeProvider force="teen">
+      <PaperBackground>
+        <ScreenHeader />
+        <KeyboardAvoider contentContainerStyle={{ paddingHorizontal: MODE_TOKENS.teen.density.padX, paddingTop: spacing[4] }}>
+          <Animated.View entering={FadeInDown.duration(500)} style={styles.header}>
+            <HBPet size={72} mood={success ? 'happy' : 'curious'} />
+            <Text variant="title" align="center">
+              {success ? (isAz ? 'Email təsdiqləndi' : 'Email подтверждён') : isAz ? 'Email-i təsdiqləyin' : 'Подтвердите email'}
+            </Text>
+            <Text variant="body" tone="secondary" align="center">
+              {success
+                ? isAz ? 'Təşəkkürlər!' : 'Спасибо!'
+                : isAz
+                  ? `${userEmail} ünvanına göndərilən 6 rəqəmli kodu daxil edin.`
+                  : `Введите 6-значный код из письма на ${userEmail}.`}
+            </Text>
           </Animated.View>
-        )}
-      </KeyboardAvoider>
-    </View>
+
+          {success ? (
+            <HBButton full iconRight="arrow-right" label={isAz ? 'Davam et' : 'Продолжить'} onPress={() => router.back()} />
+          ) : (
+            <Animated.View entering={FadeInUp.duration(450).delay(120)} style={styles.form}>
+              <Field
+                label={isAz ? 'Kod' : 'Код'}
+                value={code}
+                onChangeText={(v) => setCode(v.replace(/\D/g, '').slice(0, 6))}
+                placeholder="000000"
+                keyboardType="number-pad"
+                maxLength={6}
+                autoFocus
+                style={styles.code}
+              />
+              {error ? <InlineBanner tone="danger" text={error} /> : null}
+              {resent && !error ? (
+                <InlineBanner tone="success" text={isAz ? 'Kod yenidən göndərildi' : 'Код отправлен ещё раз'} />
+              ) : null}
+              <HBButton
+                full
+                icon="check"
+                loading={loading}
+                label={isAz ? 'Təsdiqlə' : 'Подтвердить'}
+                onPress={handleVerify}
+                disabled={loading || code.length !== 6}
+              />
+              <HBButton variant="ghost" icon="mail" label={isAz ? 'Kodu yenidən göndər' : 'Отправить код снова'} onPress={handleResend} />
+            </Animated.View>
+          )}
+        </KeyboardAvoider>
+      </PaperBackground>
+    </UIModeProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 },
-  kav: { flex: 1, justifyContent: 'center', paddingHorizontal: spacing[5] },
-  header: { alignItems: 'center', gap: spacing[2], marginBottom: spacing[6] },
-  title: {
-    fontFamily: fontFamily.display,
-    fontSize: fontSize['2xl'],
-    color: colors.ink,
-    textAlign: 'center',
-    marginTop: spacing[2],
-  },
-  subtitle: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.sm,
-    color: colors.inkSoft,
-    textAlign: 'center',
-    maxWidth: 320,
-    lineHeight: 20,
-  },
-  form: { gap: spacing[3] },
-  input: {
-    backgroundColor: colors.white,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    borderRadius: radius.lg,
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[4],
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.base,
-    color: colors.ink,
-    ...shadow.sm,
-  },
-  codeInput: {
-    fontFamily: fontFamily.display,
-    fontSize: fontSize['2xl'],
-    letterSpacing: 10,
-    textAlign: 'center',
-  },
-  errorText: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.sm,
-    color: colors.error,
-    textAlign: 'center',
-  },
-  successText: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.sm,
-    color: colors.success,
-    textAlign: 'center',
-  },
-  btn: { borderRadius: radius.full, overflow: 'hidden', ...shadow.glow },
-  btnGrad: { paddingVertical: spacing[4], alignItems: 'center' },
-  btnText: {
-    color: colors.white,
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize.lg,
-  },
+  header: { alignItems: 'center', gap: spacing[2], marginBottom: spacing[5] },
+  form: { gap: spacing[4] },
+  code: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize.xl, letterSpacing: 8, textAlign: 'center' },
 });

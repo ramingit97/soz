@@ -1,5 +1,5 @@
 /**
- * App accent = the pet's color. The child picks Bobo's color once (setup/pet),
+ * App accent = the pet's color. The child picks Bobo's color in pet-room,
  * and that same hue becomes the app's accent — so primary buttons (and, over
  * time, other accent surfaces) wear "your color". Base cream/ink/claymorphism
  * never changes; only the accent family shifts.

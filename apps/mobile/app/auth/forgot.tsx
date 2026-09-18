@@ -1,22 +1,25 @@
 import * as Haptics from 'expo-haptics';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-  Pressable,
   StyleSheet,
-  TextInput,
   View,
 } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
-import { Bobo } from '@/components/Bobo';
-import { HBBackButton } from '@/components/HBBackButton';
+import { Field } from '@/components/Field';
+import { HBButton } from '@/components/HBButton';
+import { HBPet } from '@/components/HBPet';
+import { InlineBanner } from '@/components/InlineBanner';
 import { KeyboardAvoider } from '@/components/KeyboardAvoider';
+import { PaperBackground } from '@/components/PaperBackground';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { Text } from '@/components/Text';
+import { UIModeProvider } from '@/hooks/useUIMode';
 import { forgotPassword, resetPassword } from '@/services/api';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, gradients, radius, shadow, spacing } from '@/theme';
+import { fontFamily, fontSize, spacing } from '@/theme';
+import { MODE_TOKENS } from '@/theme/modeTokens';
 
 type Step = 'email' | 'reset';
 
@@ -80,185 +83,93 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <View style={styles.root}>
-      <LinearGradient
-        colors={['#F7F0FF', '#EFE8FF', '#FFF6EC']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-      <HBBackButton />
+    // Восстановление пароля — действие родителя: «взрослый» режим.
+    <UIModeProvider force="teen">
+      <PaperBackground>
+        <ScreenHeader />
+        <KeyboardAvoider contentContainerStyle={{ paddingHorizontal: MODE_TOKENS.teen.density.padX, paddingTop: spacing[4] }}>
+          <Animated.View entering={FadeInDown.duration(500)} style={styles.header}>
+            <HBPet size={72} mood={success ? 'happy' : 'curious'} />
+            <Text variant="title" align="center">
+              {success
+                ? isAz ? 'Şifrə dəyişdirildi' : 'Пароль изменён'
+                : step === 'email'
+                  ? isAz ? 'Şifrəni unutmusunuz?' : 'Забыли пароль?'
+                  : isAz ? 'Yeni şifrə' : 'Новый пароль'}
+            </Text>
+            <Text variant="body" tone="secondary" align="center">
+              {success
+                ? isAz ? 'İndi yeni şifrə ilə daxil ola bilərsiniz.' : 'Теперь можно войти с новым паролем.'
+                : step === 'email'
+                  ? isAz ? 'Email-ə kod göndərəcəyik.' : 'Отправим код на email.'
+                  : isAz
+                    ? `${email} ünvanına göndərilən 6 rəqəmli kodu daxil edin.`
+                    : `Введите 6-значный код из письма на ${email}.`}
+            </Text>
+          </Animated.View>
 
-      <KeyboardAvoider center contentContainerStyle={{ paddingHorizontal: spacing[5] }}>
-        <Animated.View entering={FadeInDown.duration(600)} style={styles.header}>
-          <Bobo size={88} mood={success ? 'happy' : 'curious'} />
-          <Text style={styles.title}>
-            {success
-              ? (isAz ? '✓ Şifrə dəyişdirildi' : '✓ Пароль изменён')
-              : step === 'email'
-              ? (isAz ? 'Şifrəni unutdum' : 'Забыл пароль')
-              : (isAz ? 'Yeni şifrə qur' : 'Новый пароль')}
-          </Text>
-          <Text style={styles.subtitle}>
-            {success
-              ? (isAz ? 'Daxil ola bilərsiz' : 'Можете войти')
-              : step === 'email'
-              ? (isAz ? 'Email-ə kod göndərəcəyik' : 'Отправим код на email')
-              : (isAz
-                ? `${email}-ə göndərilən 6-rəqəmli kodu daxil edin`
-                : `Введите 6-значный код, отправленный на ${email}`)}
-          </Text>
-        </Animated.View>
-
-        {!success && step === 'email' && (
-          <Animated.View entering={FadeInUp.duration(500).delay(150)} style={styles.form}>
-            <View style={styles.field}>
-              <Text style={styles.label}>Email</Text>
-              <TextInput
-                style={styles.input}
+          {success ? (
+            <HBButton full iconRight="arrow-right" label={isAz ? 'Daxil ol' : 'Войти'} onPress={() => router.replace('/auth/login' as never)} />
+          ) : step === 'email' ? (
+            <Animated.View entering={FadeInUp.duration(450).delay(120)} style={styles.form}>
+              <Field
+                label="Email"
                 value={email}
                 onChangeText={setEmail}
                 placeholder="email@example.com"
-                placeholderTextColor={colors.inkSoft}
                 autoCapitalize="none"
                 keyboardType="email-address"
                 autoComplete="email"
               />
-            </View>
-            {error && <Text style={styles.errorText}>{error}</Text>}
-            <Pressable
-              onPress={handleRequest}
-              disabled={loading}
-              style={[styles.btn, loading && { opacity: 0.6 }]}
-            >
-              <LinearGradient
-                colors={gradients.primary}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.btnGrad}
-              >
-                <Text style={styles.btnText}>
-                  {loading
-                    ? (isAz ? 'Göndərilir...' : 'Отправляем...')
-                    : (isAz ? 'Kod göndər →' : 'Отправить код →')}
-                </Text>
-              </LinearGradient>
-            </Pressable>
-          </Animated.View>
-        )}
-
-        {!success && step === 'reset' && (
-          <Animated.View entering={FadeInUp.duration(500)} style={styles.form}>
-            <View style={styles.field}>
-              <Text style={styles.label}>{isAz ? 'Kod' : 'Код'}</Text>
-              <TextInput
-                style={[styles.input, styles.codeInput]}
+              {error ? <InlineBanner tone="danger" text={error} /> : null}
+              <HBButton
+                full
+                icon="mail"
+                loading={loading}
+                label={isAz ? 'Kod göndər' : 'Отправить код'}
+                onPress={handleRequest}
+                disabled={loading}
+              />
+            </Animated.View>
+          ) : (
+            <Animated.View entering={FadeInUp.duration(450)} style={styles.form}>
+              <Field
+                label={isAz ? 'Kod' : 'Код'}
                 value={code}
                 onChangeText={(v) => setCode(v.replace(/\D/g, '').slice(0, 6))}
                 placeholder="000000"
-                placeholderTextColor={colors.inkSoft}
                 keyboardType="number-pad"
                 maxLength={6}
+                style={styles.code}
               />
-            </View>
-            <View style={styles.field}>
-              <Text style={styles.label}>{isAz ? 'Yeni şifrə' : 'Новый пароль'}</Text>
-              <TextInput
-                style={styles.input}
+              <Field
+                label={isAz ? 'Yeni şifrə' : 'Новый пароль'}
                 value={newPwd}
                 onChangeText={setNewPwd}
                 placeholder={isAz ? 'Ən az 6 simvol' : 'Минимум 6 символов'}
-                placeholderTextColor={colors.inkSoft}
                 secureTextEntry
                 autoComplete="new-password"
               />
-            </View>
-            {error && <Text style={styles.errorText}>{error}</Text>}
-            <Pressable
-              onPress={handleReset}
-              disabled={loading}
-              style={[styles.btn, loading && { opacity: 0.6 }]}
-            >
-              <LinearGradient
-                colors={gradients.primary}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.btnGrad}
-              >
-                <Text style={styles.btnText}>
-                  {loading
-                    ? (isAz ? 'Yenilənir...' : 'Сохраняем...')
-                    : (isAz ? 'Şifrəni dəyişdir' : 'Сменить пароль')}
-                </Text>
-              </LinearGradient>
-            </Pressable>
-            <Pressable onPress={() => setStep('email')} style={{ paddingVertical: spacing[2], alignItems: 'center' }}>
-              <Text style={{ color: colors.inkSoft, fontFamily: fontFamily.bodyMedium, fontSize: fontSize.sm }}>
-                {isAz ? 'Email-i dəyişdir' : 'Изменить email'}
-              </Text>
-            </Pressable>
-          </Animated.View>
-        )}
-      </KeyboardAvoider>
-    </View>
+              {error ? <InlineBanner tone="danger" text={error} /> : null}
+              <HBButton
+                full
+                icon="check"
+                loading={loading}
+                label={isAz ? 'Şifrəni dəyiş' : 'Сменить пароль'}
+                onPress={handleReset}
+                disabled={loading}
+              />
+              <HBButton variant="ghost" label={isAz ? 'Email-i dəyiş' : 'Изменить email'} onPress={() => setStep('email')} />
+            </Animated.View>
+          )}
+        </KeyboardAvoider>
+      </PaperBackground>
+    </UIModeProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 },
-  kav: { flex: 1, justifyContent: 'center', paddingHorizontal: spacing[5] },
-  header: { alignItems: 'center', gap: spacing[2], marginBottom: spacing[6] },
-  title: {
-    fontFamily: fontFamily.display,
-    fontSize: fontSize['2xl'],
-    color: colors.ink,
-    textAlign: 'center',
-    marginTop: spacing[2],
-  },
-  subtitle: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.sm,
-    color: colors.inkSoft,
-    textAlign: 'center',
-    maxWidth: 320,
-    lineHeight: 20,
-  },
+  header: { alignItems: 'center', gap: spacing[2], marginBottom: spacing[5] },
   form: { gap: spacing[4] },
-  field: { gap: spacing[2] },
-  label: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize.sm,
-    color: colors.inkSoft,
-  },
-  input: {
-    backgroundColor: colors.white,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    borderRadius: radius.lg,
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[4],
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.base,
-    color: colors.ink,
-    ...shadow.sm,
-  },
-  codeInput: {
-    fontFamily: fontFamily.display,
-    fontSize: fontSize['2xl'],
-    letterSpacing: 8,
-    textAlign: 'center',
-  },
-  errorText: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.sm,
-    color: colors.error,
-    textAlign: 'center',
-  },
-  btn: { borderRadius: radius.full, overflow: 'hidden', ...shadow.glow },
-  btnGrad: { paddingVertical: spacing[4], alignItems: 'center' },
-  btnText: {
-    color: colors.white,
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize.lg,
-  },
+  code: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize.xl, letterSpacing: 8, textAlign: 'center' },
 });

@@ -1,12 +1,14 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
-import { HBBackButton } from '@/components/HBBackButton';
+import { PaperBackground } from '@/components/PaperBackground';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { Text } from '@/components/Text';
+import { UIModeProvider } from '@/hooks/useUIMode';
 import { useSettings } from '@/store/settings';
-import { colors, gradients, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, spacing } from '@/theme';
+import { MODE_TOKENS } from '@/theme/modeTokens';
 
 export default function PrivacyPolicyScreen() {
   const router = useRouter();
@@ -14,21 +16,12 @@ export default function PrivacyPolicyScreen() {
   const isAz = lang === 'az';
 
   return (
-    <View style={styles.root}>
-      <LinearGradient
-        colors={gradients.cream}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-
-      <HBBackButton />
-
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <Animated.View entering={FadeInDown.duration(500)}>
-          <Text style={styles.title}>
-            {isAz ? 'Məxfilik siyasəti' : 'Политика конфиденциальности'}
-          </Text>
+    // Политику читает родитель — «взрослый» режим.
+    <UIModeProvider force="teen">
+    <PaperBackground>
+      <ScreenHeader title={isAz ? 'Məxfilik siyasəti' : 'Политика конфиденциальности'} />
+      <ScrollView contentContainerStyle={[styles.scroll, { paddingHorizontal: MODE_TOKENS.teen.density.padX }]}>
+        <Animated.View entering={FadeInDown.duration(400)}>
           <Text style={styles.updated}>
             {isAz ? 'Son yenilənmə: 2026-07-07' : 'Обновлено: 2026-07-07'}
           </Text>
@@ -68,7 +61,8 @@ export default function PrivacyPolicyScreen() {
           </Section>
         </Animated.View>
       </ScrollView>
-    </View>
+    </PaperBackground>
+    </UIModeProvider>
   );
 }
 
@@ -82,17 +76,9 @@ function Section({ title, children }: { title: string; children: string }) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 },
   scroll: {
-    paddingHorizontal: spacing[6],
-    paddingTop: spacing[16] ?? 64,
+    paddingTop: spacing[1],
     paddingBottom: spacing[10],
-  },
-  title: {
-    fontFamily: fontFamily.display,
-    fontSize: fontSize['3xl'],
-    color: colors.ink,
-    marginBottom: spacing[1],
   },
   updated: {
     fontFamily: fontFamily.bodyMedium,

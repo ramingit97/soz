@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import * as Sentry from '@sentry/react-native';
 
 import { Text } from '@/components/Text';
+import { useSettings } from '@/store/settings';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/theme';
 
 interface Props {
@@ -35,20 +36,18 @@ export class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
+      // Без маскота и анимаций: если упал сам рисунок персонажа, экран ошибки
+      // не должен падать вместе с ним. Язык — из стора напрямую (класс без хуков).
+      const az = useSettings.getState().parentUILanguage === 'az';
       return (
         <View style={styles.root}>
-          <Text style={styles.emoji}>🤖💔</Text>
-          <Text style={styles.title}>Что-то пошло не так</Text>
+          <Text style={styles.title}>{az ? 'Nəsə alınmadı' : 'Что-то пошло не так'}</Text>
           <Text style={styles.subtitle}>
-            Bobo споткнулся. Попробуй обновить экран.
+            {az ? 'Ekranı yeniləməyə çalışın.' : 'Попробуйте обновить экран.'}
           </Text>
-          {__DEV__ && this.state.error && (
-            <Text style={styles.devError}>
-              {this.state.error.message}
-            </Text>
-          )}
-          <Pressable onPress={this.handleReset} style={styles.btn}>
-            <Text style={styles.btnText}>Попробовать снова</Text>
+          {__DEV__ && this.state.error && <Text style={styles.devError}>{this.state.error.message}</Text>}
+          <Pressable onPress={this.handleReset} style={styles.btn} accessibilityRole="button">
+            <Text style={styles.btnText}>{az ? 'Yenidən cəhd et' : 'Попробовать снова'}</Text>
           </Pressable>
         </View>
       );
@@ -60,13 +59,12 @@ export class ErrorBoundary extends Component<Props, State> {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.cream,
+    backgroundColor: colors.bg,
     alignItems: 'center',
     justifyContent: 'center',
     padding: spacing[6],
     gap: spacing[3],
   },
-  emoji: { fontSize: 64 },
   title: {
     fontFamily: fontFamily.display,
     fontSize: fontSize['2xl'],

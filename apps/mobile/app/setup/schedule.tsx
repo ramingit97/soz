@@ -1,9 +1,8 @@
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
@@ -12,8 +11,12 @@ import { scheduleLessonReminders } from '@/services/notifications';
 import { useSettings, type ScheduleDay, type ScheduleMinutes } from '@/store/settings';
 import { useCompanionName } from '@/utils/companion';
 import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
-import { HBBackButton } from '@/components/HBBackButton';
+import { Icon } from '@/components/Icon';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { StepIndicator } from '@/components/StepIndicator';
+import { useAccent } from '@/hooks/useAccent';
+import { UIModeProvider } from '@/hooks/useUIMode';
+import { updateChild } from '@/services/api';
 
 const DAYS: { key: ScheduleDay; labelRu: string; labelAz: string }[] = [
   { key: 'mon', labelRu: 'Пн', labelAz: 'B.e' },
@@ -25,14 +28,7 @@ const DAYS: { key: ScheduleDay; labelRu: string; labelAz: string }[] = [
   { key: 'sun', labelRu: 'Вс', labelAz: 'Baz' },
 ];
 
-const DURATIONS: { value: ScheduleMinutes; emoji: string }[] = [
-  { value: 10, emoji: '⚡' },
-  { value: 15, emoji: '🌟' },
-  { value: 20, emoji: '🔥' },
-  { value: 30, emoji: '🏆' },
-  { value: 45, emoji: '🚀' },
-  { value: 60, emoji: '👑' },
-];
+const DURATIONS: ScheduleMinutes[] = [10, 15, 20, 30, 45, 60];
 
 const HOURS = Array.from({ length: 16 }, (_, i) => i + 7); // 7–22
 
@@ -43,12 +39,13 @@ export default function SetupScheduleScreen() {
   // Раньше «Изменить» отсюда уводило в `setup/building?create=1`, то есть в
   // создание ещё одного ребёнка.
   const fromParent = useLocalSearchParams<{ from?: string }>().from === 'parent';
-  const insets = useSafeAreaInsets();
   const lang = useSettings((s) => s.parentUILanguage) ?? 'ru';
   const childName = useSettings((s) => s.childName) ?? '';
   const setSchedule = useSettings((s) => s.setSchedule);
   const setProactiveOptIn = useSettings((s) => s.setProactiveOptIn);
   const authToken = useSettings((s) => s.authToken);
+  const childId = useSettings((s) => s.childId);
+  const accent = useAccent();
   const bot = useCompanionName();
 
   const isAz = lang === 'az';
@@ -78,6 +75,15 @@ export default function SetupScheduleScreen() {
     // Schedule push notifications (best effort)
     scheduleLessonReminders(childName, hour, days, isAz).catch(() => {});
     if (fromParent) {
+      // Расписание знает и сервер (напоминания, отчёт родителю) — раньше
+      // «Сохранить» меняло его только на телефоне.
+      if (childId && authToken) {
+        updateChild(
+          childId,
+          { scheduleDays: days, scheduleMinutes: minutes, scheduleHour: hour, proactiveOptIn: proactiveOn ? 1 : 0 },
+          authToken,
+        ).catch(() => {});
+      }
       router.back();
       return;
     }
@@ -87,31 +93,31 @@ export default function SetupScheduleScreen() {
     else router.push('/auth/consent?then=register' as any);
   };
 
-  const formatHour = (h: number) => {
-    const suffix = h >= 12 ? 'PM' : 'AM';
-    const display = h > 12 ? h - 12 : h;
-    return `${display}:00 ${suffix}`;
-  };
-
   return (
-    <Screen gradient decoration="sunrise" scroll>
-      {fromParent ? null : <StepIndicator current={7} total={7} />}
-      {/* Открыт как настройка — нужен выход без сохранения. */}
-      {fromParent ? <HBBackButton top={insets.top + spacing[2]} /> : null}
-
-      <Animated.View entering={FadeInDown.duration(600).delay(100)} style={styles.header}>
-        <Text style={{ fontSize: scaleFont(52), textAlign: 'center' }}>⏰</Text>
-        <Text variant="title" align="center" style={{ marginTop: spacing[4] }}>
-          {isAz
-            ? `${childName} nə vaxt oxuyacaq?`
-            : `Когда ${childName} будет заниматься?`}
-        </Text>
-        <Text variant="subtitle" tone="secondary" align="center" style={{ marginTop: spacing[3] }}>
-          {isAz
-            ? `${bot} hər gün xatırladacaq`
-            : `${bot} будет напоминать каждый день`}
-        </Text>
-      </Animated.View>
+    // Настройку делает родитель — «взрослый» режим.
+    <UIModeProvider force="teen">
+    <Screen scroll>
+      {fromParent ? (
+        // Открыт как настройка: шапка с выходом без сохранения.
+        <ScreenHeader
+          safeTop={false}
+          title={isAz ? 'Cədvəl' : 'Расписание'}
+          subtitle={isAz ? `${childName} nə vaxt oxuyur` : `Когда ${childName} занимается`}
+          style={styles.settingsHeader}
+        />
+      ) : (
+        <>
+          <StepIndicator current={7} total={7} />
+          <Animated.View entering={FadeInDown.duration(600).delay(100)} style={styles.header}>
+            <Text variant="title" align="center">
+              {isAz ? `${childName} nə vaxt oxuyacaq?` : `Когда ${childName} будет заниматься?`}
+            </Text>
+            <Text variant="subtitle" tone="secondary" align="center" style={{ marginTop: spacing[3] }}>
+              {isAz ? `${bot} hər gün xatırladacaq` : `${bot} будет напоминать каждый день`}
+            </Text>
+          </Animated.View>
+        </>
+      )}
 
       {/* Days */}
       <Animated.View entering={FadeInUp.duration(500).delay(200)}>
@@ -125,9 +131,11 @@ export default function SetupScheduleScreen() {
               <Pressable
                 key={d.key}
                 onPress={() => toggleDay(d.key)}
-                style={[styles.dayBtn, active && styles.dayBtnActive]}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: active }}
+                style={[styles.dayBtn, active && { backgroundColor: accent.bottom, borderColor: accent.bottom }]}
               >
-                <Text style={[styles.dayText, active && styles.dayTextActive]}>
+                <Text style={[styles.dayText, active && { color: accent.text }]}>
                   {isAz ? d.labelAz : d.labelRu}
                 </Text>
               </Pressable>
@@ -142,18 +150,19 @@ export default function SetupScheduleScreen() {
           {isAz ? 'Müddət' : 'Сколько времени в день'}
         </Text>
         <View style={styles.durationRow}>
-          {DURATIONS.map((d) => (
+          {DURATIONS.map((value) => (
             <Pressable
-              key={d.value}
+              key={value}
               onPress={() => {
                 Haptics.selectionAsync().catch(() => {});
-                setMinutes(d.value);
+                setMinutes(value);
               }}
-              style={[styles.durationBtn, minutes === d.value && styles.durationBtnActive, shadow.sm]}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: minutes === value }}
+              style={[styles.durationBtn, minutes === value && { backgroundColor: accent.bottom, borderColor: accent.bottom }]}
             >
-              <Text style={{ fontSize: 20 }}>{d.emoji}</Text>
-              <Text style={[styles.durationText, minutes === d.value && { color: colors.white }]}>
-                {d.value} {isAz ? 'dəq' : 'мин'}
+              <Text style={[styles.durationText, minutes === value && { color: accent.text }]}>
+                {value} {isAz ? 'dəq' : 'мин'}
               </Text>
             </Pressable>
           ))}
@@ -165,12 +174,8 @@ export default function SetupScheduleScreen() {
         <Text style={styles.sectionLabel}>
           {isAz ? 'Saat' : 'Время урока'}
         </Text>
-        <View style={styles.hoursWrap}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.hoursScroll}
-          >
+        {/* Сеткой, а не прокруткой: выбранный час (обычно вечерний) виден сразу. */}
+        <View style={styles.hoursGrid}>
             {HOURS.map((h) => (
               <Pressable
                 key={h}
@@ -178,16 +183,15 @@ export default function SetupScheduleScreen() {
                   Haptics.selectionAsync().catch(() => {});
                   setHour(h);
                 }}
-                style={[styles.hourBtn, hour === h && styles.hourBtnActive, shadow.sm]}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: hour === h }}
+                style={[styles.hourBtn, hour === h && { backgroundColor: accent.bottom, borderColor: accent.bottom }]}
               >
-                <Text style={[styles.hourText, hour === h && { color: colors.white }]}>
+                <Text style={[styles.hourText, hour === h && { color: accent.text }]}>
                   {h}:00
                 </Text>
               </Pressable>
             ))}
-          </ScrollView>
-          {/* Right fade — hints at more items to scroll */}
-          <View style={styles.hoursFade} pointerEvents="none" />
         </View>
       </Animated.View>
 
@@ -199,7 +203,9 @@ export default function SetupScheduleScreen() {
             Haptics.selectionAsync().catch(() => {});
             setProactiveOn((v) => !v);
           }}
-          style={[styles.toggleRow, shadow.sm]}
+          accessibilityRole="switch"
+          accessibilityState={{ checked: proactiveOn }}
+          style={styles.toggleRow}
         >
           <View style={{ flex: 1 }}>
             <Text style={styles.toggleTitle}>
@@ -211,34 +217,46 @@ export default function SetupScheduleScreen() {
                 : 'Вспомнит прошлый разговор и спросит вовремя (например, как прошли выходные). Можно выключить в любой момент.'}
             </Text>
           </View>
-          <View style={[styles.switch, proactiveOn && styles.switchOn]}>
+          <View style={[styles.switch, proactiveOn && { backgroundColor: accent.bottom }]}>
             <View style={[styles.knob, proactiveOn && styles.knobOn]} />
           </View>
         </Pressable>
       </Animated.View>
 
       {/* Summary */}
-      <Animated.View entering={FadeInUp.duration(400).delay(500)} style={[styles.summary, shadow.md]}>
-        <Text style={styles.summaryText}>
+      <Animated.View entering={FadeInUp.duration(400).delay(500)} style={[styles.summary, { backgroundColor: accent.soft }]}>
+        <Icon name="calendar" size={16} color={accent.ink} />
+        <Text style={[styles.summaryText, { color: accent.ink }]}>
           {isAz
-            ? `📅 ${days.length} gün · ⏱ ${minutes} dəq · ⏰ ${formatHour(hour)}`
-            : `📅 ${days.length} дней · ⏱ ${minutes} мин · ⏰ ${formatHour(hour)}`}
+            ? `${days.length} gün · ${minutes} dəq · ${hour}:00`
+            : `${days.length} ${daysRu(days.length)} · ${minutes} мин · ${hour}:00`}
         </Text>
       </Animated.View>
 
       <HBButton
         full
-        variant={days.length === 0 ? 'soft' : 'primary'}
+        icon={fromParent ? 'check' : undefined}
         label={fromParent ? (isAz ? 'Yadda saxla' : 'Сохранить') : isAz ? 'Planı göstər' : 'Показать план'}
         onPress={handleContinue}
         disabled={days.length === 0}
       />
     </Screen>
+    </UIModeProvider>
   );
+}
+
+/** «1 день», «3 дня», «5 дней». */
+function daysRu(n: number): string {
+  const d10 = n % 10;
+  const d100 = n % 100;
+  if (d10 === 1 && d100 !== 11) return 'день';
+  if (d10 >= 2 && d10 <= 4 && (d100 < 12 || d100 > 14)) return 'дня';
+  return 'дней';
 }
 
 const styles = StyleSheet.create({
   header: { marginTop: spacing[2], marginBottom: spacing[6], paddingHorizontal: spacing[2] },
+  settingsHeader: { paddingHorizontal: 0, marginBottom: spacing[3] },
   sectionLabel: {
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize.caption,
@@ -258,9 +276,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.border,
   },
-  dayBtnActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   dayText: { fontFamily: fontFamily.bodyBold, fontSize: fontSize['2xs'], color: colors.inkSoft },
-  dayTextActive: { color: colors.white },
 
   durationRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] },
   durationBtn: {
@@ -274,34 +290,19 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.border,
   },
-  durationBtnActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   durationText: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.xs, color: colors.ink },
 
-  hoursWrap: { position: 'relative' },
-  hoursScroll: { gap: spacing[2], paddingRight: spacing[8] },
-  hoursFade: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    bottom: 0,
-    width: 48,
-    backgroundColor: 'transparent',
-    borderRightWidth: 0,
-    // Simulated right edge fade using shadow-like appearance
-    shadowColor: colors.bg,
-    shadowOffset: { width: -16, height: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 12,
-  },
+  hoursGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] },
   hourBtn: {
-    paddingHorizontal: spacing[4],
+    flexBasis: '22%',
+    flexGrow: 1,
+    alignItems: 'center',
     paddingVertical: spacing[3],
     borderRadius: radius.lg,
     backgroundColor: colors.white,
     borderWidth: 2,
     borderColor: colors.border,
   },
-  hourBtnActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   hourText: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.sm, color: colors.ink },
 
   toggleRow: {
@@ -330,7 +331,6 @@ const styles = StyleSheet.create({
     padding: 3,
     justifyContent: 'center',
   },
-  switchOn: { backgroundColor: colors.accent },
   knob: {
     width: 22,
     height: 22,
@@ -341,23 +341,14 @@ const styles = StyleSheet.create({
   knobOn: { alignSelf: 'flex-end' },
 
   summary: {
-    backgroundColor: colors.white,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing[2],
     borderRadius: radius.xl,
     padding: spacing[4],
-    alignItems: 'center',
     marginTop: spacing[6],
     marginBottom: spacing[4],
   },
   summaryText: { fontFamily: fontFamily.bodyBold, fontSize: scaleFont(15), color: colors.ink },
-
-  btn: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.full,
-    paddingVertical: spacing[4],
-    alignItems: 'center',
-    marginBottom: spacing[6],
-    ...shadow.glow,
-  },
-  btnDisabled: { backgroundColor: colors.border, shadowOpacity: 0, elevation: 0 },
-  btnText: { color: colors.white, fontFamily: fontFamily.bodyBlack, fontSize: fontSize.button },
 });

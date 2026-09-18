@@ -217,7 +217,7 @@ export default function SetupInterestsScreen() {
     if (tags.length < 1) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     setChildInterests(tags);
-    router.push('/setup/pet' as any);
+    router.push('/setup/level' as any); // выбор имени и цвета питомца переехал в pet-room
   };
 
   // Suggestions = known interests not already selected

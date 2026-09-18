@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   TextInput,
@@ -12,15 +11,21 @@ import {
 } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
+import { AuthTabs } from '@/components/AuthTabs';
+import { Field } from '@/components/Field';
 import { HBButton } from '@/components/HBButton';
 import { HBPet } from '@/components/HBPet';
+import { InlineBanner } from '@/components/InlineBanner';
 import { PaperBackground } from '@/components/PaperBackground';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { Text } from '@/components/Text';
+import { UIModeProvider } from '@/hooks/useUIMode';
 import { createChild, registerUser } from '@/services/api';
 import { clearGuestSession } from '@/services/guestSession';
 import { fetchFullCurriculum } from '@/services/curriculum';
 import { focusToLessonPrefs, useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
+import { spacing } from '@/theme';
+import { MODE_TOKENS } from '@/theme/modeTokens';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -158,62 +163,34 @@ export default function RegisterScreen() {
   };
 
   return (
-    <PaperBackground>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.kav}
-      >
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scroll}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Header */}
-          <Animated.View entering={FadeInDown.duration(600)} style={styles.header}>
-            <View style={styles.petHalo}>
+    // Регистрация — действие родителя: «взрослый» режим.
+    <UIModeProvider force="teen">
+      <PaperBackground>
+        <ScreenHeader hideBack={!router.canGoBack()} />
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.kav}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={[styles.scroll, { paddingHorizontal: MODE_TOKENS.teen.density.padX }]}
+            keyboardShouldPersistTaps="handled"
+          >
+            <Animated.View entering={FadeInDown.duration(500)} style={styles.header}>
               <HBPet size={72} hue={storedHue} mood="happy" />
-            </View>
-            <Text style={styles.title}>
-              {childName
-                ? (isAz ? `${childName} üçün hesab` : `Аккаунт для ${childName}`)
-                : (isAz ? 'Hesab yaradın' : 'Создайте аккаунт')}
-            </Text>
-            <Text style={styles.subtitle}>
-              {isAz
-                ? 'Tərəqqinizi saxlamaq üçün qeydiyyatdan keçin'
-                : 'Зарегистрируйтесь, чтобы сохранить прогресс'}
-            </Text>
-          </Animated.View>
+              <Text variant="title" align="center">
+                {childName
+                  ? isAz ? `${childName} üçün hesab` : `Аккаунт для ${childName}`
+                  : isAz ? 'Hesab yaradın' : 'Создайте аккаунт'}
+              </Text>
+              <Text variant="body" tone="secondary" align="center">
+                {isAz ? 'Tərəqqini saxlamaq üçün qeydiyyatdan keçin' : 'Зарегистрируйтесь, чтобы сохранить прогресс'}
+              </Text>
+            </Animated.View>
 
-          {/* Tab bar */}
-          <Animated.View entering={FadeInUp.duration(500).delay(100)} style={styles.tabs}>
-            <Pressable
-              style={styles.tabInactive}
-              onPress={() => router.replace('/auth/login' as any)}
-            >
-              <Text style={styles.tabTextInactive}>
-                {isAz ? 'Daxil ol' : 'Войти'}
-              </Text>
-            </Pressable>
-            <View style={styles.tabActive}>
-              <Text style={styles.tabTextActive}>
-                {isAz ? 'Qeydiyyat' : 'Создать'}
-              </Text>
-            </View>
-          </Animated.View>
+            <AuthTabs active="register" az={isAz} />
 
-          {/* Form */}
-          <Animated.View entering={FadeInUp.duration(500).delay(180)} style={styles.form}>
-            <View style={styles.field}>
-              <Text style={styles.label}>
-                {isAdult
-                  ? 'Email'
-                  : isAz ? 'Valideyn emaili' : 'Email родителя'}
-              </Text>
-              <TextInput
-                style={styles.input}
+            <Animated.View entering={FadeInUp.duration(450).delay(120)} style={styles.form}>
+              <Field
+                label={isAdult ? 'Email' : isAz ? 'Valideynin emaili' : 'Email родителя'}
                 placeholder="email@example.com"
-                placeholderTextColor={colors.inkSoft}
                 value={email}
                 onChangeText={setEmail}
                 autoCapitalize="none"
@@ -222,15 +199,10 @@ export default function RegisterScreen() {
                 returnKeyType="next"
                 onSubmitEditing={() => pwRef.current?.focus()}
               />
-            </View>
-
-            <View style={styles.field}>
-              <Text style={styles.label}>{isAz ? 'Şifrə' : 'Пароль'}</Text>
-              <TextInput
+              <Field
                 ref={pwRef}
-                style={styles.input}
+                label={isAz ? 'Şifrə' : 'Пароль'}
                 placeholder={isAz ? 'Ən az 6 simvol' : 'Минимум 6 символов'}
-                placeholderTextColor={colors.inkSoft}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
@@ -238,17 +210,10 @@ export default function RegisterScreen() {
                 returnKeyType="next"
                 onSubmitEditing={() => confirmRef.current?.focus()}
               />
-            </View>
-
-            <View style={styles.field}>
-              <Text style={styles.label}>
-                {isAz ? 'Şifrəni təsdiqləyin' : 'Подтвердите пароль'}
-              </Text>
-              <TextInput
+              <Field
                 ref={confirmRef}
-                style={styles.input}
-                placeholder={isAz ? 'Şifrəni yenidən daxil edin' : 'Повторите пароль'}
-                placeholderTextColor={colors.inkSoft}
+                label={isAz ? 'Şifrəni təkrarlayın' : 'Повторите пароль'}
+                placeholder={isAz ? 'Şifrəni yenidən daxil edin' : 'Ещё раз тот же пароль'}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 secureTextEntry
@@ -256,245 +221,29 @@ export default function RegisterScreen() {
                 returnKeyType="done"
                 onSubmitEditing={handleRegister}
               />
-            </View>
 
-            {error ? (
-              <View style={styles.errorBox}>
-                <Text style={styles.errorText}>{error}</Text>
-              </View>
-            ) : null}
+              {error ? <InlineBanner tone="danger" text={error} onClose={() => setError('')} /> : null}
 
-            <HBButton
-              full
-              variant="primary"
-              label={loading
-                ? (isAz ? 'Yüklənir...' : 'Загрузка...')
-                : (isAz ? 'Başla 🚀' : 'Начать 🚀')}
-              onPress={handleRegister}
-              disabled={loading}
-            />
+              <HBButton
+                full
+                iconRight="arrow-right"
+                loading={loading}
+                label={isAz ? 'Hesab yarat' : 'Создать аккаунт'}
+                onPress={handleRegister}
+                disabled={loading}
+              />
+            </Animated.View>
 
-            {/* Divider */}
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>{isAz ? 'və ya' : 'или'}</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
-            {/* Social placeholders */}
-            <View style={styles.socialRow}>
-              <SocialBtn icon="🍎" label="Apple" />
-              <SocialBtn icon="G" label="Google" />
-            </View>
-          </Animated.View>
-
-          <Animated.View entering={FadeInUp.duration(400).delay(280)} style={styles.footer}>
-            <Pressable onPress={() => router.replace('/auth/login' as any)}>
-              <Text style={styles.footerText}>
-                {isAz ? 'Hesabınız var? ' : 'Уже есть аккаунт? '}
-                <Text style={styles.footerLink}>
-                  {isAz ? 'Daxil olun' : 'Войдите'}
-                </Text>
-              </Text>
-            </Pressable>
-          </Animated.View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </PaperBackground>
-  );
-}
-
-function SocialBtn({ icon, label }: { icon: string; label: string }) {
-  return (
-    <View style={styles.socialBtn}>
-      <Text style={styles.socialIcon}>{icon}</Text>
-      <Text style={styles.socialLabel}>{label}</Text>
-      <View style={styles.soonBadge}>
-        <Text style={styles.soonText}>Скоро</Text>
-      </View>
-    </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </PaperBackground>
+    </UIModeProvider>
   );
 }
 
 const styles = StyleSheet.create({
   kav: { flex: 1 },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: spacing[6],
-    paddingTop: 60,
-    paddingBottom: spacing[8],
-  },
-
-  header: { alignItems: 'center', marginBottom: spacing[6], gap: spacing[2] },
-  petHalo: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing[2],
-    borderTopWidth: 1.5,
-    borderTopColor: 'rgba(255,255,255,0.8)',
-    borderBottomWidth: 2,
-    borderBottomColor: 'rgba(125,90,42,0.08)',
-    ...shadow.sm,
-  },
-  title: {
-    fontFamily: fontFamily.display,
-    fontSize: fontSize['2xl'],
-    color: colors.ink,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.sm,
-    color: colors.inkSoft,
-    textAlign: 'center',
-    maxWidth: 280,
-    lineHeight: 20,
-  },
-
-  tabs: {
-    flexDirection: 'row',
-    backgroundColor: colors.bgDeep,
-    borderRadius: radius.xl,
-    padding: 4,
-    marginBottom: spacing[6],
-  },
-  tabActive: {
-    flex: 1,
-    paddingVertical: spacing[3],
-    alignItems: 'center',
-    backgroundColor: colors.card,
-    borderRadius: radius.lg,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.8)',
-    borderBottomWidth: 2,
-    borderBottomColor: 'rgba(125,90,42,0.08)',
-    ...shadow.sm,
-  },
-  tabInactive: {
-    flex: 1,
-    paddingVertical: spacing[3],
-    alignItems: 'center',
-  },
-  tabTextActive: {
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize.sm,
-    color: colors.primary,
-  },
-  tabTextInactive: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.sm,
-    color: colors.inkSoft,
-  },
-
+  scroll: { paddingTop: spacing[1], paddingBottom: spacing[10], gap: spacing[5] },
+  header: { alignItems: 'center', gap: spacing[2] },
   form: { gap: spacing[4] },
-  field: { gap: spacing[2] },
-  label: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize.sm,
-    color: colors.inkSoft,
-  },
-  input: {
-    backgroundColor: colors.card,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.8)',
-    borderBottomWidth: 2,
-    borderBottomColor: 'rgba(125,90,42,0.10)',
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    borderLeftColor: 'rgba(125,90,42,0.06)',
-    borderRightColor: 'rgba(125,90,42,0.06)',
-    borderRadius: radius.xl,
-    paddingHorizontal: spacing[5],
-    paddingVertical: spacing[4],
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.base,
-    color: colors.ink,
-    ...shadow.sm,
-  },
-
-  errorBox: {
-    backgroundColor: '#FFF0F0',
-    borderWidth: 1,
-    borderColor: colors.error,
-    borderRadius: radius.lg,
-    padding: spacing[3],
-  },
-  errorText: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.sm,
-    color: colors.error,
-    textAlign: 'center',
-  },
-
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[3],
-    marginVertical: spacing[1],
-  },
-  dividerLine: { flex: 1, height: 1, backgroundColor: colors.bgDeep },
-  dividerText: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.xs,
-    color: colors.inkSoft,
-  },
-
-  socialRow: { flexDirection: 'row', gap: spacing[3] },
-  socialBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing[2],
-    paddingVertical: spacing[3],
-    backgroundColor: colors.card,
-    borderRadius: radius.xl,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.8)',
-    borderBottomWidth: 2,
-    borderBottomColor: 'rgba(125,90,42,0.08)',
-    opacity: 0.7,
-    position: 'relative',
-    ...shadow.sm,
-  },
-  socialIcon: {
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize.base,
-    color: colors.ink,
-  },
-  socialLabel: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize.sm,
-    color: colors.ink,
-  },
-  soonBadge: {
-    position: 'absolute',
-    top: -8,
-    right: -4,
-    backgroundColor: colors.butter,
-    borderRadius: radius.full,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  soonText: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: scaleFont(9),
-    color: colors.ink,
-    letterSpacing: 0.2,
-  },
-
-  footer: { alignItems: 'center', marginTop: spacing[6] },
-  footerText: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.sm,
-    color: colors.inkSoft,
-  },
-  footerLink: {
-    fontFamily: fontFamily.bodyBold,
-    color: colors.primary,
-  },
 });
