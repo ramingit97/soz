@@ -1,24 +1,34 @@
-import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+/**
+ * Диалоги ребёнка с персонажем — родителю видно всё, что было сказано.
+ * Хранятся 90 дней (`services/retention.ts` на сервере), карточки раскрываются.
+ */
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import Animated, { FadeInUp } from 'react-native-reanimated';
 
-import { HBBackButton } from '@/components/HBBackButton';
+import { HBCard } from '@/components/HBCard';
+import { HBPet } from '@/components/HBPet';
+import { Icon } from '@/components/Icon';
+import { PaperBackground } from '@/components/PaperBackground';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { Text } from '@/components/Text';
+import { useAccent } from '@/hooks/useAccent';
+import { UIModeProvider } from '@/hooks/useUIMode';
 import { getTranscripts, type ConversationRecord } from '@/services/api';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, radius, spacing } from '@/theme';
+import { MODE_TOKENS } from '@/theme/modeTokens';
 import { useCompanionName } from '@/utils/companion';
 
 export default function ParentTranscriptsScreen() {
-  const router = useRouter();
   const lang = useSettings((s) => s.parentUILanguage) ?? 'ru';
   const childId = useSettings((s) => s.childId);
   const childName = useSettings((s) => s.childName) ?? '';
   const authToken = useSettings((s) => s.authToken);
   const isAz = lang === 'az';
   const bot = useCompanionName();
+  const accent = useAccent();
+  const padX = MODE_TOKENS.teen.density.padX;
 
   const [conversations, setConversations] = useState<ConversationRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,195 +55,105 @@ export default function ParentTranscriptsScreen() {
     });
   };
 
+  const turnsLabel = (n: number) =>
+    isAz ? `${n} replika` : `${n} ${n === 1 ? 'реплика' : n < 5 ? 'реплики' : 'реплик'}`;
+
   return (
-    <View style={styles.root}>
-      <LinearGradient
-        colors={['#F4EDFF', '#EDE4FF', colors.cream]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
+    <UIModeProvider force="teen">
+      <PaperBackground>
+        <ScreenHeader
+          title={isAz ? 'Dialoqlar' : `Диалоги ${childName}`}
+          subtitle={
+            isAz ? `${bot} ilə bütün söhbətlər` : `Все разговоры с ${bot}`
+          }
+        />
 
-      <HBBackButton />
+        <ScrollView contentContainerStyle={[styles.scroll, { paddingHorizontal: padX }]} showsVerticalScrollIndicator={false}>
+          {loading ? (
+            <View style={styles.center}>
+              <ActivityIndicator color={accent.bottom} size="large" />
+            </View>
+          ) : null}
 
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <Animated.View entering={FadeInDown.duration(500)} style={styles.header}>
-          <Text style={styles.title}>
-            {isAz ? `${childName}-in dialoqları` : `Диалоги ${childName}`}
-          </Text>
-          <Text style={styles.subtitle}>
-            {isAz
-              ? `${bot} ilə müzakirələr — bütün dedikləri burada`
-              : `Разговоры с ${bot} — всё что говорил здесь`}
-          </Text>
-        </Animated.View>
+          {!loading && conversations.length === 0 ? (
+            <HBCard style={styles.empty}>
+              <HBPet size={MODE_TOKENS.teen.mascot.hero} mood="curious" />
+              <Text variant="body" tone="secondary" align="center">
+                {isAz ? `Hələ dialoq yoxdur. ${bot} gözləyir!` : `Пока нет диалогов. ${bot} ждёт!`}
+              </Text>
+            </HBCard>
+          ) : null}
 
-        {loading && (
-          <View style={styles.loaderBox}>
-            <ActivityIndicator color={colors.primary} size="large" />
-          </View>
-        )}
-
-        {!loading && conversations.length === 0 && (
-          <View style={styles.emptyBox}>
-            <Text style={{ fontSize: 48, textAlign: 'center' }}>💬</Text>
-            <Text style={styles.emptyText}>
-              {isAz
-                ? `Hələ dialoq yoxdur. ${bot} gözləyir!`
-                : `Пока нет диалогов. ${bot} ждёт!`}
-            </Text>
-          </View>
-        )}
-
-        {!loading && conversations.map((conv, i) => {
-          const expanded = expandedId === conv.id;
-          const childTurns = conv.turns.filter((t) => t.role === 'child').length;
-          return (
-            <Animated.View
-              key={conv.id}
-              entering={FadeInUp.duration(400).delay(i * 60)}
-              style={[styles.card, shadow.sm]}
-            >
-              <Pressable
-                onPress={() => setExpandedId(expanded ? null : conv.id)}
-                style={styles.cardHeader}
-              >
-                <View style={styles.dayBadge}>
-                  <Text style={styles.dayBadgeText}>
-                    {isAz ? `Gün ${conv.day}` : `День ${conv.day}`}
-                  </Text>
-                </View>
-                <View style={{ flex: 1, marginLeft: spacing[3] }}>
-                  <Text style={styles.cardDate}>{formatDate(conv.updatedAt)}</Text>
-                  <Text style={styles.cardMeta}>
-                    {childTurns} {isAz ? 'replika' : childTurns === 1 ? 'реплика' : childTurns < 5 ? 'реплики' : 'реплик'} ·{' '}
-                    {conv.language === 'en' ? '🇬🇧 English' : '🇷🇺 Русский'}
-                  </Text>
-                </View>
-                <Text style={styles.expandArrow}>{expanded ? '▾' : '▸'}</Text>
-              </Pressable>
-
-              {expanded && (
-                <View style={styles.turnsList}>
-                  {conv.turns.length === 0 && (
-                    <Text style={styles.emptyTurns}>
-                      {isAz ? 'Bu dialoq boşdur' : 'Этот диалог пуст'}
-                    </Text>
-                  )}
-                  {conv.turns.map((t, j) => (
-                    <View
-                      key={j}
-                      style={[
-                        styles.turnRow,
-                        t.role === 'child' ? styles.turnChild : styles.turnBobo,
-                      ]}
-                    >
-                      <Text style={styles.turnLabel}>
-                        {t.role === 'child' ? `🧒 ${childName}` : `🤖 ${bot}`}
+          {conversations.map((conv, i) => {
+            const expanded = expandedId === conv.id;
+            const childTurns = conv.turns.filter((t) => t.role === 'child').length;
+            return (
+              <Animated.View key={conv.id} entering={FadeInUp.duration(350).delay(Math.min(i, 8) * 50)}>
+                <HBCard style={styles.card}>
+                  <Pressable
+                    onPress={() => setExpandedId(expanded ? null : conv.id)}
+                    accessibilityRole="button"
+                    accessibilityState={{ expanded }}
+                    style={styles.cardHeader}
+                  >
+                    <View style={[styles.dayChip, { backgroundColor: accent.soft }]}>
+                      <Text style={[styles.dayChipText, { color: accent.ink }]}>
+                        {isAz ? `Gün ${conv.day}` : `День ${conv.day}`}
                       </Text>
-                      <Text style={styles.turnText}>{t.text}</Text>
                     </View>
-                  ))}
-                </View>
-              )}
-            </Animated.View>
-          );
-        })}
-      </ScrollView>
-    </View>
+                    <View style={styles.flex}>
+                      <Text variant="bodyBold" numberOfLines={1}>{formatDate(conv.updatedAt)}</Text>
+                      <Text variant="caption" tone="secondary">
+                        {turnsLabel(childTurns)} · {conv.language === 'en' ? 'English' : 'Русский'}
+                      </Text>
+                    </View>
+                    <Icon name={expanded ? 'chevron-down' : 'chevron-right'} size={20} color={colors.inkSoft} />
+                  </Pressable>
+
+                  {expanded ? (
+                    <View style={styles.turns}>
+                      {conv.turns.length === 0 ? (
+                        <Text variant="caption" tone="secondary">
+                          {isAz ? 'Bu dialoq boşdur' : 'Этот диалог пуст'}
+                        </Text>
+                      ) : null}
+                      {conv.turns.map((t, j) => (
+                        <View
+                          key={j}
+                          style={[
+                            styles.turn,
+                            t.role === 'child'
+                              ? { backgroundColor: accent.soft }
+                              : { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.surfaceBorder },
+                          ]}
+                        >
+                          <Text variant="caption" tone="secondary">
+                            {t.role === 'child' ? childName : bot}
+                          </Text>
+                          <Text variant="body">{t.text}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  ) : null}
+                </HBCard>
+              </Animated.View>
+            );
+          })}
+        </ScrollView>
+      </PaperBackground>
+    </UIModeProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 },
-  scroll: {
-    paddingHorizontal: spacing[5],
-    paddingTop: spacing[16] ?? 64,
-    paddingBottom: spacing[10],
-    gap: spacing[3],
-  },
-  header: { marginBottom: spacing[4] },
-  title: {
-    fontFamily: fontFamily.display,
-    fontSize: fontSize['2xl'],
-    color: colors.ink,
-  },
-  subtitle: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.sm,
-    color: colors.inkSoft,
-    marginTop: 4,
-  },
-  loaderBox: { paddingVertical: spacing[10] },
-  emptyBox: { paddingVertical: spacing[10], gap: spacing[3], alignItems: 'center' },
-  emptyText: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.base,
-    color: colors.inkSoft,
-    textAlign: 'center',
-  },
-  card: {
-    backgroundColor: colors.card,
-    borderRadius: radius.xl,
-    overflow: 'hidden',
-  },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', padding: spacing[4] },
-  dayBadge: {
-    backgroundColor: colors.primarySoft,
-    paddingHorizontal: spacing[3],
-    paddingVertical: spacing[1],
-    borderRadius: radius.sm,
-  },
-  dayBadgeText: {
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize['2xs'],
-    color: colors.primary,
-    letterSpacing: 0.5,
-  },
-  cardDate: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize.sm,
-    color: colors.ink,
-  },
-  cardMeta: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.xs,
-    color: colors.inkSoft,
-    marginTop: 2,
-  },
-  expandArrow: {
-    fontSize: fontSize.xl,
-    color: colors.inkSoft,
-    fontFamily: fontFamily.bodyBold,
-  },
-  turnsList: {
-    paddingHorizontal: spacing[4],
-    paddingBottom: spacing[4],
-    gap: spacing[2],
-  },
-  turnRow: {
-    padding: spacing[3],
-    borderRadius: radius.lg,
-  },
-  turnChild: { backgroundColor: '#FFF3E0' },
-  turnBobo: { backgroundColor: colors.primarySoft },
-  turnLabel: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize.xs,
-    color: colors.inkSoft,
-    marginBottom: 4,
-  },
-  turnText: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.sm,
-    color: colors.ink,
-    lineHeight: 20,
-  },
-  emptyTurns: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.sm,
-    color: colors.inkSoft,
-    textAlign: 'center',
-    paddingVertical: spacing[3],
-  },
+  scroll: { paddingTop: spacing[2], paddingBottom: spacing[10], gap: spacing[2] },
+  center: { paddingVertical: spacing[10], alignItems: 'center' },
+  empty: { alignItems: 'center', gap: spacing[3], paddingVertical: spacing[6] },
+  card: { gap: spacing[3] },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
+  flex: { flex: 1, minWidth: 0 },
+  dayChip: { paddingHorizontal: spacing[2], paddingVertical: 4, borderRadius: radius.full },
+  dayChipText: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize['2xs'] },
+  turns: { gap: spacing[2] },
+  turn: { borderRadius: radius.lg, paddingHorizontal: spacing[3], paddingVertical: spacing[2], gap: 2 },
 });

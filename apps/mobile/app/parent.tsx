@@ -1,20 +1,28 @@
 import * as Haptics from 'expo-haptics';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { useEffect, useState } from 'react';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
-import { Bobo } from '@/components/Bobo';
-import { HBBackButton } from '@/components/HBBackButton';
+import { HBButton } from '@/components/HBButton';
+import { HBCard } from '@/components/HBCard';
+import { HBIconBox } from '@/components/HBIconBox';
+import { HBPet } from '@/components/HBPet';
+import { Icon, type IconName } from '@/components/Icon';
+import { InlineBanner } from '@/components/InlineBanner';
+import { PaperBackground } from '@/components/PaperBackground';
 import { ParentalGateModal, useParentalGate } from '@/components/ParentalGate';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { Text } from '@/components/Text';
-import { Alert } from 'react-native';
+import { useAccent } from '@/hooks/useAccent';
+import { useTheme } from '@/hooks/useTheme';
+import { UIModeProvider } from '@/hooks/useUIMode';
 import { deleteChild, getChildren, getMe, getTalkQuota, sendVerification, type ChildProfile, type TalkQuota } from '@/services/api';
 import { fetchFullCurriculum } from '@/services/curriculum';
 import { cancelAllReminders } from '@/services/notifications';
-import { useEffect, useState } from 'react';
 import { useSettings, todayISO } from '@/store/settings';
-import { colors, fontFamily, fontSize, gradients, radius, scaleFont, shadow, spacing, tints } from '@/theme';
+import { colors, fontFamily, fontSize, radius, semantic, spacing, tints } from '@/theme';
+import { MODE_TOKENS } from '@/theme/modeTokens';
 import { useCompanionName } from '@/utils/companion';
 
 const DAY_LABELS_RU = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
@@ -61,11 +69,18 @@ export default function ParentScreen() {
   const bot = useCompanionName();
 
   const isAz = lang === 'az';
+  const accent = useAccent();
+  // Сам экран лежит ВНЕ своего `UIModeProvider`, поэтому отступы берём из
+  // взрослых токенов напрямую; внутренние компоненты режим уже видят.
+  const padX = MODE_TOKENS.teen.density.padX;
   const weekActivity = buildWeekActivity(lastCompletedDate, streak);
   const dayLabels = isAz ? DAY_LABELS_AZ : DAY_LABELS_RU;
   const daysCompleted = Math.max(0, currentDay - 1);
   const vocabEstimate = daysCompleted * 5 * (learningLanguages.length || 1);
-  const langFlags = learningLanguages.map((l) => (l === 'en' ? '🇬🇧' : '🇷🇺')).join(' ');
+  // Языки словами, а не флагами: флаг страны — не язык, и на Android они разные.
+  const learningLabel = learningLanguages
+    .map((l) => (l === 'en' ? (isAz ? 'İngilis' : 'Английский') : (isAz ? 'Rus' : 'Русский')))
+    .join(' · ');
   const scheduleTimeStr = `${scheduleHour.toString().padStart(2, '0')}:00`;
   const weeklyActive = weekActivity.filter((d) => d.completed).length;
 
@@ -167,721 +182,392 @@ export default function ParentScreen() {
   };
 
   return (
-    <View style={styles.root}>
-      <LinearGradient
-        colors={[colors.primarySoft, colors.cream, colors.cream]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0.4, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
+    // Родительская зона всегда во «взрослом» режиме: её читает родитель, даже
+    // если ребёнку шесть.
+    <UIModeProvider force="teen">
+      <PaperBackground>
+        <ScreenHeader title={isAz ? 'Valideyn' : 'Родителям'} />
 
-      {/* Back button */}
-      <Animated.View entering={FadeIn.duration(300)} style={styles.topBar}>
-        <HBBackButton inline />
-        <Text style={styles.topTitle}>
-          {isAz ? 'Valideyn' : 'Родителям'}
-        </Text>
-        <View style={{ width: 64 }} />
-      </Animated.View>
-
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scroll}
-      >
-
-        {/* Child summary card */}
-        <Animated.View entering={FadeInDown.duration(600)} style={[styles.childCard, shadow.md]}>
-          <Bobo size={80} mood="happy" />
-          <View style={styles.childInfo}>
-            <Text style={styles.childName}>{childName}</Text>
-            {childAge && (
-              <Text style={styles.childMeta}>
-                {isAz ? `${childAge} yaş` : `${childAge} лет`}
-                {langFlags ? `  ·  ${langFlags}` : ''}
-              </Text>
-            )}
-            <View style={styles.dayBadge}>
-              <LinearGradient
-                colors={gradients.primary}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.dayBadgeGrad}
-              >
-                <Text style={styles.dayBadgeText}>
-                  {isAz ? `Gün ${currentDay} / 30` : `День ${currentDay} из 30`}
-                </Text>
-              </LinearGradient>
-            </View>
-          </View>
-        </Animated.View>
-
-        {/* Email verification banner */}
-        {emailVerified === false && (
-          <Animated.View entering={FadeInUp.duration(500).delay(80)}>
-            <Pressable
-              onPress={handleResendVerification}
-              style={[styles.verifyBanner, shadow.sm]}
-            >
-              <Text style={{ fontSize: 22 }}>📩</Text>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.verifyTitle}>
-                  {isAz ? 'Email-i təsdiqlə' : 'Подтвердите email'}
-                </Text>
-                <Text style={styles.verifySub}>
-                  {isAz
-                    ? 'Şifrəni bərpa etmək üçün vacibdir'
-                    : 'Чтобы можно было восстановить пароль'}
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scroll, { paddingHorizontal: padX }]}>
+          {/* Ребёнок */}
+          <Animated.View entering={FadeInDown.duration(450)}>
+            <HBCard style={styles.row}>
+              <HBPet size={56} mood="happy" />
+              <View style={styles.flex}>
+                <Text variant="headline" numberOfLines={1}>{childName}</Text>
+                {childAge ? (
+                  <Text variant="caption" tone="secondary">
+                    {isAz ? `${childAge} yaş` : `${childAge} лет`}
+                    {learningLabel ? ` · ${learningLabel}` : ''}
+                  </Text>
+                ) : null}
+              </View>
+              <View style={[styles.dayChip, { backgroundColor: accent.soft }]}>
+                <Text style={[styles.dayChipText, { color: accent.ink }]}>
+                  {isAz ? `Gün ${currentDay}/30` : `День ${currentDay}/30`}
                 </Text>
               </View>
-              <Text style={{ fontSize: fontSize.lg, color: '#D4A017' }}>→</Text>
-            </Pressable>
+            </HBCard>
           </Animated.View>
-        )}
 
-        {/* Multi-child switcher */}
-        {allChildren.length > 0 && (
-          <Animated.View entering={FadeInUp.duration(500).delay(100)} style={styles.childrenSection}>
-            <Text style={styles.childrenLabel}>
-              {isAz ? 'UŞAQLAR' : 'ДЕТИ'}
-            </Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.childrenRow}>
-              {allChildren.map((c) => {
-                const active = c.id === childId;
-                return (
-                  <Pressable
-                    key={c.id}
-                    onPress={() => handleSwitchChild(c)}
-                    style={[styles.childPill, active && styles.childPillActive, shadow.sm]}
-                  >
-                    <Text style={[styles.childPillName, active && styles.childPillNameActive]}>
-                      {c.name}
+          {/* Почта не подтверждена */}
+          {emailVerified === false ? (
+            <InlineBanner
+              tone="warning"
+              icon="mail"
+              title={isAz ? 'Email-i təsdiqləyin' : 'Подтвердите email'}
+              text={
+                isAz
+                  ? 'Bu, şifrəni bərpa etmək və təhlükəsizlik xəbərdarlıqlarını almaq üçün lazımdır.'
+                  : 'Это нужно, чтобы восстановить пароль и получать предупреждения о безопасности.'
+              }
+              action={{ label: isAz ? 'Təsdiqlə' : 'Подтвердить', onPress: handleResendVerification }}
+            />
+          ) : null}
+
+          {/* Дети */}
+          {allChildren.length > 0 ? (
+            <Animated.View entering={FadeInUp.duration(450).delay(60)} style={styles.block}>
+              <Text variant="label" tone="secondary">{isAz ? 'Uşaqlar' : 'Дети'}</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.childrenRow}>
+                {allChildren.map((c) => {
+                  const active = c.id === childId;
+                  return (
+                    <Pressable
+                      key={c.id}
+                      onPress={() => handleSwitchChild(c)}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: active }}
+                      style={[
+                        styles.childPill,
+                        active && { backgroundColor: accent.soft, borderColor: accent.bottom },
+                      ]}
+                    >
+                      <Text variant="bodyBold" numberOfLines={1} style={active ? { color: accent.ink } : undefined}>
+                        {c.name}
+                      </Text>
+                      <View style={styles.pillMeta}>
+                        <Text variant="caption" tone="secondary">
+                          {isAz ? `Gün ${c.currentDay}` : `День ${c.currentDay}`}
+                        </Text>
+                        <Icon name="star" size={12} color={colors.butterDeep} fill={colors.butter} strokeWidth={2} />
+                        <Text variant="caption" tone="secondary">{c.totalStars}</Text>
+                      </View>
+                    </Pressable>
+                  );
+                })}
+                <Pressable
+                  onPress={() => router.push('/setup/profile-type' as never)}
+                  accessibilityRole="button"
+                  style={[styles.childPill, styles.childAdd]}
+                >
+                  <Icon name="plus" size={20} color={colors.inkSoft} />
+                  <Text variant="caption" tone="secondary">{isAz ? 'Əlavə et' : 'Добавить'}</Text>
+                </Pressable>
+              </ScrollView>
+            </Animated.View>
+          ) : null}
+
+          {/* Разделы */}
+          <Animated.View entering={FadeInUp.duration(450).delay(100)} style={styles.block}>
+            <LinkRow
+              icon="trophy"
+              label={isAz ? 'Nailiyyətlər' : 'Достижения'}
+              onPress={() => router.push('/achievements' as any)}
+            />
+            <LinkRow
+              icon="messages-square"
+              label={isAz ? 'Dialoqlar' : `Диалоги ${childName}`}
+              onPress={() => router.push('/parent-transcripts' as any)}
+            />
+            <LinkRow
+              icon="sliders-horizontal"
+              label={isAz ? 'Dərsləri tənzimlə' : 'Настроить уроки'}
+              onPress={() => router.push('/checkpoint' as any)}
+            />
+            <LinkRow
+              icon="target"
+              label={isAz ? 'Məqsədlər və vurğu' : 'Цели и упор'}
+              onPress={() => router.push('/setup/goals?from=parent' as never)}
+            />
+          </Animated.View>
+
+          {/* Отчёт AI */}
+          {currentDay >= 8 ? (
+            <Animated.View entering={FadeInUp.duration(450).delay(140)}>
+              <Pressable onPress={() => router.push('/parent-summary' as any)} accessibilityRole="button">
+                <HBCard bg={accent.soft} style={styles.row}>
+                  <HBIconBox icon="brain" tint={colors.surface} iconColor={accent.ink} size={44} />
+                  <View style={styles.flex}>
+                    <Text variant="bodyBold">{isAz ? 'Hesabat və plan' : 'Отчёт и план'}</Text>
+                    <Text variant="caption" style={{ color: colors.ink }}>
+                      {isAz ? `${bot} tərəqqini təhlil etdi` : `${bot} разобрал прогресс`}
                     </Text>
-                    <Text style={styles.childPillMeta}>
-                      {isAz ? `Gün ${c.currentDay}` : `День ${c.currentDay}`} · ⭐{c.totalStars}
-                    </Text>
-                    {active && <View style={styles.childPillDot} />}
-                  </Pressable>
-                );
-              })}
-              <Pressable
-                onPress={() => router.push('/setup/profile-type' as never)}
-                style={[styles.childAddBtn, shadow.sm]}
-              >
-                <Text style={styles.childAddPlus}>+</Text>
-                <Text style={styles.childAddText}>
-                  {isAz ? 'Əlavə et' : 'Добавить'}
-                </Text>
+                  </View>
+                  <Icon name="chevron-right" size={20} color={accent.ink} />
+                </HBCard>
               </Pressable>
-            </ScrollView>
+            </Animated.View>
+          ) : null}
+
+          {/* Цифры */}
+          <Animated.View entering={FadeInUp.duration(450).delay(180)} style={styles.statsRow}>
+            <Stat icon="flame" color={colors.primaryDeep} value={streak} label={isAz ? 'Seriya' : 'Серия'} />
+            <Stat icon="star" color={colors.butterDeep} fill={colors.butter} value={totalStars} label={isAz ? 'Ulduz' : 'Звёзд'} />
+            <Stat icon="book-open" color={colors.accentDeep} value={vocabEstimate} label={isAz ? 'Söz' : 'Слов'} />
           </Animated.View>
-        )}
 
-        {/* Achievements + Transcripts links */}
-        <Animated.View entering={FadeInUp.duration(500).delay(110)} style={{ gap: spacing[2] }}>
-          <Pressable
-            onPress={() => router.push('/achievements' as any)}
-            style={[styles.achLink, shadow.sm]}
-          >
-            <Text style={{ fontSize: 24 }}>🏆</Text>
-            <Text style={styles.achLinkText}>
-              {isAz ? 'Nailiyyətlər' : 'Достижения'}
-            </Text>
-            <Text style={styles.achArrow}>→</Text>
-          </Pressable>
-
-          <Pressable
-            onPress={() => router.push('/parent-transcripts' as any)}
-            style={[styles.achLink, shadow.sm]}
-          >
-            <Text style={{ fontSize: 24 }}>💬</Text>
-            <Text style={styles.achLinkText}>
-              {isAz ? `${childName}-in dialoqları` : `Диалоги ${childName}`}
-            </Text>
-            <Text style={styles.achArrow}>→</Text>
-          </Pressable>
-
-          <Pressable
-            onPress={() => router.push('/checkpoint' as any)}
-            style={[styles.achLink, shadow.sm]}
-          >
-            <Text style={{ fontSize: 24 }}>🎚️</Text>
-            <Text style={styles.achLinkText}>
-              {isAz ? 'Dərsləri tənzimlə' : 'Настроить уроки'}
-            </Text>
-            <Text style={styles.achArrow}>→</Text>
-          </Pressable>
-        </Animated.View>
-
-        {/* AI report banner — shown when child has any progress */}
-        {currentDay >= 8 && (
-          <Animated.View entering={FadeInUp.duration(500).delay(120)} style={[styles.aiReportCard, shadow.md]}>
-            <View style={styles.aiReportLeft}>
-              <Text style={{ fontSize: 32 }}>🤖</Text>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.aiReportTitle}>
-                  {isAz ? 'AI hesabatı və plan' : 'AI отчёт и план'}
+          {/* Неделя */}
+          <Animated.View entering={FadeInUp.duration(450).delay(220)}>
+            <HBCard style={styles.block}>
+              <View style={styles.sectionHead}>
+                <Text variant="bodyBold" style={styles.flex}>
+                  {isAz ? '7 günlük aktivlik' : '7 дней активности'}
                 </Text>
-                <Text style={styles.aiReportSub}>
-                  {isAz
-                    ? `${bot} nələri öyrəndiyini analiz etdi`
-                    : `${bot} проанализировал прогресс`}
+                <Text variant="caption" tone="secondary">
+                  {weeklyActive}/{weekActivity.length} {isAz ? 'gün' : 'дн'}
                 </Text>
               </View>
-            </View>
-            <Pressable
-              onPress={() => router.push('/parent-summary' as any)}
-              style={styles.aiReportBtn}
-            >
-              <Text style={styles.aiReportBtnText}>→</Text>
-            </Pressable>
-          </Animated.View>
-        )}
-
-        {/* Stats row */}
-        <Animated.View entering={FadeInUp.duration(500).delay(150)} style={styles.statsRow}>
-          <StatCard emoji="🔥" value={streak} label={isAz ? 'Seriya' : 'Серия'} accent={colors.primary} bg={colors.primarySoft} />
-          <StatCard emoji="⭐" value={totalStars} label={isAz ? 'Ulduz' : 'Звёзд'} accent={colors.butterDeep} bg={tints.butter} />
-          <StatCard emoji="📚" value={vocabEstimate} label={isAz ? 'Söz' : 'Слов'} accent={colors.english} bg={colors.englishLight} />
-        </Animated.View>
-
-        {/* 7-day activity tracker */}
-        <Animated.View entering={FadeInUp.duration(500).delay(250)} style={[styles.sectionCard, shadow.sm]}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>
-              {isAz ? '7 günlük aktivlik' : '7 дней активности'}
-            </Text>
-            <View style={styles.weekBadge}>
-              <Text style={styles.weekBadgeText}>
-                {weeklyActive}/{weekActivity.length} {isAz ? 'gün' : 'дн'}
-              </Text>
-            </View>
-          </View>
-          <View style={styles.calendarRow}>
-            {weekActivity.map((day, i) => (
-              <View key={day.iso} style={styles.calDay}>
-                <Text style={[styles.calDayLabel, day.isToday && styles.calDayLabelToday]}>
-                  {dayLabels[day.dow]}
+              <View style={styles.calendarRow}>
+                {weekActivity.map((day) => (
+                  <View key={day.iso} style={styles.calDay}>
+                    <Text variant="caption" tone={day.isToday ? 'primary' : 'secondary'}>
+                      {dayLabels[day.dow]}
+                    </Text>
+                    <View
+                      style={[
+                        styles.calDot,
+                        day.completed && { backgroundColor: accent.bottom, borderColor: accent.bottom },
+                        day.isToday && !day.completed && { borderColor: accent.bottom },
+                      ]}
+                    >
+                      {day.completed ? <Icon name="check" size={14} color={accent.text} strokeWidth={3} /> : null}
+                    </View>
+                  </View>
+                ))}
+              </View>
+              {streak > 0 ? (
+                <Text variant="caption" tone="secondary">
+                  {isAz
+                    ? `Seriya davam edir: ${streak} gün`
+                    : `Серия уже ${streak} ${streak === 1 ? 'день' : streak < 5 ? 'дня' : 'дней'}`}
                 </Text>
-                <View style={[
-                  styles.calDot,
-                  day.completed && styles.calDotDone,
-                  day.isToday && !day.completed && styles.calDotToday,
-                ]}>
-                  {day.completed
-                    ? <Text style={{ fontSize: fontSize.xs }}>✓</Text>
-                    : day.isToday
-                    ? <Text style={{ fontSize: fontSize['3xs'], color: colors.primary }}>·</Text>
-                    : null
-                  }
+              ) : null}
+            </HBCard>
+          </Animated.View>
+
+          {/* Расписание */}
+          <Animated.View entering={FadeInUp.duration(450).delay(260)}>
+            <HBCard style={styles.block}>
+              <View style={styles.sectionHead}>
+                <Text variant="bodyBold" style={styles.flex}>{isAz ? 'Cədvəl' : 'Расписание'}</Text>
+                <HBButton
+                  size="sm"
+                  variant="ghost"
+                  icon="pencil"
+                  label={isAz ? 'Dəyişdir' : 'Изменить'}
+                  onPress={() => router.push('/setup/schedule?from=parent' as never)}
+                />
+              </View>
+              <View style={styles.chipsRow}>
+                {scheduleDays.map((d) => (
+                  <View key={d} style={styles.chip}>
+                    <Text variant="caption">{SCHEDULE_DAY_SHORT[d] ?? d}</Text>
+                  </View>
+                ))}
+              </View>
+              <View style={styles.chipsRow}>
+                <View style={styles.chip}>
+                  <Icon name="clock" size={14} color={colors.inkSoft} />
+                  <Text variant="caption">{scheduleTimeStr}</Text>
+                </View>
+                <View style={styles.chip}>
+                  <Icon name="target" size={14} color={colors.inkSoft} />
+                  <Text variant="caption">{scheduleMinutes} {isAz ? 'dəq' : 'мин'}</Text>
                 </View>
               </View>
-            ))}
-          </View>
-          {streak > 0 && (
-            <Text style={styles.streakCaption}>
-              {isAz
-                ? `🔥 ${streak} günlük seriya davam edir!`
-                : `🔥 Серия уже ${streak} ${streak === 1 ? 'день' : streak < 5 ? 'дня' : 'дней'}!`}
-            </Text>
-          )}
-        </Animated.View>
+            </HBCard>
+          </Animated.View>
 
-        {/* Schedule card */}
-        <Animated.View entering={FadeInUp.duration(500).delay(350)} style={[styles.sectionCard, shadow.sm]}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>
-              {isAz ? '📅 Cədvəl' : '📅 Расписание'}
-            </Text>
-            <Pressable
-              onPress={() => router.push('/setup/schedule')}
-              style={styles.editBtn}
-            >
-              <Text style={styles.editBtnText}>
-                {isAz ? 'Dəyişdir' : 'Изменить'}
-              </Text>
-            </Pressable>
-          </View>
-          <View style={styles.scheduleDaysRow}>
-            {scheduleDays.map((d) => (
-              <View key={d} style={styles.scheduleDayChip}>
-                <Text style={styles.scheduleDayText}>{SCHEDULE_DAY_SHORT[d] ?? d}</Text>
-              </View>
-            ))}
-          </View>
-          <View style={styles.scheduleTimeRow}>
-            <View style={styles.scheduleTimeChip}>
-              <Text style={styles.scheduleTimeIcon}>⏰</Text>
-              <Text style={styles.scheduleTimeText}>{scheduleTimeStr}</Text>
-            </View>
-            <View style={styles.scheduleTimeChip}>
-              <Text style={styles.scheduleTimeIcon}>⏱</Text>
-              <Text style={styles.scheduleTimeText}>
-                {scheduleMinutes} {isAz ? 'dəq' : 'мин'}
-              </Text>
-            </View>
-          </View>
-        </Animated.View>
+          {/* Аккаунт */}
+          <Animated.View entering={FadeInUp.duration(450).delay(300)}>
+            <HBCard style={styles.block}>
+              <Text variant="bodyBold">{isAz ? 'Hesab' : 'Аккаунт'}</Text>
+              {userEmail ? (
+                <Text variant="caption" tone="secondary">{userEmail}</Text>
+              ) : null}
 
-        {/* Account card */}
-        <Animated.View entering={FadeInUp.duration(500).delay(450)} style={[styles.sectionCard, shadow.sm]}>
-          <Text style={styles.sectionTitle}>
-            {isAz ? '👤 Hesab' : '👤 Аккаунт'}
-          </Text>
-          {userEmail && (
-            <View style={styles.emailRow}>
-              <Text style={styles.emailText}>{userEmail}</Text>
-            </View>
-          )}
-
-          {/* Subscription status */}
-          {isPremium ? (
-            <View style={styles.premiumBadge}>
-              <Text style={{ fontSize: 18 }}>👑</Text>
-              <Text style={styles.premiumText}>
-                {isAz ? 'Söz Premium aktiv' : 'Söz Premium активен'}
-              </Text>
-            </View>
-          ) : (
-            <>
-              {quota && !quota.premium && (
-                <Text style={styles.quotaText}>
-                  {isAz
-                    ? `Bu gün ${quota.remaining} / ${quota.limit} söhbət qalıb`
-                    : `Разговоров с Бобо сегодня: осталось ${quota.remaining} из ${quota.limit}`}
-                </Text>
+              {isPremium ? (
+                <View style={[styles.premiumRow, { backgroundColor: tints.butter }]}>
+                  <Icon name="crown" size={18} color={colors.butterDeep} fill={colors.butter} strokeWidth={2} />
+                  <Text variant="bodyBold" style={{ color: '#7F6628' }}>
+                    {isAz ? 'Söz Premium aktivdir' : 'Söz Premium активен'}
+                  </Text>
+                </View>
+              ) : (
+                <>
+                  {quota && !quota.premium ? (
+                    <Text variant="caption" tone="secondary">
+                      {isAz
+                        ? `Bu gün ${quota.remaining} / ${quota.limit} söhbət qalıb`
+                        : `Разговоров сегодня осталось ${quota.remaining} из ${quota.limit}`}
+                    </Text>
+                  ) : null}
+                  <HBButton
+                    full
+                    icon="crown"
+                    label={isAz ? 'Premium — bütün 30 gün' : 'Premium — все 30 дней'}
+                    onPress={() => parentalGate.run(() => router.push('/paywall' as any))}
+                  />
+                </>
               )}
-              <Pressable
-                onPress={() => parentalGate.run(() => router.push('/paywall' as any))}
-                style={styles.upgradeBtn}
-              >
-                <Text style={styles.upgradeBtnText}>
-                  {isAz ? '🚀 Premium almaq — bütün 30 günü aç' : '🚀 Получить Premium — открыть все 30 дней'}
-                </Text>
-              </Pressable>
-            </>
-          )}
 
-          <Pressable onPress={() => router.push('/legal/privacy' as any)} style={styles.legalLink}>
-            <Text style={styles.legalLinkText}>
-              {isAz ? 'Məxfilik siyasəti' : 'Политика конфиденциальности'}
-            </Text>
-          </Pressable>
+              <View style={styles.accountLinks}>
+                <TextLink
+                  icon="shield-check"
+                  label={isAz ? 'Məxfilik siyasəti' : 'Политика конфиденциальности'}
+                  onPress={() => router.push('/legal/privacy' as any)}
+                />
+                <TextLink icon="log-out" label={isAz ? 'Çıxış' : 'Выйти из аккаунта'} onPress={handleLogout} />
+                <TextLink
+                  icon="trash"
+                  danger
+                  label={isAz ? `${childName} profilini sil` : `Удалить профиль ${childName}`}
+                  onPress={handleDeleteChild}
+                />
+              </View>
+            </HBCard>
+          </Animated.View>
+        </ScrollView>
 
-          <Pressable onPress={handleLogout} style={styles.logoutBtn}>
-            <Text style={styles.logoutText}>
-              {isAz ? 'Çıxış' : 'Выйти из аккаунта'}
-            </Text>
-          </Pressable>
-
-          <Pressable onPress={handleDeleteChild} style={styles.deleteBtn}>
-            <Text style={styles.deleteText}>
-              {isAz ? `🗑 ${childName} profilini sil` : `🗑 Удалить профиль ${childName}`}
-            </Text>
-          </Pressable>
-        </Animated.View>
-
-      </ScrollView>
-      <ParentalGateModal {...parentalGate.modalProps} />
-    </View>
+        <ParentalGateModal {...parentalGate.modalProps} />
+      </PaperBackground>
+    </UIModeProvider>
   );
 }
 
-function StatCard({
-  emoji,
+function LinkRow({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
+  const { accent } = useTheme();
+  return (
+    <Pressable onPress={onPress} accessibilityRole="button">
+      <HBCard style={styles.row}>
+        <HBIconBox icon={icon} tint={accent.soft} iconColor={accent.ink} size={40} />
+        <Text variant="bodyBold" style={styles.flex} numberOfLines={1}>
+          {label}
+        </Text>
+        <Icon name="chevron-right" size={20} color={colors.inkSoft} />
+      </HBCard>
+    </Pressable>
+  );
+}
+
+function Stat({
+  icon,
+  color,
+  fill,
   value,
   label,
-  accent,
-  bg,
 }: {
-  emoji: string;
+  icon: IconName;
+  color: string;
+  fill?: string;
   value: number;
   label: string;
-  accent: string;
-  bg: string;
 }) {
   return (
-    <View style={[styles.statCard, shadow.sm, { backgroundColor: bg }]}>
-      <Text style={{ fontSize: 26 }}>{emoji}</Text>
-      <Text style={[styles.statValue, { color: accent }]}>{value}</Text>
-      <Text style={[styles.statLabel, { color: accent }]}>{label}</Text>
-    </View>
+    <HBCard style={styles.statCard}>
+      <Icon name={icon} size={20} color={color} fill={fill} strokeWidth={2.25} />
+      <Text style={[styles.statValue, { color }]}>{value}</Text>
+      <Text variant="caption" tone="secondary">{label}</Text>
+    </HBCard>
+  );
+}
+
+function TextLink({
+  icon,
+  label,
+  onPress,
+  danger,
+}: {
+  icon: IconName;
+  label: string;
+  onPress: () => void;
+  danger?: boolean;
+}) {
+  const color = danger ? semantic.danger : colors.inkSoft;
+  return (
+    <Pressable onPress={onPress} accessibilityRole="button" style={styles.textLink} hitSlop={6}>
+      <Icon name={icon} size={16} color={color} />
+      <Text variant="caption" style={{ color }} numberOfLines={1}>
+        {label}
+      </Text>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.cream },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing[5],
-    paddingTop: spacing[14] ?? 56,
-    paddingBottom: spacing[3],
-  },
-  backLabel: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize.base,
-    color: colors.inkSoft,
-  },
-  topTitle: {
-    fontFamily: fontFamily.display,
-    fontSize: fontSize.lg,
-    color: colors.ink,
-  },
-  scroll: { paddingHorizontal: spacing[5], paddingBottom: spacing[16] ?? 64, gap: spacing[4] },
+  scroll: { paddingTop: spacing[2], paddingBottom: spacing[10], gap: spacing[3] },
 
-  childCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[4],
-    backgroundColor: colors.card,
-    borderRadius: radius.xl,
-    padding: spacing[5],
-  },
-  childInfo: { flex: 1, gap: spacing[1] },
-  childName: {
-    fontFamily: fontFamily.display,
-    fontSize: fontSize['2xl'],
-    color: colors.ink,
-  },
-  childMeta: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.sm,
-    color: colors.inkSoft,
-  },
-  dayBadge: { marginTop: spacing[2], alignSelf: 'flex-start' },
-  dayBadgeGrad: {
-    paddingHorizontal: spacing[3],
-    paddingVertical: spacing[1],
-    borderRadius: radius.full,
-  },
-  dayBadgeText: {
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize.xs,
-    color: colors.card,
-    letterSpacing: 0.5,
-  },
+  row: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
+  flex: { flex: 1, minWidth: 0 },
+  block: { gap: spacing[2] },
 
-  statsRow: { flexDirection: 'row', gap: spacing[3] },
+  dayChip: { paddingHorizontal: spacing[2], paddingVertical: 4, borderRadius: radius.full },
+  dayChipText: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize['2xs'] },
 
-  aiReportCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.card,
-    borderRadius: radius.xl,
-    padding: spacing[4],
-    gap: spacing[3],
-    borderWidth: 2,
-    borderColor: colors.primary,
-  },
-  aiReportLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing[3], flex: 1 },
-  aiReportTitle: {
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize.base,
-    color: colors.primary,
-  },
-  aiReportSub: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.xs,
-    color: colors.inkSoft,
-    marginTop: 2,
-  },
-  aiReportBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.full,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  aiReportBtnText: {
-    color: colors.card,
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize.xl,
-  },
-  statCard: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: spacing[4],
-    borderRadius: radius.xl,
-    gap: spacing[1],
-  },
-  statValue: { fontFamily: fontFamily.display, fontSize: fontSize['2xl'] },
-  statLabel: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.xs, textTransform: 'uppercase', letterSpacing: 0.5 },
-
-  sectionCard: {
-    backgroundColor: colors.card,
-    borderRadius: radius.xl,
-    padding: spacing[5],
-    gap: spacing[3],
-  },
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  sectionTitle: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize.base, color: colors.ink },
-
-  // Calendar
-  calendarRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  calDay: { alignItems: 'center', gap: spacing[2] },
-  calDayLabel: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize['2xs'],
-    color: colors.inkSoft,
-  },
-  calDayLabelToday: { color: colors.primary },
-  calDot: {
-    width: 32,
-    height: 32,
-    borderRadius: radius.full,
-    backgroundColor: colors.cream,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  calDotDone: {
-    backgroundColor: colors.accent,
-    borderColor: colors.accent,
-  },
-  calDotToday: {
-    borderColor: colors.primary,
-    borderWidth: 2,
-  },
-  weekBadge: {
-    backgroundColor: colors.primarySoft,
-    paddingHorizontal: spacing[3],
-    paddingVertical: spacing[0.5],
-    borderRadius: radius.full,
-  },
-  weekBadgeText: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize.xs,
-    color: colors.primary,
-  },
-  streakCaption: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.sm,
-    color: colors.inkSoft,
-    textAlign: 'center',
-  },
-
-  // Schedule
-  scheduleDaysRow: { flexDirection: 'row', gap: spacing[2], flexWrap: 'wrap' },
-  scheduleDayChip: {
-    backgroundColor: colors.primarySoft,
-    paddingHorizontal: spacing[3],
-    paddingVertical: spacing[1],
-    borderRadius: radius.full,
-  },
-  scheduleDayText: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize.sm,
-    color: colors.primary,
-  },
-  scheduleTimeRow: { flexDirection: 'row', gap: spacing[3] },
-  scheduleTimeChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[2],
-    backgroundColor: colors.cream,
-    paddingHorizontal: spacing[3],
-    paddingVertical: spacing[2],
-    borderRadius: radius.md,
-  },
-  scheduleTimeIcon: { fontSize: 16 },
-  scheduleTimeText: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize.base,
-    color: colors.ink,
-  },
-  editBtn: {
-    backgroundColor: colors.primarySoft,
-    paddingHorizontal: spacing[3],
-    paddingVertical: spacing[1],
-    borderRadius: radius.full,
-  },
-  editBtnText: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize.sm,
-    color: colors.primary,
-  },
-
-  // Account
-  emailRow: {
-    backgroundColor: colors.cream,
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[3],
-    borderRadius: radius.md,
-  },
-  emailText: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.base,
-    color: colors.inkSoft,
-  },
-  premiumBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[2],
-    backgroundColor: '#FFFBEA',
-    borderWidth: 1.5,
-    borderColor: colors.accentYellow,
-    borderRadius: radius.lg,
-    paddingVertical: spacing[3],
-    paddingHorizontal: spacing[4],
-  },
-  premiumText: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize.base,
-    color: '#E8A000',
-  },
-  quotaText: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.sm,
-    color: colors.inkSoft,
-    textAlign: 'center',
-  },
-  upgradeBtn: {
-    backgroundColor: colors.accentYellow,
-    borderRadius: radius.lg,
-    paddingVertical: spacing[3],
-    paddingHorizontal: spacing[4],
-    alignItems: 'center',
-    ...shadow.sm,
-  },
-  upgradeBtnText: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize.sm,
-    color: colors.midnight,
-  },
-  logoutBtn: {
-    backgroundColor: '#FFF0F0',
-    borderWidth: 1.5,
-    borderColor: '#FFCDD2',
-    borderRadius: radius.lg,
-    paddingVertical: spacing[3],
-    alignItems: 'center',
-  },
-  logoutText: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize.base,
-    color: colors.error,
-  },
-  legalLink: {
-    paddingVertical: spacing[2],
-    alignItems: 'center',
-  },
-  legalLinkText: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.sm,
-    color: colors.inkSoft,
-    textDecorationLine: 'underline',
-  },
-  deleteBtn: {
-    paddingVertical: spacing[3],
-    alignItems: 'center',
-    marginTop: spacing[2],
-  },
-  deleteText: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.sm,
-    color: colors.inkSoft,
-  },
-  achLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[3],
-    backgroundColor: colors.card,
-    borderRadius: radius.lg,
-    padding: spacing[4],
-  },
-  achLinkText: {
-    flex: 1,
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize.base,
-    color: colors.ink,
-  },
-  achArrow: { fontSize: scaleFont(22), color: colors.inkSoft, fontFamily: fontFamily.bodyBold },
-
-  childrenSection: { gap: spacing[2] },
-  childrenLabel: {
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize['2xs'],
-    color: colors.inkSoft,
-    letterSpacing: 1,
-  },
-  childrenRow: { gap: spacing[2], paddingRight: spacing[5] },
+  childrenRow: { gap: spacing[2], paddingVertical: 2 },
   childPill: {
-    backgroundColor: colors.card,
+    minWidth: 116,
+    gap: 2,
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
     borderRadius: radius.lg,
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[3],
-    minWidth: 130,
-    borderWidth: 2,
-    borderColor: 'transparent',
-    position: 'relative',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
   },
-  childPillActive: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
-  childPillName: {
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize.base,
-    color: colors.ink,
-  },
-  childPillNameActive: { color: colors.primary },
-  childPillMeta: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.xs,
-    color: colors.inkSoft,
-    marginTop: 2,
-  },
-  childPillDot: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: colors.primary,
-  },
-  childAddBtn: {
-    backgroundColor: colors.cream,
-    borderRadius: radius.lg,
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[3],
-    minWidth: 100,
+  pillMeta: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  childAdd: { minWidth: 96, alignItems: 'center', justifyContent: 'center' },
+
+  statsRow: { flexDirection: 'row', gap: spacing[2] },
+  statCard: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: spacing[3] },
+  statValue: { fontFamily: fontFamily.display, fontSize: fontSize.xl },
+
+  sectionHead: { flexDirection: 'row', alignItems: 'center', gap: spacing[2] },
+  calendarRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  calDay: { alignItems: 'center', gap: 4 },
+  calDot: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: colors.surfaceBorder,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    borderStyle: 'dashed',
   },
-  childAddPlus: {
-    fontSize: scaleFont(22),
-    fontFamily: fontFamily.bodyBlack,
-    color: colors.primary,
-  },
-  childAddText: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize.xs,
-    color: colors.inkSoft,
-    marginTop: 2,
-  },
-  verifyBanner: {
+
+  chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] },
+  chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing[3],
-    backgroundColor: '#FFFBEA',
-    borderWidth: 1.5,
-    borderColor: '#FFD55A',
+    gap: 4,
+    paddingHorizontal: spacing[2],
+    paddingVertical: 5,
+    borderRadius: radius.full,
+    backgroundColor: colors.bg,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
+  },
+
+  premiumRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[2],
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
     borderRadius: radius.lg,
-    padding: spacing[4],
   },
-  verifyTitle: {
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize.base,
-    color: '#8B5E00',
-  },
-  verifySub: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.xs,
-    color: '#A07000',
-    marginTop: 2,
-  },
+  accountLinks: { gap: spacing[2], marginTop: spacing[1] },
+  textLink: { flexDirection: 'row', alignItems: 'center', gap: spacing[2], paddingVertical: 2 },
 });

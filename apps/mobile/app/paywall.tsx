@@ -1,10 +1,9 @@
 /**
- * Honeybear · Paywall (Söz Premium).
+ * Пейволл Söz Premium — читает родитель, поэтому всегда «взрослый» режим.
  *
- * Бобо wears a crown, sparkles around, peach radial halo on cream paper.
- * Features card uses dashed dividers; testimonials in butter-tinted cards
- * with a left berry rule. Plan toggle has the year card painted primary with
- * a savings badge whose percentage is computed from the real prices.
+ * Персонаж в короне, что даёт Premium, честное сравнение с бесплатным, тарифы
+ * (скидка годового считается из настоящих цен RevenueCat), покупка,
+ * восстановление и условия продления.
  */
 
 import * as Haptics from 'expo-haptics';
@@ -18,7 +17,6 @@ import {
   View,
 } from 'react-native';
 import Animated, {
-  FadeIn,
   FadeInDown,
   FadeInUp,
   useAnimatedStyle,
@@ -33,10 +31,16 @@ import Svg, { Path, Circle } from 'react-native-svg';
 
 import { HBButton } from '@/components/HBButton';
 import { HBCard } from '@/components/HBCard';
+import { HBIconBox } from '@/components/HBIconBox';
 import { HBPet } from '@/components/HBPet';
+import { Icon, type IconName } from '@/components/Icon';
+import { InlineBanner } from '@/components/InlineBanner';
 import { PaperBackground } from '@/components/PaperBackground';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { Text } from '@/components/Text';
+import { useAccent } from '@/hooks/useAccent';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { UIModeProvider } from '@/hooks/useUIMode';
 import { track } from '@/services/analytics';
 import {
   FREE_DAYS,
@@ -46,42 +50,43 @@ import {
 } from '@/services/subscriptions';
 import { getBillingStatus } from '@/services/api';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing, tints } from '@/theme';
+import { colors, fontFamily, fontSize, radius, spacing, tints } from '@/theme';
+import { MODE_TOKENS } from '@/theme/modeTokens';
 import { useCompanionName, withCompanionName } from '@/utils/companion';
 
 const PREMIUM_DAYS = 30 - FREE_DAYS;
 
 const FEATURES = [
   {
-    emoji: '🧠',
+    icon: 'brain' as IconName,
     titleRu: 'Бобо помнит вашего ребёнка',
     titleAz: 'Bobo uşağınızı xatırlayır',
     subRu: 'Имя кота, любимый цвет, школа — Бобо запоминает каждый разговор',
     subAz: 'Pişiyin adı, sevimli rəng, məktəb — Bobo hər söhbəti yadda saxlayır',
   },
   {
-    emoji: '✨',
+    icon: 'sparkles' as IconName,
     titleRu: 'AI создаёт план под ребёнка',
     titleAz: 'AI uşağa uyğun plan qurur',
     subRu: 'После 30 дней AI анализирует ошибки и составляет персональные уроки',
     subAz: '30 gündən sonra AI səhvləri təhlil edib fərdi dərslər tərtib edir',
   },
   {
-    emoji: '📚',
+    icon: 'library' as IconName,
     titleRu: `Все 30 дней + бесконечный AI-курс`,
     titleAz: `Bütün 30 gün + sonsuz AI kursu`,
     subRu: `+${PREMIUM_DAYS} уроков сейчас, и новые уроки каждую неделю после`,
     subAz: `İndi +${PREMIUM_DAYS} dərs, sonra hər həftə yeni dərslər`,
   },
   {
-    emoji: '🗣️',
+    icon: 'mic' as IconName,
     titleRu: 'Безлимитные разговоры с Бобо',
     titleAz: 'Bobo ilə limitsiz söhbət',
     subRu: 'Свободная практика речи в любое время дня',
     subAz: 'İstənilən vaxtda sərbəst nitq təcrübəsi',
   },
   {
-    emoji: '📊',
+    icon: 'chart-column' as IconName,
     titleRu: 'Глубокая аналитика для родителя',
     titleAz: 'Valideyn üçün dərin analiz',
     subRu: 'Сильные стороны, слабые места, рекомендации',
@@ -89,20 +94,8 @@ const FEATURES = [
   },
 ];
 
-const TESTIMONIALS = [
-  {
-    quoteRu: 'Мой Самир уже сам открывает приложение каждый вечер. Бобо стал его другом!',
-    quoteAz: 'Səmirim hər axşam özü tətbiqi açır. Bobo onun dostu oldu!',
-    nameRu: 'Лейла, мама Самира (7 лет)',
-    nameAz: 'Leyla, Səmirin anası (7 yaş)',
-  },
-  {
-    quoteRu: 'За месяц дочь начала говорить простыми фразами на английском. Невероятно.',
-    quoteAz: 'Bir ayda qızım sadə cümlələrlə ingiliscə danışmağa başladı. İnanılmazdır.',
-    nameRu: 'Эльдар, отец Айсель (9 лет)',
-    nameAz: 'Eldar, Aysəlin atası (9 yaş)',
-  },
-];
+// Отзывы родителей были выдуманы (приложение ещё не вышло): такие отзывы вводят
+// в заблуждение и запрещены правилами Google Play. Вернуть, когда будут настоящие.
 
 function Crown() {
   return (
@@ -155,6 +148,9 @@ export default function PaywallScreen() {
   const setIsPremium = useSettings((s) => s.setIsPremium);
   const petName = useSettings((s) => s.petName);
   const isAz = lang === 'az';
+  const accent = useAccent();
+  // Экран лежит вне своего UIModeProvider — отступы из взрослых токенов напрямую.
+  const padX = MODE_TOKENS.teen.density.padX;
 
   const userId = useSettings((s) => s.userId);
   const childId = useSettings((s) => s.childId);
@@ -269,485 +265,258 @@ export default function PaywallScreen() {
     return saved >= 5 ? saved : null;
   }
 
+  const selectedAnnual = !!annualPkg && selectedPkg === annualPkg;
+  const selectedMonthly = !!monthlyPkg && selectedPkg === monthlyPkg;
+  const saved = annualSavingsPercent(annualPkg, monthlyPkg);
+
   return (
-    <PaperBackground variant="honey">
-      <Pressable onPress={() => router.back()} style={[styles.closeBtn, shadow.sm]}>
-        <Text style={styles.closeText}>✕</Text>
-      </Pressable>
+    // Пейволл читает родитель — всегда «взрослый» режим.
+    <UIModeProvider force="teen">
+      <PaperBackground>
+        <ScreenHeader backIcon="x" backLabel={isAz ? 'Bağla' : 'Закрыть'} onBack={() => router.back()} />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-        {/* Hero — Бобо with crown */}
-        <Animated.View entering={FadeInDown.duration(700)} style={styles.hero}>
-          {/* sparkles — gently twinkling */}
-          {[
-            { x: -8, y: -4, c: colors.butter, s: 16 },
-            { x: 130, y: 18, c: colors.berry, s: 14 },
-            { x: -12, y: 90, c: colors.accent, s: 12 },
-            { x: 140, y: 110, c: colors.primary, s: 10 },
-          ].map((sp, i) => (
-            <TwinkleStar key={i} x={sp.x} y={sp.y} color={sp.c} size={sp.s} delay={i * 220} />
-          ))}
-
-          <View style={styles.haloRing}>
-            <View style={styles.petCenter}>
-              <HBPet size={120} mood="happy" />
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scroll, { paddingHorizontal: padX }]}>
+          {/* Персонаж в короне */}
+          <Animated.View entering={FadeInDown.duration(600)} style={styles.hero}>
+            {[
+              { x: -8, y: -4, c: colors.butter, s: 16 },
+              { x: 130, y: 18, c: colors.berry, s: 14 },
+              { x: -12, y: 90, c: colors.accent, s: 12 },
+              { x: 140, y: 110, c: colors.primary, s: 10 },
+            ].map((sp, i) => (
+              <TwinkleStar key={i} x={sp.x} y={sp.y} color={sp.c} size={sp.s} delay={i * 220} />
+            ))}
+            <View style={[styles.halo, { backgroundColor: accent.soft }]}>
+              <HBPet size={110} mood="happy" />
               <View style={styles.crownWrap}>
                 <Crown />
               </View>
             </View>
-          </View>
-
-          <View style={styles.premiumBadge}>
-            <Text style={styles.premiumBadgeText}>👑 PREMIUM</Text>
-          </View>
-
-          <Text style={styles.heroTitle}>
-            {isAz ? 'Söz Premium' : 'Söz Премиум'}
-          </Text>
-          <Text style={styles.heroSub}>
-            {isAz
-              ? `Bütün ${PREMIUM_DAYS} günü aç və nəticəyə çat`
-              : `Открой все 30 дней и достигни цели`}
-          </Text>
-        </Animated.View>
-
-        {/* Features */}
-        <Animated.View entering={FadeInUp.duration(500).delay(200)} style={{ width: '100%' }}>
-          <HBCard depth="md" style={{ paddingVertical: spacing[2] }}>
-            {FEATURES.map((f, i) => (
-              <View
-                key={i}
-                style={[
-                  styles.featureRow,
-                  i > 0 && styles.featureRowDashed,
-                ]}
-              >
-                <View style={styles.featureEmoji}>
-                  <Text style={{ fontSize: 22 }}>{f.emoji}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.featureTitle}>
-                    {withCompanionName(isAz ? f.titleAz : f.titleRu, petName)}
-                  </Text>
-                  <Text style={styles.featureSub}>
-                    {withCompanionName(isAz ? f.subAz : f.subRu, petName)}
-                  </Text>
-                </View>
-                <Text style={{ color: colors.accent, fontSize: 18, fontFamily: fontFamily.bodyBlack }}>✓</Text>
-              </View>
-            ))}
-          </HBCard>
-        </Animated.View>
-
-        {/* Free vs Premium comparison — honest side-by-side */}
-        <Animated.View entering={FadeInUp.duration(500).delay(240)} style={{ width: '100%' }}>
-          <HBCard depth="sm" style={styles.compareCard}>
-            <View style={styles.compareRow}>
-              <View style={{ flex: 1 }} />
-              <Text style={styles.compareColHead}>{isAz ? 'Pulsuz' : 'Бесплатно'}</Text>
-              <Text style={[styles.compareColHead, styles.compareColHeadPrem]}>Premium</Text>
+            <View style={[styles.premiumChip, { backgroundColor: tints.butter }]}>
+              <Icon name="crown" size={14} color="#7F6628" fill={colors.butter} strokeWidth={2} />
+              <Text style={styles.premiumChipText}>PREMIUM</Text>
             </View>
-            {[
-              { l: isAz ? 'Kurs günləri' : 'Дни курса', free: `${FREE_DAYS}`, prem: isAz ? 'Hamısı + AI' : 'Все + AI' },
-              { l: isAz ? `${bot} ilə söhbət` : `Разговоры с ${bot}`, free: isAz ? 'Məhdud' : 'Лимит', prem: '∞' },
-              { l: isAz ? 'Yaddaş' : 'Память', free: isAz ? 'Əsas' : 'База', prem: isAz ? 'Tam' : 'Полная' },
-              { l: isAz ? 'Valideyn hesabatı' : 'Отчёты родителю', free: '—', prem: '✓' },
-            ].map((r, i) => (
-              <View key={i} style={[styles.compareRow, styles.compareRowBorder]}>
-                <Text style={styles.compareLabel}>{r.l}</Text>
-                <Text style={styles.compareFree}>{r.free}</Text>
-                <View style={styles.comparePremCell}>
-                  <Text style={styles.comparePremText}>{r.prem}</Text>
-                </View>
-              </View>
-            ))}
-          </HBCard>
-        </Animated.View>
-
-        {/* Testimonials */}
-        <Animated.View entering={FadeInUp.duration(500).delay(280)} style={styles.testimonialsBlock}>
-          <Text style={styles.testimonialsLabel}>
-            {isAz ? 'VALIDEYNLƏR DEYIR' : 'РОДИТЕЛИ ГОВОРЯТ'}
-          </Text>
-          {TESTIMONIALS.map((t, i) => (
-            <HBCard
-              key={i}
-              depth="sm"
-              bg={tints.butter}
-              style={styles.testimonialCard}
-            >
-              <Text style={styles.testimonialQuote}>
-                «{withCompanionName(isAz ? t.quoteAz : t.quoteRu, petName)}»
-              </Text>
-              <Text style={styles.testimonialName}>
-                — {isAz ? t.nameAz : t.nameRu}
-              </Text>
-            </HBCard>
-          ))}
-        </Animated.View>
-
-        {/* Packages */}
-        {loading ? (
-          <ActivityIndicator color={colors.primary} size="large" style={{ marginVertical: spacing[6] }} />
-        ) : (
-          <Animated.View entering={FadeInUp.duration(500).delay(350)} style={styles.packages}>
-            {annualPkg && (
-              <Pressable
-                onPress={() => setSelectedPkg(annualPkg)}
-                style={({ pressed }) => [pressed && { opacity: 0.85 }]}
-              >
-                <HBCard
-                  depth={selectedPkg === annualPkg ? 'deep' : 'sm'}
-                  ringColor={selectedPkg === annualPkg ? colors.primary : undefined}
-                  bg={selectedPkg === annualPkg ? colors.primary : undefined}
-                  style={styles.packageCard}
-                >
-                  {(() => {
-                    const saved = annualSavingsPercent(annualPkg, monthlyPkg);
-                    if (saved === null) return null;
-                    return (
-                      <View style={styles.bestValueBadge}>
-                        <Text style={styles.bestValueText}>
-                          {isAz ? `ƏN YAXŞI · -${saved}%` : `ВЫГОДНЕЕ -${saved}%`}
-                        </Text>
-                      </View>
-                    );
-                  })()}
-                  <View style={styles.packageRow}>
-                    <View>
-                      <Text style={[styles.packagePeriod, selectedPkg === annualPkg && { color: colors.white }]}>
-                        {isAz ? 'İllik' : 'Годовой'}
-                      </Text>
-                      <Text style={[styles.packageMonthly, selectedPkg === annualPkg && { color: 'rgba(255,255,255,0.85)' }]}>
-                        {annualMonthlyPrice(annualPkg)}
-                      </Text>
-                    </View>
-                    <Text style={[styles.packagePrice, selectedPkg === annualPkg && { color: colors.white }]}>
-                      {priceStr(annualPkg)}
-                    </Text>
-                  </View>
-                  {selectedPkg === annualPkg && (
-                    <View style={styles.checkCircle}>
-                      <Text style={{ fontSize: fontSize.xs, color: colors.primary, fontFamily: fontFamily.bodyBlack }}>✓</Text>
-                    </View>
-                  )}
-                </HBCard>
-              </Pressable>
-            )}
-
-            {monthlyPkg && (
-              <Pressable
-                onPress={() => setSelectedPkg(monthlyPkg)}
-                style={({ pressed }) => [pressed && { opacity: 0.85 }]}
-              >
-                <HBCard
-                  depth={selectedPkg === monthlyPkg ? 'deep' : 'sm'}
-                  ringColor={selectedPkg === monthlyPkg ? colors.primary : undefined}
-                  style={styles.packageCard}
-                >
-                  <View style={styles.packageRow}>
-                    <Text style={styles.packagePeriod}>
-                      {isAz ? 'Aylıq' : 'Ежемесячно'}
-                    </Text>
-                    <Text style={styles.packagePrice}>{priceStr(monthlyPkg)}</Text>
-                  </View>
-                </HBCard>
-              </Pressable>
-            )}
-
-            {!annualPkg && !monthlyPkg && (
-              <HBCard style={styles.noOfferingsBox} depth="sm">
-                <Text style={styles.noOfferingsText}>
-                  {isAz
-                    ? 'Abunəlik məlumatları yüklənə bilmədi. Yenidən cəhd edin.'
-                    : 'Не удалось загрузить тарифы. Попробуйте позже.'}
-                </Text>
-              </HBCard>
-            )}
-          </Animated.View>
-        )}
-
-        {/* CTA */}
-        <Animated.View entering={FadeInUp.duration(500).delay(500)} style={styles.ctaSection}>
-          <HBButton
-            full
-            variant={selectedPkg ? 'primary' : 'soft'}
-            label={
-              purchasing
-                ? isAz ? 'Alınır...' : 'Покупка...'
-                : isAz ? '🚀 7 gün pulsuz cəhd et' : '🚀 Попробовать 7 дней бесплатно'
-            }
-            onPress={handlePurchase}
-            disabled={purchasing || !selectedPkg}
-          />
-
-          <Pressable onPress={handleRestore} disabled={restoring} style={styles.restoreBtn}>
-            <Text style={styles.restoreText}>
-              {restoring
-                ? (isAz ? 'Bərpa olunur...' : 'Восстановление...')
-                : (isAz ? 'Satın almaları bərpa et' : 'Восстановить покупки')}
+            <Text variant="title" align="center">Söz Premium</Text>
+            <Text variant="body" tone="secondary" align="center">
+              {isAz ? 'Bütün 30 günü aç və nəticəyə çat' : 'Открой все 30 дней и дойди до результата'}
             </Text>
-          </Pressable>
+          </Animated.View>
 
-          <Text style={styles.legalText}>
-            {isAz
-              ? 'Abunəlik avtomatik olaraq yenilənəcək. İstənilən vaxt ləğv etmək olar.'
-              : 'Авто-продление можно отменить в любой момент.'}
-          </Text>
-        </Animated.View>
-      </ScrollView>
-    </PaperBackground>
+          {/* Что даёт */}
+          <Animated.View entering={FadeInUp.duration(450).delay(150)}>
+            <HBCard style={styles.features}>
+              {FEATURES.map((f, i) => (
+                <View key={i} style={[styles.featureRow, i > 0 && styles.featureRule]}>
+                  <HBIconBox icon={f.icon} tint={accent.soft} iconColor={accent.ink} size={40} />
+                  <View style={styles.flex}>
+                    <Text variant="bodyBold">{withCompanionName(isAz ? f.titleAz : f.titleRu, petName)}</Text>
+                    <Text variant="caption" tone="secondary">
+                      {withCompanionName(isAz ? f.subAz : f.subRu, petName)}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            </HBCard>
+          </Animated.View>
+
+          {/* Бесплатно и Premium рядом — честно */}
+          <Animated.View entering={FadeInUp.duration(450).delay(200)}>
+            <HBCard style={styles.compare}>
+              <View style={styles.compareRow}>
+                <View style={styles.flex} />
+                <Text variant="caption" tone="secondary" style={styles.compareCol}>
+                  {isAz ? 'Pulsuz' : 'Бесплатно'}
+                </Text>
+                <Text variant="caption" style={[styles.compareCol, { color: accent.ink }]}>Premium</Text>
+              </View>
+              {[
+                { l: isAz ? 'Kurs günləri' : 'Дни курса', free: `${FREE_DAYS}`, prem: isAz ? 'Hamısı + AI' : 'Все + AI' },
+                { l: isAz ? `${bot} ilə söhbət` : `Разговоры с ${bot}`, free: isAz ? 'Məhdud' : 'Лимит', prem: isAz ? 'Limitsiz' : 'Без лимита' },
+                { l: isAz ? 'Yaddaş' : 'Память', free: isAz ? 'Əsas' : 'База', prem: isAz ? 'Tam' : 'Полная' },
+                { l: isAz ? 'Valideyn hesabatı' : 'Отчёты родителю', free: '—', prem: isAz ? 'Var' : 'Есть' },
+              ].map((r, i) => (
+                <View key={i} style={[styles.compareRow, styles.featureRule]}>
+                  <Text variant="caption" style={styles.flex}>{r.l}</Text>
+                  <Text variant="caption" tone="secondary" style={styles.compareCol}>{r.free}</Text>
+                  <View style={[styles.compareCol, styles.premCell, { backgroundColor: accent.soft }]}>
+                    <Text variant="caption" style={{ color: accent.ink, fontFamily: fontFamily.bodyBlack }}>{r.prem}</Text>
+                  </View>
+                </View>
+              ))}
+            </HBCard>
+          </Animated.View>
+
+          {/* Тарифы */}
+          {loading ? (
+            <ActivityIndicator color={accent.bottom} size="large" style={styles.loader} />
+          ) : (
+            <Animated.View entering={FadeInUp.duration(450).delay(260)} style={styles.packages}>
+              {annualPkg ? (
+                <PlanCard
+                  selected={selectedAnnual}
+                  title={isAz ? 'İllik' : 'Годовой'}
+                  sub={annualMonthlyPrice(annualPkg)}
+                  price={priceStr(annualPkg)}
+                  badge={saved !== null ? (isAz ? `Sərfəli · −${saved}%` : `Выгоднее на ${saved}%`) : null}
+                  onPress={() => setSelectedPkg(annualPkg)}
+                />
+              ) : null}
+              {monthlyPkg ? (
+                <PlanCard
+                  selected={selectedMonthly}
+                  title={isAz ? 'Aylıq' : 'Помесячно'}
+                  price={priceStr(monthlyPkg)}
+                  onPress={() => setSelectedPkg(monthlyPkg)}
+                />
+              ) : null}
+              {!annualPkg && !monthlyPkg ? (
+                <InlineBanner
+                  tone="danger"
+                  text={
+                    isAz
+                      ? 'Abunəlik məlumatları yüklənmədi. Bir az sonra yenidən cəhd edin.'
+                      : 'Не удалось загрузить тарифы. Попробуйте чуть позже.'
+                  }
+                />
+              ) : null}
+            </Animated.View>
+          )}
+
+          {/* Покупка */}
+          <Animated.View entering={FadeInUp.duration(450).delay(320)} style={styles.cta}>
+            <HBButton
+              full
+              icon="crown"
+              loading={purchasing}
+              label={
+                purchasing
+                  ? isAz ? 'Alınır…' : 'Покупка…'
+                  : isAz ? `${FREE_DAYS} gün pulsuz yoxla` : `Попробовать ${FREE_DAYS} дней бесплатно`
+              }
+              onPress={handlePurchase}
+              disabled={purchasing || !selectedPkg}
+            />
+            <HBButton
+              full
+              variant="ghost"
+              loading={restoring}
+              label={isAz ? 'Alışları bərpa et' : 'Восстановить покупки'}
+              onPress={handleRestore}
+              disabled={restoring}
+            />
+            <Text variant="caption" tone="secondary" align="center">
+              {isAz
+                ? 'Abunəlik avtomatik yenilənir. İstənilən vaxt Google Play-də ləğv etmək olar.'
+                : 'Подписка продлевается сама. Отменить можно в любой момент в Google Play.'}
+            </Text>
+          </Animated.View>
+        </ScrollView>
+      </PaperBackground>
+    </UIModeProvider>
+  );
+}
+
+function PlanCard({
+  selected,
+  title,
+  sub,
+  price,
+  badge,
+  onPress,
+}: {
+  selected: boolean;
+  title: string;
+  sub?: string;
+  price: string;
+  badge?: string | null;
+  onPress: () => void;
+}) {
+  const accent = useAccent();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="radio"
+      accessibilityState={{ selected }}
+      style={({ pressed }) => [pressed && styles.pressed]}
+    >
+      <HBCard
+        ringColor={selected ? accent.bottom : undefined}
+        bg={selected ? accent.soft : undefined}
+        style={styles.planCard}
+      >
+        {badge ? (
+          <View style={[styles.badge, { backgroundColor: accent.bottom }]}>
+            <Text style={[styles.badgeText, { color: accent.text }]}>{badge}</Text>
+          </View>
+        ) : null}
+        <View style={[styles.radio, selected && { borderColor: accent.bottom, backgroundColor: accent.bottom }]}>
+          {selected ? <Icon name="check" size={14} color={accent.text} strokeWidth={3} /> : null}
+        </View>
+        <View style={styles.flex}>
+          <Text variant="bodyBold">{title}</Text>
+          {sub ? <Text variant="caption" tone="secondary">{sub}</Text> : null}
+        </View>
+        <Text style={styles.price}>{price}</Text>
+      </HBCard>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  closeBtn: {
-    position: 'absolute',
-    top: 56,
-    right: spacing[5],
-    zIndex: 10,
-    width: 36,
-    height: 36,
-    borderRadius: radius.full,
-    backgroundColor: colors.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeText: { color: colors.ink, fontSize: fontSize.sm, fontFamily: fontFamily.bodyBlack },
-
-  scroll: {
-    paddingHorizontal: spacing[5],
-    paddingBottom: spacing[12],
-    paddingTop: 64,
-    gap: spacing[4],
-  },
+  scroll: { paddingTop: spacing[1], paddingBottom: spacing[10], gap: spacing[4] },
+  flex: { flex: 1, minWidth: 0 },
+  pressed: { opacity: 0.85 },
 
   hero: { alignItems: 'center', gap: spacing[2] },
-  haloRing: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    backgroundColor: 'rgba(245, 212, 102, 0.35)',
+  halo: {
+    width: 150,
+    height: 150,
+    borderRadius: 75,
     alignItems: 'center',
     justifyContent: 'center',
-    position: 'relative',
   },
-  petCenter: {
-    position: 'relative',
+  crownWrap: { position: 'absolute', top: 2 },
+  premiumChip: {
+    flexDirection: 'row',
     alignItems: 'center',
-  },
-  crownWrap: {
-    position: 'absolute',
-    top: -22,
-    alignSelf: 'center',
-  },
-  premiumBadge: {
-    backgroundColor: colors.ink,
-    paddingHorizontal: spacing[3],
+    gap: 4,
+    paddingHorizontal: spacing[2],
     paddingVertical: 4,
     borderRadius: radius.full,
-    marginTop: spacing[2],
   },
-  premiumBadgeText: {
-    color: colors.white,
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize['2xs'],
-    letterSpacing: 1.5,
-  },
-  heroTitle: {
-    fontFamily: fontFamily.display,
-    fontSize: fontSize['3xl'],
-    color: colors.ink,
-    textAlign: 'center',
-    marginTop: spacing[1],
-  },
-  heroSub: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.sm,
-    color: colors.inkSoft,
-    textAlign: 'center',
-    maxWidth: 280,
-    lineHeight: 20,
-  },
+  premiumChipText: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize['2xs'], color: '#7F6628', letterSpacing: 1.2 },
 
-  featureRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[3],
-    paddingVertical: spacing[2],
-  },
-  featureRowDashed: {
-    borderTopWidth: 1,
-    borderTopColor: colors.bgDeep,
-    borderStyle: 'dashed',
-  },
-  featureEmoji: {
-    width: 38,
-    height: 38,
-    borderRadius: radius.md,
-    backgroundColor: colors.bgDeep,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  featureTitle: {
-    fontFamily: fontFamily.display,
-    fontSize: fontSize.sm,
-    color: colors.ink,
-    lineHeight: 18,
-  },
-  featureSub: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize['2xs'],
-    color: colors.inkSoft,
-    marginTop: 2,
-    lineHeight: 15,
-  },
+  features: { gap: 0, paddingVertical: spacing[1] },
+  featureRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[3], paddingVertical: spacing[2] },
+  featureRule: { borderTopWidth: 1, borderTopColor: colors.surfaceBorder },
 
-  testimonialsBlock: { gap: spacing[2] },
-  testimonialsLabel: {
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize['3xs'],
-    color: colors.inkSoft,
-    letterSpacing: 1.8,
-    marginBottom: spacing[1],
-    marginLeft: spacing[1],
-  },
-  testimonialCard: {
-    paddingVertical: spacing[3],
-    paddingHorizontal: spacing[4],
-    borderLeftWidth: 3,
-    borderLeftColor: colors.berry,
-  },
-  testimonialQuote: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.sm,
-    color: colors.ink,
-    lineHeight: 21,
-    fontStyle: 'italic',
-  },
-  testimonialName: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize.xs,
-    color: colors.inkSoft,
-    marginTop: spacing[1],
-  },
+  compare: { paddingVertical: spacing[1] },
+  compareRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[2], paddingVertical: spacing[2] },
+  compareCol: { width: 84, textAlign: 'center' },
+  premCell: { borderRadius: radius.sm, paddingVertical: 3, alignItems: 'center' },
 
-  compareCard: { paddingVertical: spacing[2] },
-  compareRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing[2],
-  },
-  compareRowBorder: {
-    borderTopWidth: 1,
-    borderTopColor: colors.bgDeep,
-    borderStyle: 'dashed',
-  },
-  compareColHead: {
-    width: 72,
-    textAlign: 'center',
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize['3xs'],
-    letterSpacing: 0.8,
-    color: colors.inkSoft,
-  },
-  compareColHeadPrem: { color: colors.primary },
-  compareLabel: {
-    flex: 1,
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize.sm,
-    color: colors.ink,
-  },
-  compareFree: {
-    width: 72,
-    textAlign: 'center',
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.sm,
-    color: colors.textMuted,
-  },
-  comparePremCell: {
-    width: 72,
-    alignItems: 'center',
-  },
-  comparePremText: {
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize.sm,
-    color: colors.primaryDeep,
-  },
-
-  packages: { gap: spacing[2] },
-  packageCard: {
-    position: 'relative',
-    paddingVertical: spacing[3],
-  },
-  bestValueBadge: {
+  loader: { marginVertical: spacing[6] },
+  packages: { gap: spacing[3] },
+  planCard: { flexDirection: 'row', alignItems: 'center', gap: spacing[3], paddingVertical: spacing[4] },
+  badge: {
     position: 'absolute',
     top: -10,
-    right: spacing[4],
-    backgroundColor: colors.berry,
+    right: spacing[3],
     paddingHorizontal: spacing[2],
-    paddingVertical: 2,
+    paddingVertical: 3,
     borderRadius: radius.full,
   },
-  bestValueText: {
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: scaleFont(9),
-    color: colors.white,
-    letterSpacing: 0.5,
-  },
-  packageRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  packagePeriod: {
-    fontFamily: fontFamily.display,
-    fontSize: fontSize.base,
-    color: colors.ink,
-  },
-  packageMonthly: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize['2xs'],
-    color: colors.inkSoft,
-    marginTop: 2,
-  },
-  packagePrice: {
-    fontFamily: fontFamily.display,
-    fontSize: fontSize.xl,
-    color: colors.ink,
-  },
-  checkCircle: {
-    position: 'absolute',
-    bottom: spacing[2],
-    right: spacing[2],
-    width: 22,
-    height: 22,
-    borderRadius: radius.full,
-    backgroundColor: colors.white,
+  badgeText: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize['2xs'] },
+  radio: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: colors.borderStrong,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  noOfferingsBox: { padding: spacing[5] },
-  noOfferingsText: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.sm,
-    color: colors.inkSoft,
-    textAlign: 'center',
-  },
+  price: { fontFamily: fontFamily.display, fontSize: fontSize.lg, color: colors.ink },
 
-  ctaSection: { gap: spacing[2], marginTop: spacing[3] },
-  restoreBtn: { paddingVertical: spacing[2], alignItems: 'center' },
-  restoreText: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.sm,
-    color: colors.inkSoft,
-  },
-  legalText: {
-    fontFamily: fontFamily.body,
-    fontSize: fontSize['3xs'],
-    color: colors.inkSoft,
-    textAlign: 'center',
-    lineHeight: 14,
-    paddingHorizontal: spacing[4],
-  },
+  cta: { gap: spacing[2] },
 });

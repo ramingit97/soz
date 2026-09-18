@@ -24,6 +24,7 @@ import { useAccent } from '@/hooks/useAccent';
 import { useSettings, type ProfileType } from '@/store/settings';
 import { colors, radius, spacing } from '@/theme';
 import { useCompanionName } from '@/utils/companion';
+import { consentLabel } from '@/utils/consent';
 
 export default function ProfileTypeScreen() {
   const router = useRouter();
@@ -44,14 +45,7 @@ export default function ProfileTypeScreen() {
     router.push('/setup/name' as never);
   };
 
-  const consentText =
-    who === 'kid'
-      ? isAz
-        ? 'Mən valideyn və ya qəyyumam. Uşağın adının və tərəqqisinin saxlanmasına, söhbət zamanı səsinin AI tərəfdaşlarına göndərilməsinə razıyam (səs yazılmır).'
-        : 'Я родитель или опекун. Разрешаю сохранять имя и прогресс ребёнка и отправлять его голос AI-партнёрам во время разговоров (голос не записывается).'
-      : isAz
-        ? 'Məlumatlarımın və tərəqqimin saxlanmasına, söhbət zamanı səsimin AI tərəfdaşlarına göndərilməsinə razıyam (səs yazılmır).'
-        : 'Разрешаю сохранять мои данные и прогресс и отправлять голос AI-партнёрам во время разговоров (голос не записывается).';
+  const consentText = consentLabel(who, isAz);
 
   return (
     <OnboardingStep

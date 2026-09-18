@@ -8,16 +8,18 @@
  */
 
 import * as Haptics from 'expo-haptics';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
 import { useSettings, type LearningFocus } from '@/store/settings';
 import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
 import { HBButton } from '@/components/HBButton';
+import { HBBackButton } from '@/components/HBBackButton';
 import { StepIndicator } from '@/components/StepIndicator';
 
 interface GoalOpt { key: string; emoji: string; ru: string; az: string }
@@ -39,6 +41,9 @@ const FOCI: FocusOpt[] = [
 
 export default function SetupGoalsScreen() {
   const router = useRouter();
+  /** `?from=parent` — настройка из родительского раздела: сохранить и назад. */
+  const fromParent = useLocalSearchParams<{ from?: string }>().from === 'parent';
+  const insets = useSafeAreaInsets();
   const lang = useSettings((s) => s.parentUILanguage) ?? 'ru';
   const childName = useSettings((s) => s.childName) ?? '';
   const setGoals = useSettings((s) => s.setGoals);
@@ -74,12 +79,15 @@ export default function SetupGoalsScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     setGoals(goals);
     setLearningFocus(focus);
-    router.push('/setup/schedule');
+    if (fromParent) router.back();
+    else router.push('/setup/schedule');
   };
 
   return (
     <Screen gradient decoration="sunrise" scroll>
-      <StepIndicator current={6} total={7} />
+      {fromParent ? null : <StepIndicator current={6} total={7} />}
+      {/* Открыт как настройка — нужен выход без сохранения. */}
+      {fromParent ? <HBBackButton top={insets.top + spacing[2]} /> : null}
 
       <Animated.View entering={FadeInDown.duration(600).delay(100)} style={styles.header}>
         <Text style={{ fontSize: 52, textAlign: 'center' }}>🎯</Text>
@@ -140,7 +148,7 @@ export default function SetupGoalsScreen() {
         <HBButton
           full
           variant={goals.length ? 'primary' : 'soft'}
-          label={isAz ? 'Davam et' : 'Продолжить'}
+          label={fromParent ? (isAz ? 'Yadda saxla' : 'Сохранить') : isAz ? 'Davam et' : 'Продолжить'}
           onPress={handleContinue}
           disabled={!goals.length}
         />

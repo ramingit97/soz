@@ -13,7 +13,9 @@ import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated'
 import { HBButton } from '@/components/HBButton';
 import { HBCard } from '@/components/HBCard';
 import { HBPet } from '@/components/HBPet';
+import { Icon, type IconName } from '@/components/Icon';
 import { PaperBackground } from '@/components/PaperBackground';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { CardSkeleton, Skeleton } from '@/components/Skeleton';
 import { Text } from '@/components/Text';
 import { getLesson } from '@/data/lessons';
@@ -36,7 +38,10 @@ import {
 } from '@/services/generatedLessons';
 import { useSettings } from '@/store/settings';
 import { HBIconBox } from '@/components/HBIconBox';
+import { useAccent } from '@/hooks/useAccent';
+import { UIModeProvider } from '@/hooks/useUIMode';
 import { colors, fontFamily, fontSize, radius, shadow, spacing, tints } from '@/theme';
+import { MODE_TOKENS } from '@/theme/modeTokens';
 import { useCompanionName } from '@/utils/companion';
 
 export default function ParentSummaryScreen() {
@@ -50,6 +55,7 @@ export default function ParentSummaryScreen() {
   const proactiveOptIn = useSettings((s) => s.proactiveOptIn);
   const setProactiveOptIn = useSettings((s) => s.setProactiveOptIn);
   const isAz = lang === 'az';
+  const accent = useAccent();
   const learningLang = learningLanguages[0] ?? 'en';
   const bot = useCompanionName();
 
@@ -151,50 +157,28 @@ export default function ParentSummaryScreen() {
   })();
 
   return (
+    // Отчёт читает родитель — всегда «взрослый» режим.
+    <UIModeProvider force="teen">
     <PaperBackground>
-      {/* Top action bar */}
-      <View style={styles.topBar}>
-        <Pressable
-          style={styles.topBtn}
-          onPress={() => router.replace('/profile-select' as any)}
-        >
-          <Text style={styles.topBtnText}>‹ {isAz ? 'Profillər' : 'Профили'}</Text>
-        </Pressable>
-        <Pressable
-          style={styles.topBtn}
-          onPress={() => router.push('/setup/name' as any)}
-        >
-          <Text style={[styles.topBtnText, { color: colors.primary }]}>
-            + {isAz ? 'Uşaq' : 'Ребёнок'}
-          </Text>
-        </Pressable>
-      </View>
+      <ScreenHeader title={isAz ? `${childName}: hesabat` : `Отчёт: ${childName}`} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scroll}
+        contentContainerStyle={[styles.scroll, { paddingHorizontal: MODE_TOKENS.teen.density.padX }]}
       >
-        {/* Header */}
-        <Animated.View entering={FadeInDown.duration(600)} style={styles.header}>
-          <View style={styles.petHalo}>
-            <HBPet size={72} hue={storedHue} mood="happy" />
-          </View>
-          <Text style={styles.title}>
-            {isAz ? `${childName} üçün hesabat` : `Отчёт по ${childName}`}
-          </Text>
-          <Text style={styles.subtitle}>
-            {isAz
-              ? `${bot} nələr öyrəndiyini analiz etdi`
-              : `${bot} проанализировал что выучилось`}
+        <Animated.View entering={FadeInDown.duration(450)} style={styles.intro}>
+          <HBPet size={56} hue={storedHue} mood="happy" />
+          <Text variant="body" tone="secondary" style={styles.flex}>
+            {isAz ? `${bot} nələrin öyrənildiyini təhlil etdi` : `${bot} разобрал, что уже выучено`}
           </Text>
         </Animated.View>
 
         {/* Бобо memory & proactive control (parent transparency) */}
         {!loading && childId && authToken && error !== 'no_auth' && error !== 'no_child' && (
           <Animated.View entering={FadeInUp.duration(500).delay(40)}>
-            <HBCard depth="sm" ringColor={proactiveOn ? colors.accent : undefined} style={styles.memCard}>
+            <HBCard depth="sm" ringColor={proactiveOn ? accent.bottom : undefined} style={styles.memCard}>
               <View style={styles.cardHeader}>
-                <HBIconBox glyph="🐻" tint={colors.primarySoft} size={36} rounding={radius.md} glyphSize={18} />
+                <HBIconBox icon="brain" tint={colors.primarySoft} size={36} rounding={radius.md} />
                 <Text style={styles.cardTitle}>{isAz ? 'Bobo yaddaşı' : 'Память Бобо'}</Text>
               </View>
 
@@ -209,7 +193,11 @@ export default function ParentSummaryScreen() {
                       : 'Вспомнит прошлый разговор и спросит вовремя (≤1 в день, днём). Можно выключить.'}
                   </Text>
                 </View>
-                <View style={[styles.memSwitch, proactiveOn && styles.memSwitchOn]}>
+                <View
+                  style={[styles.memSwitch, proactiveOn && { backgroundColor: accent.bottom }]}
+                  accessibilityRole="switch"
+                  accessibilityState={{ checked: proactiveOn }}
+                >
                   <View style={[styles.memKnob, proactiveOn && styles.memKnobOn]} />
                 </View>
               </Pressable>
@@ -227,8 +215,14 @@ export default function ParentSummaryScreen() {
                           {threadStatusLabel(t)} · {t.mentionedAt}
                         </Text>
                       </View>
-                      <Pressable onPress={() => handleForgetThread(t.id)} hitSlop={8} style={styles.threadForget}>
-                        <Text style={styles.threadForgetText}>✕</Text>
+                      <Pressable
+                        onPress={() => handleForgetThread(t.id)}
+                        hitSlop={8}
+                        accessibilityRole="button"
+                        accessibilityLabel={isAz ? 'Unut' : 'Забыть'}
+                        style={styles.threadForget}
+                      >
+                        <Icon name="x" size={14} color={colors.inkSoft} strokeWidth={2.5} />
                       </Pressable>
                     </View>
                   ))}
@@ -247,7 +241,7 @@ export default function ParentSummaryScreen() {
           <Animated.View entering={FadeInUp.duration(500).delay(60)}>
             <HBCard depth="sm" style={styles.analysisCard}>
               <View style={styles.cardHeader}>
-                <HBIconBox glyph="✅" tint={tints.sage} size={36} rounding={radius.md} glyphSize={18} />
+                <HBIconBox icon="circle-check" tint={tints.sage} size={36} rounding={radius.md} />
                 <Text style={styles.cardTitle}>
                   {isAz ? 'Keçilən dərslər' : 'Пройденные уроки'}
                 </Text>
@@ -267,7 +261,10 @@ export default function ParentSummaryScreen() {
                       </Text>
                       <Text style={styles.lessonDate}>{(p.completedAt ?? '').slice(0, 10)}</Text>
                     </View>
-                    <Text style={styles.lessonStars}>⭐ {p.starsEarned}</Text>
+                    <View style={styles.starsRow}>
+                      <Icon name="star" size={14} color={colors.butterDeep} fill={colors.butter} strokeWidth={2} />
+                      <Text style={styles.lessonStars}>{p.starsEarned}</Text>
+                    </View>
                   </View>
                 );
               })}
@@ -297,33 +294,33 @@ export default function ParentSummaryScreen() {
         {/* Error states */}
         {error === 'no_child' && !loading && (
           <EmptyState
-            emoji="👶"
+            icon="baby"
             title={isAz ? 'Hələ uşaq yoxdur' : 'Пока нет ребёнка'}
             body={isAz
-              ? `Uşaq əlavə et və ${bot} ona dil öyrətməyə başlasın.`
-              : `Добавь ребёнка и ${bot} начнёт его учить языку.`}
-            action={isAz ? '+ Uşaq əlavə et' : '+ Добавить ребёнка'}
-            onAction={() => router.push('/setup/name' as any)}
+              ? `Uşaq əlavə edin — və ${bot} ona dil öyrətməyə başlayacaq.`
+              : `Добавьте ребёнка — и ${bot} начнёт учить его языку.`}
+            action={isAz ? 'Uşaq əlavə et' : 'Добавить ребёнка'}
+            onAction={() => router.push('/setup/profile-type' as never)}
           />
         )}
         {error === 'no_auth' && !loading && (
           <EmptyState
-            emoji="🔐"
-            title={isAz ? 'Daxil ol' : 'Нужен вход'}
+            icon="lock"
+            title={isAz ? 'Giriş lazımdır' : 'Нужен вход'}
             body={isAz
-              ? 'Tərəqqi və analiz görmək üçün hesaba daxil ol.'
-              : 'Войди в аккаунт чтобы видеть прогресс и анализ.'}
-            action={isAz ? 'Daxil ol' : 'Войти'}
+              ? 'Tərəqqini və təhlili görmək üçün hesaba daxil olun.'
+              : 'Войдите в аккаунт, чтобы видеть прогресс и разбор.'}
+            action={isAz ? 'Daxil olun' : 'Войти'}
             onAction={() => router.push('/auth/login' as any)}
           />
         )}
         {error === 'load_failed' && !loading && (
           <EmptyState
-            emoji="📡"
+            icon="wifi-off"
             title={isAz ? 'Yükləmə alınmadı' : 'Не удалось загрузить'}
             body={isAz
-              ? 'İnternet bağlantısını yoxla və yenidən cəhd et.'
-              : 'Проверь подключение и попробуй ещё раз.'}
+              ? 'İnternet bağlantısını yoxlayın və yenidən cəhd edin.'
+              : 'Проверьте подключение и попробуйте ещё раз.'}
             action={isAz ? 'Təkrar cəhd et' : 'Повторить'}
             onAction={load}
           />
@@ -333,7 +330,7 @@ export default function ParentSummaryScreen() {
         {analysis && !loading && analysis.meta.empty && (
           <Animated.View entering={FadeInUp.duration(500)}>
             <HBCard depth="sm" style={styles.emptyCard}>
-              <Text style={{ fontSize: 48, textAlign: 'center' }}>📚</Text>
+              <HBPet size={96} mood="curious" />
               <Text style={styles.cardTitle}>
                 {isAz ? 'Hələ məlumat yoxdur' : 'Пока нет данных'}
               </Text>
@@ -351,9 +348,9 @@ export default function ParentSummaryScreen() {
           <>
             {/* Stats row */}
             <Animated.View entering={FadeInUp.duration(500).delay(80)} style={styles.statsRow}>
-              <StatCard emoji="📚" value={analysis.meta.lessonsCompleted} label={isAz ? 'dərs' : 'уроков'} />
-              <StatCard emoji="⭐" value={analysis.meta.totalStars} label={isAz ? 'ulduz' : 'звёзд'} />
-              <StatCard emoji="🎯" value={analysis.meta.totalErrors} label={isAz ? 'xəta' : 'ошибок'} />
+              <StatCard icon="book-open" value={analysis.meta.lessonsCompleted} label={isAz ? 'dərs' : 'уроков'} />
+              <StatCard icon="star" value={analysis.meta.totalStars} label={isAz ? 'ulduz' : 'звёзд'} />
+              <StatCard icon="target" value={analysis.meta.totalErrors} label={isAz ? 'xəta' : 'ошибок'} />
             </Animated.View>
 
             {/* Strengths */}
@@ -361,7 +358,7 @@ export default function ParentSummaryScreen() {
               <Animated.View entering={FadeInUp.duration(500).delay(160)}>
                 <HBCard depth="sm" ringColor={colors.accent} style={styles.analysisCard}>
                   <View style={styles.cardHeader}>
-                    <HBIconBox glyph="💪" tint={tints.sage} size={36} rounding={radius.md} glyphSize={18} />
+                    <HBIconBox icon="dumbbell" tint={tints.sage} size={36} rounding={radius.md} />
                     <Text style={styles.cardTitle}>
                       {isAz ? 'Güclü tərəfləri' : 'Сильные стороны'}
                     </Text>
@@ -369,7 +366,7 @@ export default function ParentSummaryScreen() {
                   {analysis.analysis.strengths.map((s, i) => (
                     <View key={i} style={styles.bulletRow}>
                       <View style={[styles.bullet, { backgroundColor: colors.accent }]}>
-                        <Text style={styles.bulletCheck}>✓</Text>
+                        <Icon name="check" size={12} color={colors.white} strokeWidth={3} />
                       </View>
                       <View style={{ flex: 1 }}>
                         <Text style={styles.bulletTopic}>{s.topic}</Text>
@@ -386,7 +383,7 @@ export default function ParentSummaryScreen() {
               <Animated.View entering={FadeInUp.duration(500).delay(240)}>
                 <HBCard depth="sm" ringColor={colors.butter} style={styles.analysisCard}>
                   <View style={styles.cardHeader}>
-                    <HBIconBox glyph="🎯" tint="#FFF8D6" size={36} rounding={radius.md} glyphSize={18} />
+                    <HBIconBox icon="target" tint="#FFF8D6" size={36} rounding={radius.md} />
                     <Text style={styles.cardTitle}>
                       {isAz ? 'Üzərində işləyirik' : 'Над чем работаем'}
                     </Text>
@@ -420,7 +417,7 @@ export default function ParentSummaryScreen() {
               <Animated.View entering={FadeInUp.duration(500).delay(300)}>
                 <HBCard depth="sm" style={styles.analysisCard}>
                   <View style={styles.cardHeader}>
-                    <HBIconBox glyph="💖" tint={tints.berry} size={36} rounding={radius.md} glyphSize={18} />
+                    <HBIconBox icon="heart" tint={tints.berry} size={36} rounding={radius.md} />
                     <Text style={styles.cardTitle}>{isAz ? 'Maraqları' : 'Интересы'}</Text>
                   </View>
                   <View style={styles.chipRow}>
@@ -444,7 +441,7 @@ export default function ParentSummaryScreen() {
               <Animated.View entering={FadeInUp.duration(500).delay(340)}>
                 <HBCard depth="sm" style={styles.analysisCard}>
                   <View style={styles.cardHeader}>
-                    <HBIconBox glyph="🔄" tint={colors.primarySoft} size={36} rounding={radius.md} glyphSize={18} />
+                    <HBIconBox icon="refresh-cw" tint={colors.primarySoft} size={36} rounding={radius.md} />
                     <Text style={styles.cardTitle}>
                       {isAz ? 'Təkrarlanacaq sözlər' : 'Повторим слова'}
                     </Text>
@@ -462,10 +459,10 @@ export default function ParentSummaryScreen() {
 
             {/* AI Week plan */}
             <Animated.View entering={FadeInUp.duration(500).delay(400)}>
-              <HBCard depth="md" ringColor={colors.primary} style={styles.planCard}>
+              <HBCard depth="md" ringColor={accent.bottom} style={styles.planCard}>
                 <View style={styles.cardHeader}>
-                  <HBIconBox glyph="📅" tint={colors.primarySoft} size={36} rounding={radius.md} glyphSize={18} />
-                  <Text style={[styles.cardTitle, { color: colors.primary }]}>
+                  <HBIconBox icon="calendar" tint={colors.primarySoft} size={36} rounding={radius.md} />
+                  <Text style={[styles.cardTitle, { color: accent.ink }]}>
                     {isAz ? 'AI plan — növbəti həftə' : 'AI-план на следующую неделю'}
                   </Text>
                 </View>
@@ -480,7 +477,8 @@ export default function ParentSummaryScreen() {
                     <HBButton
                       full
                       variant="primary"
-                      label={isAz ? '✨ Planı yarat' : '✨ Создать план'}
+                      icon="sparkles"
+                      label={isAz ? 'Planı yarat' : 'Создать план'}
                       onPress={handleGenerate}
                     />
                   </>
@@ -533,20 +531,20 @@ export default function ParentSummaryScreen() {
                     ))}
 
                     <View style={styles.actionsRow}>
-                      <Pressable
+                      <HBButton
+                        variant="soft"
+                        icon="refresh-cw"
+                        label={isAz ? 'Yenidən' : 'Заново'}
                         onPress={handleRegenerate}
                         disabled={approving}
-                        style={[styles.secondaryBtn, approving && { opacity: 0.5 }]}
-                      >
-                        <Text style={styles.secondaryBtnText}>
-                          {isAz ? '🔄 Yenidən' : '🔄 Перегенерировать'}
-                        </Text>
-                      </Pressable>
+                      />
                       <View style={{ flex: 1 }}>
                         <HBButton
                           full
                           variant="primary"
-                          label={approving ? '...' : (isAz ? '✓ Təsdiqlə' : '✓ Утвердить')}
+                          icon="check"
+                          loading={approving}
+                          label={isAz ? 'Təsdiqlə' : 'Утвердить'}
                           onPress={handleApprove}
                           disabled={approving}
                         />
@@ -560,99 +558,48 @@ export default function ParentSummaryScreen() {
         )}
       </ScrollView>
     </PaperBackground>
+    </UIModeProvider>
   );
 }
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
-function StatCard({ emoji, value, label }: { emoji: string; value: number; label: string }) {
+function StatCard({ icon, value, label }: { icon: IconName; value: number; label: string }) {
+  const accent = useAccent();
   return (
-    <View style={[styles.statCard, shadow.sm]}>
-      <Text style={{ fontSize: 22 }}>{emoji}</Text>
+    <HBCard style={styles.statCard}>
+      <Icon name={icon} size={20} color={accent.ink} />
       <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
+      <Text variant="caption" tone="secondary">{label}</Text>
+    </HBCard>
   );
 }
 
 function EmptyState({
-  emoji, title, body, action, onAction,
+  icon, title, body, action, onAction,
 }: {
-  emoji: string; title: string; body: string; action: string; onAction: () => void;
+  icon: IconName; title: string; body: string; action: string; onAction: () => void;
 }) {
+  const accent = useAccent();
   return (
     <HBCard depth="sm" style={styles.emptyCard}>
-      <Text style={{ fontSize: 52, textAlign: 'center' }}>{emoji}</Text>
-      <Text style={[styles.cardTitle, { textAlign: 'center' }]}>{title}</Text>
-      <Text style={[styles.cardSub, { textAlign: 'center' }]}>{body}</Text>
+      <HBIconBox icon={icon} tint={accent.soft} iconColor={accent.ink} size={56} />
+      <Text variant="headline" align="center">{title}</Text>
+      <Text variant="body" tone="secondary" align="center">{body}</Text>
       <HBButton full variant="primary" label={action} onPress={onAction} />
     </HBCard>
   );
 }
 
 const styles = StyleSheet.create({
-  topBar: {
-    position: 'absolute',
-    top: 52,
-    left: spacing[5],
-    right: spacing[5],
-    zIndex: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  topBtn: {
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[2],
-    borderRadius: radius.full,
-    backgroundColor: colors.card,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.8)',
-    borderBottomWidth: 2,
-    borderBottomColor: 'rgba(125,90,42,0.08)',
-    ...shadow.sm,
-  },
-  topBtnText: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize.sm,
-    color: colors.inkSoft,
-  },
-
   scroll: {
-    paddingHorizontal: spacing[5],
-    paddingTop: 110,
+    paddingTop: spacing[1],
     paddingBottom: spacing[12],
-    gap: spacing[4],
+    gap: spacing[3],
   },
-
-  header: { alignItems: 'center', gap: spacing[2], marginBottom: spacing[2] },
-  petHalo: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderTopWidth: 1.5,
-    borderTopColor: 'rgba(255,255,255,0.8)',
-    borderBottomWidth: 2,
-    borderBottomColor: 'rgba(125,90,42,0.08)',
-    ...shadow.sm,
-  },
-  title: {
-    fontFamily: fontFamily.display,
-    fontSize: fontSize['2xl'],
-    color: colors.ink,
-    textAlign: 'center',
-    marginTop: spacing[2],
-  },
-  subtitle: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.sm,
-    color: colors.inkSoft,
-    textAlign: 'center',
-    maxWidth: 280,
-    lineHeight: 20,
-  },
+  intro: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
+  flex: { flex: 1, minWidth: 0 },
+  starsRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
 
   loadingText: {
     fontFamily: fontFamily.bodyMedium,
@@ -665,29 +612,11 @@ const styles = StyleSheet.create({
   emptyCard: { alignItems: 'center', gap: spacing[3] },
 
   statsRow: { flexDirection: 'row', gap: spacing[2] },
-  statCard: {
-    flex: 1,
-    backgroundColor: colors.card,
-    borderRadius: radius.xl,
-    padding: spacing[4],
-    alignItems: 'center',
-    gap: spacing[1],
-    borderTopWidth: 1.5,
-    borderTopColor: 'rgba(255,255,255,0.8)',
-    borderBottomWidth: 2,
-    borderBottomColor: 'rgba(125,90,42,0.08)',
-  },
+  statCard: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: spacing[3] },
   statValue: {
     fontFamily: fontFamily.display,
     fontSize: fontSize['2xl'],
     color: colors.ink,
-  },
-  statLabel: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize['3xs'],
-    color: colors.inkSoft,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
 
   analysisCard: { gap: spacing[3] },
@@ -752,7 +681,6 @@ const styles = StyleSheet.create({
     padding: 3,
     justifyContent: 'center',
   },
-  memSwitchOn: { backgroundColor: colors.accent },
   memKnob: { width: 22, height: 22, borderRadius: 11, backgroundColor: colors.white, ...shadow.sm },
   memKnobOn: { alignSelf: 'flex-end' },
   memListLabel: {
@@ -779,7 +707,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  threadForgetText: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize.xs, color: colors.inkSoft },
 
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
   cardTitle: {
@@ -917,18 +844,4 @@ const styles = StyleSheet.create({
   generatingBox: { alignItems: 'center', gap: spacing[3], paddingVertical: spacing[6] },
 
   actionsRow: { flexDirection: 'row', gap: spacing[2], marginTop: spacing[2], alignItems: 'center' },
-  secondaryBtn: {
-    flex: 1,
-    borderRadius: radius.full,
-    paddingVertical: spacing[3] + 1,
-    alignItems: 'center',
-    backgroundColor: colors.bgDeep,
-    borderWidth: 1.5,
-    borderColor: 'rgba(125,90,42,0.12)',
-  },
-  secondaryBtnText: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize.sm,
-    color: colors.inkSoft,
-  },
 });

@@ -1,8 +1,9 @@
 import * as Haptics from 'expo-haptics';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
@@ -11,6 +12,7 @@ import { scheduleLessonReminders } from '@/services/notifications';
 import { useSettings, type ScheduleDay, type ScheduleMinutes } from '@/store/settings';
 import { useCompanionName } from '@/utils/companion';
 import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
+import { HBBackButton } from '@/components/HBBackButton';
 import { StepIndicator } from '@/components/StepIndicator';
 
 const DAYS: { key: ScheduleDay; labelRu: string; labelAz: string }[] = [
@@ -36,6 +38,12 @@ const HOURS = Array.from({ length: 16 }, (_, i) => i + 7); // 7–22
 
 export default function SetupScheduleScreen() {
   const router = useRouter();
+  // `?from=parent` — экран открыт как настройка из родительского раздела, а не
+  // шаг онбординга: показываем текущее расписание, сохраняем и возвращаемся.
+  // Раньше «Изменить» отсюда уводило в `setup/building?create=1`, то есть в
+  // создание ещё одного ребёнка.
+  const fromParent = useLocalSearchParams<{ from?: string }>().from === 'parent';
+  const insets = useSafeAreaInsets();
   const lang = useSettings((s) => s.parentUILanguage) ?? 'ru';
   const childName = useSettings((s) => s.childName) ?? '';
   const setSchedule = useSettings((s) => s.setSchedule);
@@ -45,10 +53,15 @@ export default function SetupScheduleScreen() {
 
   const isAz = lang === 'az';
 
-  const [days, setDays] = useState<ScheduleDay[]>(['mon', 'tue', 'wed', 'thu', 'fri']);
-  const [minutes, setMinutes] = useState<ScheduleMinutes>(15);
-  const [hour, setHour] = useState(17);
-  const [proactiveOn, setProactiveOn] = useState(false); // opt-in, default OFF
+  const storedDays = useSettings((st) => st.scheduleDays);
+  const storedMinutes = useSettings((st) => st.scheduleMinutes);
+  const storedHour = useSettings((st) => st.scheduleHour);
+  const storedProactive = useSettings((st) => st.proactiveOptIn);
+
+  const [days, setDays] = useState<ScheduleDay[]>(storedDays);
+  const [minutes, setMinutes] = useState<ScheduleMinutes>(storedMinutes);
+  const [hour, setHour] = useState(storedHour);
+  const [proactiveOn, setProactiveOn] = useState(storedProactive); // по умолчанию выключено
 
   const toggleDay = (day: ScheduleDay) => {
     Haptics.selectionAsync().catch(() => {});
@@ -64,10 +77,14 @@ export default function SetupScheduleScreen() {
     setProactiveOptIn(proactiveOn);
     // Schedule push notifications (best effort)
     scheduleLessonReminders(childName, hour, days, isAz).catch(() => {});
+    if (fromParent) {
+      router.back();
+      return;
+    }
     // Straight to the AI-plan build progress (no static "план готов" summary):
     // authenticated → building creates the child itself; otherwise account first.
     if (authToken) router.replace('/setup/building?create=1' as any);
-    else router.push('/auth/consent' as any);
+    else router.push('/auth/consent?then=register' as any);
   };
 
   const formatHour = (h: number) => {
@@ -78,7 +95,9 @@ export default function SetupScheduleScreen() {
 
   return (
     <Screen gradient decoration="sunrise" scroll>
-      <StepIndicator current={7} total={7} />
+      {fromParent ? null : <StepIndicator current={7} total={7} />}
+      {/* Открыт как настройка — нужен выход без сохранения. */}
+      {fromParent ? <HBBackButton top={insets.top + spacing[2]} /> : null}
 
       <Animated.View entering={FadeInDown.duration(600).delay(100)} style={styles.header}>
         <Text style={{ fontSize: scaleFont(52), textAlign: 'center' }}>⏰</Text>
@@ -210,7 +229,7 @@ export default function SetupScheduleScreen() {
       <HBButton
         full
         variant={days.length === 0 ? 'soft' : 'primary'}
-        label={isAz ? 'Planı göstər 🎉' : 'Показать план 🎉'}
+        label={fromParent ? (isAz ? 'Yadda saxla' : 'Сохранить') : isAz ? 'Planı göstər' : 'Показать план'}
         onPress={handleContinue}
         disabled={days.length === 0}
       />

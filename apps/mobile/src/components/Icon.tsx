@@ -23,6 +23,7 @@ import Calendar from 'lucide-react-native/icons/calendar';
 import Camera from 'lucide-react-native/icons/camera';
 import ChartColumn from 'lucide-react-native/icons/chart-column';
 import Check from 'lucide-react-native/icons/check';
+import ChevronDown from 'lucide-react-native/icons/chevron-down';
 import ChevronLeft from 'lucide-react-native/icons/chevron-left';
 import ChevronRight from 'lucide-react-native/icons/chevron-right';
 import Circle from 'lucide-react-native/icons/circle';
@@ -30,6 +31,7 @@ import CircleAlert from 'lucide-react-native/icons/circle-alert';
 import CircleCheck from 'lucide-react-native/icons/circle-check';
 import Clapperboard from 'lucide-react-native/icons/clapperboard';
 import ClipboardList from 'lucide-react-native/icons/clipboard-list';
+import Clock from 'lucide-react-native/icons/clock';
 import Crown from 'lucide-react-native/icons/crown';
 import Drama from 'lucide-react-native/icons/drama';
 import Dumbbell from 'lucide-react-native/icons/dumbbell';
@@ -46,6 +48,8 @@ import House from 'lucide-react-native/icons/house';
 import Library from 'lucide-react-native/icons/library';
 import Lightbulb from 'lucide-react-native/icons/lightbulb';
 import Lock from 'lucide-react-native/icons/lock';
+import LogOut from 'lucide-react-native/icons/log-out';
+import Mail from 'lucide-react-native/icons/mail';
 import MapIcon from 'lucide-react-native/icons/map';
 import MessageCircle from 'lucide-react-native/icons/message-circle';
 import MessageCircleDashed from 'lucide-react-native/icons/message-circle-dashed';
@@ -57,6 +61,7 @@ import Music from 'lucide-react-native/icons/music';
 import Palette from 'lucide-react-native/icons/palette';
 import PartyPopper from 'lucide-react-native/icons/party-popper';
 import PawPrint from 'lucide-react-native/icons/paw-print';
+import Pencil from 'lucide-react-native/icons/pencil';
 import Plane from 'lucide-react-native/icons/plane';
 import Play from 'lucide-react-native/icons/play';
 import Plus from 'lucide-react-native/icons/plus';
@@ -68,11 +73,14 @@ import Scale from 'lucide-react-native/icons/scale';
 import School from 'lucide-react-native/icons/school';
 import Settings from 'lucide-react-native/icons/settings';
 import Share2 from 'lucide-react-native/icons/share-2';
+import ShieldCheck from 'lucide-react-native/icons/shield-check';
+import SlidersHorizontal from 'lucide-react-native/icons/sliders-horizontal';
 import Snowflake from 'lucide-react-native/icons/snowflake';
 import Sparkles from 'lucide-react-native/icons/sparkles';
 import Star from 'lucide-react-native/icons/star';
 import Sun from 'lucide-react-native/icons/sun';
 import Target from 'lucide-react-native/icons/target';
+import Trash from 'lucide-react-native/icons/trash';
 import Trophy from 'lucide-react-native/icons/trophy';
 import User from 'lucide-react-native/icons/user';
 import Users from 'lucide-react-native/icons/users';
@@ -103,6 +111,7 @@ const ICONS = {
   camera: Camera,
   'chart-column': ChartColumn,
   check: Check,
+  'chevron-down': ChevronDown,
   'chevron-left': ChevronLeft,
   'chevron-right': ChevronRight,
   circle: Circle,
@@ -110,6 +119,7 @@ const ICONS = {
   'circle-check': CircleCheck,
   clapperboard: Clapperboard,
   'clipboard-list': ClipboardList,
+  clock: Clock,
   crown: Crown,
   drama: Drama,
   dumbbell: Dumbbell,
@@ -126,6 +136,8 @@ const ICONS = {
   library: Library,
   lightbulb: Lightbulb,
   lock: Lock,
+  'log-out': LogOut,
+  mail: Mail,
   map: MapIcon,
   'message-circle': MessageCircle,
   'message-circle-dashed': MessageCircleDashed,
@@ -137,6 +149,7 @@ const ICONS = {
   palette: Palette,
   'party-popper': PartyPopper,
   'paw-print': PawPrint,
+  pencil: Pencil,
   plane: Plane,
   play: Play,
   plus: Plus,
@@ -148,11 +161,14 @@ const ICONS = {
   school: School,
   settings: Settings,
   'share-2': Share2,
+  'shield-check': ShieldCheck,
+  'sliders-horizontal': SlidersHorizontal,
   snowflake: Snowflake,
   sparkles: Sparkles,
   star: Star,
   sun: Sun,
   target: Target,
+  trash: Trash,
   trophy: Trophy,
   user: User,
   users: Users,
