@@ -220,8 +220,11 @@ const preferencesSchema = z
   .object({
     interests: z.array(z.string().max(40)).max(12).optional(),
     lessonPrefs: lessonPrefsSchema.optional(),
+    // Уровень меняется здесь, а не через PUT: план строится под уровень, и
+    // будущие уроки нужно пересобрать — PUT только записал бы поле.
+    level: z.enum(['beginner', 'elementary', 'pre_intermediate', 'intermediate']).optional(),
   })
-  .refine((b) => b.interests !== undefined || b.lessonPrefs !== undefined, {
+  .refine((b) => b.interests !== undefined || b.lessonPrefs !== undefined || b.level !== undefined, {
     message: 'nothing_to_update',
   });
 
@@ -244,6 +247,7 @@ childrenRoute.post('/:id/preferences', zValidator('json', preferencesSchema), as
   const patch: Record<string, unknown> = { updatedAt: new Date() };
   if (body.interests !== undefined) patch.interests = body.interests;
   if (body.lessonPrefs !== undefined) patch.lessonPrefs = body.lessonPrefs;
+  if (body.level !== undefined) patch.level = body.level;
 
   const [updated] = await db
     .update(children)

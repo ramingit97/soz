@@ -300,7 +300,7 @@ export interface LessonPrefs {
  */
 export async function updatePreferences(
   childId: string,
-  prefs: { interests?: string[]; lessonPrefs?: LessonPrefs },
+  prefs: { interests?: string[]; lessonPrefs?: LessonPrefs; level?: string },
   token: string,
 ): Promise<{ ok: boolean; reskinFrom: number }> {
   return request<{ ok: boolean; reskinFrom: number }>(
@@ -773,67 +773,6 @@ export async function getTalkHint(
     {
       method: 'POST',
       body: JSON.stringify({ language, day, level, childName, recentBoboLine }),
-    },
-    token,
-  );
-}
-
-// ── Photo Learn (GPT-4o Vision) ──────────────────────────────────────────────
-
-export interface PhotoLearnItem {
-  word: string;
-  translation: string;
-  example: string;
-  emoji: string;
-}
-
-export interface PhotoLearnResponse {
-  summary: string;
-  items: PhotoLearnItem[];
-}
-
-export async function postPhotoLearn(
-  imageBase64: string,
-  targetLanguage: 'en' | 'ru',
-  uiLanguage: 'ru' | 'az',
-  level: 'beginner' | 'elementary' | 'pre_intermediate' | 'intermediate',
-  token: string,
-): Promise<PhotoLearnResponse> {
-  return request<PhotoLearnResponse>(
-    '/photo-learn',
-    {
-      method: 'POST',
-      body: JSON.stringify({
-        imageBase64,
-        imageMimeType: 'image/jpeg',
-        targetLanguage,
-        uiLanguage,
-        level,
-      }),
-    },
-    token,
-  );
-}
-
-// ── Songs / Karaoke ──────────────────────────────────────────────────────────
-
-export interface SongResponse {
-  lyrics: string[];
-  audioBase64: string;
-  audioMimeType: string;
-}
-
-export async function postSong(
-  vocab: string[],
-  language: 'en' | 'ru',
-  theme: string | undefined,
-  token: string,
-): Promise<SongResponse> {
-  return request<SongResponse>(
-    '/song',
-    {
-      method: 'POST',
-      body: JSON.stringify({ vocab, language, theme }),
     },
     token,
   );

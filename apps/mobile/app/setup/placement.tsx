@@ -1,37 +1,44 @@
 /**
- * Mini placement (≈60-90s) for older learners (14-16). ADAPTIVE staircase over
- * tiered pools (A1→B2): start at A2, a correct answer steps up a tier, a wrong
- * one steps down — 6 questions, each drawn randomly from its tier's pool, so
- * the test differs run to run and B2 must be EARNED on genuinely hard items
- * (conditionals/passive/reported speech), never on "I am a student".
- * The final level = the tier the staircase settles on after the last answer.
- * "Not sure" falls back to the self-report level screen.
+ * Мини-проверка уровня (около минуты) для 11+ — открывается с экрана уровня в
+ * родительском разделе. Адаптивная «лесенка» по четырём корзинам (A1→B2):
+ * старт с A2, верный ответ — корзина выше, неверный — ниже; 6 вопросов, каждый
+ * случайный из своей корзины, поэтому B2 нужно заработать на трудных вопросах
+ * (условные, пассив, косвенная речь). Итог — корзина после последнего ответа.
  *
- * Reached from the age screen when the 14-16 range is chosen; sets childLevel
- * and continues to the goal step.
+ * Результат сохраняется тем же `useSaveLevel`, что и ручной выбор, и оба экрана
+ * закрываются. «×» — назад к ручному выбору.
  */
 
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { HBButton } from '@/components/HBButton';
+import { HBCard } from '@/components/HBCard';
 import { HBPet } from '@/components/HBPet';
+import { Icon } from '@/components/Icon';
+import { InlineBanner } from '@/components/InlineBanner';
+import { LessonHeader } from '@/components/LessonHeader';
 import { PaperBackground } from '@/components/PaperBackground';
 import { Text } from '@/components/Text';
+import { useAccent } from '@/hooks/useAccent';
+import { useSaveLevel } from '@/hooks/useSaveLevel';
+import { UIModeProvider } from '@/hooks/useUIMode';
 import { useSettings, type ChildLevel } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
-import { StepIndicator } from '@/components/StepIndicator';
+import { colors, fontFamily, fontSize, radius, spacing, tints } from '@/theme';
+import { MODE_TOKENS } from '@/theme/modeTokens';
+import { LEVEL_INFO } from '@/utils/levels';
 
 interface Q { prompt: string; options: string[]; correct: number }
 
 const TOTAL_QUESTIONS = 6;
-const START_TIER = 1; // A2 — mid start so both directions stay reachable
+const START_TIER = 1; // A2 — старт посередине, чтобы были доступны оба направления
 
-// Tier pools: index 0=A1, 1=A2, 2=B1, 3=B2. Each question is genuinely OF its
-// tier — reaching B2 means answering B2 grammar at the end of the staircase.
+// Корзины: 0=A1, 1=A2, 2=B1, 3=B2. Каждый вопрос действительно своего уровня —
+// B2 значит «ответил на грамматику B2 в конце лесенки».
 const POOL_EN: Q[][] = [
   [ // A1 — to-be, articles, basic present
     { prompt: 'I ___ a student.', options: ['am', 'is', 'are'], correct: 0 },
@@ -91,12 +98,6 @@ const POOL_RU: Q[][] = [
 ];
 
 const LEVEL_BY_TIER: ChildLevel[] = ['beginner', 'elementary', 'pre_intermediate', 'intermediate'];
-const LEVEL_META: Record<ChildLevel, { code: string; ru: string; az: string; color: string }> = {
-  beginner: { code: 'A1', ru: 'Начинающий', az: 'Yeni başlayan', color: colors.accent },
-  elementary: { code: 'A2', ru: 'Элементарный', az: 'Elementar', color: colors.butterDeep ?? colors.butter },
-  pre_intermediate: { code: 'B1', ru: 'Средний', az: 'Orta', color: colors.english },
-  intermediate: { code: 'B2', ru: 'Уверенный', az: 'Sərbəst', color: colors.primary },
-};
 
 function pickQuestion(pool: Q[][], tier: number, used: Set<Q>): Q {
   const fresh = pool[tier]!.filter((q) => !used.has(q));
@@ -106,19 +107,16 @@ function pickQuestion(pool: Q[][], tier: number, used: Set<Q>): Q {
 
 export default function PlacementScreen() {
   const router = useRouter();
-  const lang = useSettings((s) => s.parentUILanguage) ?? 'ru';
-  const childName = useSettings((s) => s.childName) ?? '';
-  const childAge = useSettings((s) => s.childAge) ?? 14;
+  const accent = useAccent();
+  const insets = useSafeAreaInsets();
+  const isAz = useSettings((s) => s.parentUILanguage) === 'az';
   const learningLanguages = useSettings((s) => s.learningLanguages);
-  const petHue = useSettings((s) => s.petHue);
-  const setChildProfile = useSettings((s) => s.setChildProfile);
-  const isAz = lang === 'az';
+  const { save, saving, failed } = useSaveLevel();
 
-  const targetRu = (learningLanguages[0] ?? 'en') === 'ru';
-  const pool = targetRu ? POOL_RU : POOL_EN;
+  const pool = (learningLanguages[0] ?? 'en') === 'ru' ? POOL_RU : POOL_EN;
 
   const usedRef = useRef<Set<Q>>(new Set());
-  const [qNumber, setQNumber] = useState(1); // 1-based
+  const [qNumber, setQNumber] = useState(1); // с единицы
   const [tier, setTier] = useState(START_TIER);
   const [q, setQ] = useState<Q>(() => {
     const first = pickQuestion(pool, START_TIER, usedRef.current);
@@ -129,15 +127,14 @@ export default function PlacementScreen() {
   const [done, setDone] = useState(false);
 
   const result = LEVEL_BY_TIER[tier] ?? 'beginner';
-  const meta = LEVEL_META[result];
+  const info = LEVEL_INFO[result];
 
   const handlePick = (i: number) => {
     if (picked !== null) return;
     Haptics.selectionAsync().catch(() => {});
     setPicked(i);
     const correct = i === q.correct;
-    // Staircase: up on correct, down on wrong (clamped) — the tier after the
-    // LAST answer is the placement result.
+    // Лесенка: вверх за верный, вниз за неверный (в пределах корзин).
     const nextTier = Math.max(0, Math.min(pool.length - 1, tier + (correct ? 1 : -1)));
     setTimeout(() => {
       setTier(nextTier);
@@ -151,140 +148,138 @@ export default function PlacementScreen() {
         setQNumber((n) => n + 1);
         setPicked(null);
       }
-    }, 450);
+    }, 600);
   };
 
-  const finish = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-    setChildProfile(childName, childAge, result);
-    router.push('/setup/goals' as any);
+  const handleSave = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    // Закрыть и проверку, и экран уровня — назад в родительский раздел.
+    if (await save(result)) router.dismiss(2);
   };
+
+  const padX = MODE_TOKENS.teen.density.padX;
 
   return (
-    <PaperBackground>
-      <View style={styles.container}>
-        <StepIndicator current={5} total={7} />
+    // Проверку проходит подросток или взрослый — «взрослый» режим.
+    <UIModeProvider force="teen">
+      <PaperBackground>
+        <LessonHeader
+          title={isAz ? 'Səviyyə yoxlaması' : 'Проверка уровня'}
+          icon="clipboard-list"
+          step={done ? TOTAL_QUESTIONS : qNumber}
+          total={TOTAL_QUESTIONS}
+          onClose={() => router.back()}
+        />
 
         {done ? (
-          <Animated.View entering={FadeIn.duration(400)} style={styles.resultWrap}>
-            <HBPet size={120} hue={petHue} mood="happy" />
-            <Text style={styles.resultLabel}>{isAz ? 'Sənin səviyyən' : 'Твой уровень'}</Text>
-            <View style={[styles.codeBadge, { backgroundColor: meta.color }]}>
-              <Text style={styles.codeBadgeText}>{meta.code}</Text>
-            </View>
-            <Text style={styles.resultName}>{isAz ? meta.az : meta.ru}</Text>
-            <Text style={styles.resultSub}>
-              {isAz ? 'Dərsləri buna görə kökləyəcəyik' : 'Настроим уроки под него'}
-            </Text>
-            <View style={styles.resultCta}>
-              <HBButton full variant="primary" label={isAz ? 'Davam et' : 'Продолжить'} onPress={finish} />
-            </View>
-          </Animated.View>
-        ) : (
-          <>
-            <Animated.View entering={FadeInDown.duration(500)} style={styles.header}>
-              <Text style={styles.title}>{isAz ? 'Kiçik yoxlama' : 'Быстрая проверка'}</Text>
-              <Text style={styles.sub}>
-                {isAz
-                  ? `${TOTAL_QUESTIONS} sual — suallar cavablarına uyğunlaşır`
-                  : `${TOTAL_QUESTIONS} вопросов — они подстраиваются под твои ответы`}
-              </Text>
-              <View style={styles.progressRow}>
-                {Array.from({ length: TOTAL_QUESTIONS }).map((_, i) => (
-                  <View key={i} style={[styles.pdot, i < qNumber && styles.pdotActive]} />
-                ))}
+          <ScrollView contentContainerStyle={[styles.result, { paddingHorizontal: padX, paddingBottom: insets.bottom + spacing[6] }]}>
+            <Animated.View entering={FadeIn.duration(400)} style={styles.resultInner}>
+              <HBPet size={112} mood="happy" />
+              <Text variant="caption" tone="secondary">{isAz ? 'Səviyyə' : 'Уровень'}</Text>
+              <View style={[styles.resultCode, { backgroundColor: accent.bottom }]}>
+                <Text style={[styles.resultCodeText, { color: accent.text }]}>{info.code}</Text>
               </View>
+              <Text variant="title" align="center">{isAz ? info.az : info.ru}</Text>
+              <Text variant="body" tone="secondary" align="center">{isAz ? info.descAz : info.descRu}</Text>
             </Animated.View>
 
-            <Animated.View key={qNumber} entering={FadeInUp.duration(350)} style={[styles.qCard, shadow.md]}>
-              <Text style={styles.qPrompt}>{q.prompt}</Text>
+            {failed ? (
+              <InlineBanner
+                tone="danger"
+                icon="wifi-off"
+                style={styles.banner}
+                text={isAz
+                  ? 'Yadda saxlamaq alınmadı. İnterneti yoxlayıb yenidən cəhd edin.'
+                  : 'Не получилось сохранить. Проверьте интернет и попробуйте ещё раз.'}
+              />
+            ) : null}
+
+            <View style={styles.resultCta}>
+              <HBButton
+                full
+                icon="check"
+                label={saving
+                  ? isAz ? 'Dərslər yenilənir…' : 'Перестраиваю уроки…'
+                  : isAz ? 'Bu səviyyəni saxla' : 'Сохранить этот уровень'}
+                loading={saving}
+                disabled={saving}
+                onPress={handleSave}
+              />
+              <HBButton
+                full
+                variant="ghost"
+                label={isAz ? 'Özüm seçəcəyəm' : 'Выбрать самому'}
+                disabled={saving}
+                onPress={() => router.back()}
+              />
+            </View>
+          </ScrollView>
+        ) : (
+          <ScrollView contentContainerStyle={[styles.quiz, { paddingHorizontal: padX, paddingBottom: insets.bottom + spacing[6] }]}>
+            <Text variant="caption" tone="secondary" align="center">
+              {isAz ? 'Boşluğa uyğun variantı seçin' : 'Выберите, что подходит в пропуск'}
+            </Text>
+
+            <Animated.View key={qNumber} entering={FadeInUp.duration(300)}>
+              <HBCard style={styles.qCard}>
+                <Text style={styles.qPrompt}>{q.prompt}</Text>
+              </HBCard>
             </Animated.View>
 
             <View style={styles.options}>
               {q.options.map((opt, i) => {
                 const revealed = picked !== null;
-                const isCorrect = i === q.correct;
-                const isPicked = picked === i;
-                const bg = revealed && isCorrect
-                  ? '#E3F7EF'
-                  : revealed && isPicked
-                    ? '#FDE3E8'
-                    : colors.card;
-                const border = revealed && isCorrect
-                  ? colors.accent
-                  : revealed && isPicked
-                    ? colors.berry
-                    : 'transparent';
+                const isCorrect = revealed && i === q.correct;
+                const isWrong = revealed && picked === i && i !== q.correct;
                 return (
                   <Pressable
-                    key={i}
+                    key={`${qNumber}-${i}`}
                     onPress={() => handlePick(i)}
                     disabled={revealed}
-                    style={[styles.option, shadow.sm, { backgroundColor: bg, borderColor: border }]}
+                    accessibilityRole="button"
+                    style={[
+                      styles.option,
+                      isCorrect && { backgroundColor: tints.sage, borderColor: colors.accentDeep },
+                      isWrong && { backgroundColor: tints.berry, borderColor: colors.berry },
+                    ]}
                   >
                     <Text style={styles.optionText}>{opt}</Text>
+                    {isCorrect ? <Icon name="check" size={20} color={colors.accentDeep} strokeWidth={3} /> : null}
+                    {isWrong ? <Icon name="x" size={20} color={colors.berry} strokeWidth={3} /> : null}
                   </Pressable>
                 );
               })}
             </View>
-
-            <View style={{ flex: 1 }} />
-            {/* Level screen is now always the parent (level-first flow) — back, don't stack. */}
-            <Pressable onPress={() => router.back()} style={styles.skip} hitSlop={8}>
-              <Text style={styles.skipText}>{isAz ? 'Əmin deyiləm — özüm seçim' : 'Не уверен — выберу сам'}</Text>
-            </Pressable>
-          </>
+          </ScrollView>
         )}
-      </View>
-    </PaperBackground>
+      </PaperBackground>
+    </UIModeProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingHorizontal: spacing[6], paddingTop: 50, paddingBottom: spacing[6] },
-
-  header: { alignItems: 'center', gap: spacing[2], marginTop: spacing[4] },
-  title: { fontFamily: fontFamily.display, fontSize: fontSize['3xl'], color: colors.ink, letterSpacing: -0.5 },
-  sub: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize.sm, color: colors.inkSoft, textAlign: 'center' },
-  progressRow: { flexDirection: 'row', gap: spacing[2], marginTop: spacing[3] },
-  pdot: { width: 28, height: 6, borderRadius: 3, backgroundColor: colors.border },
-  pdotActive: { backgroundColor: colors.primary },
-
-  qCard: {
-    backgroundColor: colors.card,
-    borderRadius: radius['2xl'],
-    paddingVertical: spacing[8],
-    paddingHorizontal: spacing[5],
-    alignItems: 'center',
-    marginTop: spacing[6],
-  },
+  quiz: { paddingTop: spacing[4], gap: spacing[4] },
+  qCard: { paddingVertical: spacing[8], paddingHorizontal: spacing[5], alignItems: 'center' },
   qPrompt: { fontFamily: fontFamily.display, fontSize: fontSize['2xl'], color: colors.ink, textAlign: 'center', lineHeight: 34 },
-
-  options: { gap: spacing[3], marginTop: spacing[5] },
+  options: { gap: spacing[3] },
   option: {
-    paddingVertical: spacing[4],
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing[2],
+    minHeight: 56,
     paddingHorizontal: spacing[5],
     borderRadius: radius.xl,
-    alignItems: 'center',
-    borderWidth: 2,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    backgroundColor: colors.white,
   },
   optionText: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize.lg, color: colors.ink },
 
-  skip: { alignSelf: 'center', paddingVertical: spacing[3] },
-  skipText: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.sm, color: colors.inkSoft },
-
-  resultWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing[3] },
-  resultLabel: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize.sm,
-    color: colors.inkSoft,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginTop: spacing[4],
-  },
-  codeBadge: { width: 76, height: 76, borderRadius: 38, alignItems: 'center', justifyContent: 'center', ...shadow.md },
-  codeBadgeText: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize['3xl'], color: colors.white },
-  resultName: { fontFamily: fontFamily.display, fontSize: fontSize['2xl'], color: colors.ink },
-  resultSub: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize.sm, color: colors.inkSoft, textAlign: 'center' },
-  resultCta: { alignSelf: 'stretch', marginTop: spacing[6] },
+  result: { flexGrow: 1, paddingTop: spacing[6], gap: spacing[4] },
+  resultInner: { alignItems: 'center', gap: spacing[2] },
+  resultCode: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center', marginVertical: spacing[1] },
+  resultCodeText: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize['2xl'] },
+  banner: { marginTop: spacing[2] },
+  resultCta: { gap: spacing[2], marginTop: spacing[4] },
 });

@@ -80,4 +80,31 @@ describe('PUT /children/:id', { skip: hasDb ? false : 'DATABASE_URL not set' }, 
     assert.equal(res.status, 200);
     assert.equal(await childName(), 'Aylin');
   });
+
+  // Смена уровня (POST /preferences). Успешный путь здесь не проверяется: он
+  // пересобирает будущие уроки через LLM. Проверяются отказы — они срабатывают
+  // до записи и до генерации.
+  const postPrefs = (token: string, body: Record<string, unknown>) =>
+    app.request(`/children/${childId}/preferences`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+    });
+
+  const childLevel = async () => {
+    const [row] = await getDb().select({ level: children.level }).from(children).where(eq(children.id, childId));
+    return row?.level;
+  };
+
+  it('чужой пользователь не меняет уровень', async () => {
+    const res = await postPrefs(strangerToken, { level: 'intermediate' });
+    assert.equal(res.status, 403);
+    assert.equal(await childLevel(), 'beginner');
+  });
+
+  it('неизвестный уровень отклоняется', async () => {
+    const res = await postPrefs(ownerToken, { level: 'native' });
+    assert.equal(res.status, 400);
+    assert.equal(await childLevel(), 'beginner');
+  });
 });

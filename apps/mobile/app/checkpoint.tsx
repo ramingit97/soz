@@ -27,7 +27,7 @@ import { useSettings } from '@/store/settings';
 import { useCompanionName } from '@/utils/companion';
 import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing, tints } from '@/theme';
 
-// ── Known-interest display metadata (compact; mirrors setup/interests) ─────────
+// ── Known-interest display metadata ───────────────────────────────────────────
 
 interface Known {
   key: string;

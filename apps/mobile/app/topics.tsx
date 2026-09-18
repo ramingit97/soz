@@ -104,7 +104,9 @@ export default function TopicsScreen() {
       : '';
     const s = coached ? `&scenario=${encodeURIComponent(coached)}` : '';
     const g = goals?.length ? `&goals=${encodeURIComponent(JSON.stringify(goals))}` : '';
-    router.push(`/talk?lang=${learnLang}&day=1${s}${g}` as any);
+    // replace, а не push: «Говорить» уже под этим экраном, темы не копятся в стеке.
+    // Без `day=1` — разговор идёт в контексте текущего дня.
+    router.replace(`/talk?lang=${learnLang}${s}${g}` as any);
   };
 
   const goCustom = () => {

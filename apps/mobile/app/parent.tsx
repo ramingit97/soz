@@ -24,6 +24,7 @@ import { useSettings, todayISO } from '@/store/settings';
 import { colors, fontFamily, fontSize, radius, semantic, spacing, tints } from '@/theme';
 import { MODE_TOKENS } from '@/theme/modeTokens';
 import { useCompanionName } from '@/utils/companion';
+import { LEVEL_INFO } from '@/utils/levels';
 
 const DAY_LABELS_RU = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 const DAY_LABELS_AZ = ['B.e', 'Ça', 'Çə', 'Ca', 'Cü', 'Şə', 'Bz'];
@@ -53,6 +54,7 @@ export default function ParentScreen() {
   const router = useRouter();
   const parentalGate = useParentalGate();
   const lang = useSettings((s) => s.parentUILanguage) ?? 'ru';
+  const childLevel = useSettings((s) => s.childLevel);
   const childName = useSettings((s) => s.childName) ?? '';
   const childAge = useSettings((s) => s.childAge);
   const learningLanguages = useSettings((s) => s.learningLanguages);
@@ -289,6 +291,11 @@ export default function ParentScreen() {
               icon="target"
               label={isAz ? 'Məqsədlər və vurğu' : 'Цели и упор'}
               onPress={() => router.push('/setup/goals?from=parent' as never)}
+            />
+            <LinkRow
+              icon="graduation-cap"
+              label={`${isAz ? 'Dil səviyyəsi' : 'Уровень языка'} · ${LEVEL_INFO[childLevel ?? 'beginner'].code}`}
+              onPress={() => router.push('/setup/level' as never)}
             />
           </Animated.View>
 

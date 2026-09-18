@@ -51,6 +51,7 @@ import { StarParticle } from '@/components/StarParticle';
 import { Text } from '@/components/Text';
 import { TypingDots } from '@/components/TypingDots';
 import { useTheme } from '@/hooks/useTheme';
+import { useUIMode } from '@/hooks/useUIMode';
 import { track } from '@/services/analytics';
 import { fetchTalkOpener, getTalkHint, markThreadAsked, postSessionEnd, postTalk, reportAiMessage, type TalkResponsePayload } from '@/services/api';
 import { notifyParentSensitive } from '@/services/notifications';
@@ -155,6 +156,8 @@ export default function TalkScreen() {
   const bot = useCompanionName();
   const currentDay = useSettings((s) => s.currentDay);
   const fromLesson = params.fromLesson === '1';
+  // Разговор на выбранную тему — для 11+ и вне урока (у малышей тему ведёт урок).
+  const showTopics = useUIMode() === 'teen' && !fromLesson;
   // A graded "conversation day" from the path (not free-chat / topics / threads):
   // it needs a real END. The session has a planned LENGTH (grows with age/level,
   // longer when the goal is real speaking); we send elapsed/target to the server
@@ -955,19 +958,33 @@ export default function TalkScreen() {
                   </Pressable>
                 </Animated.View>
               ) : (
-                <Pressable
-                  onPress={requestHint}
-                  disabled={hintLoading}
-                  accessibilityRole="button"
-                  style={[styles.hintBtn, hintLoading && { opacity: 0.6 }]}
-                >
-                  <Icon name="lightbulb" size={16} color={accent.ink} />
-                  <Text style={styles.hintBtnText}>
-                    {hintLoading
-                      ? (language === 'en' ? 'Thinking…' : 'Думаю…')
-                      : (language === 'en' ? 'Need a hint?' : 'Нужна подсказка?')}
-                  </Text>
-                </Pressable>
+                <View style={styles.hintPills}>
+                  <Pressable
+                    onPress={requestHint}
+                    disabled={hintLoading}
+                    accessibilityRole="button"
+                    style={[styles.hintBtn, hintLoading && { opacity: 0.6 }]}
+                  >
+                    <Icon name="lightbulb" size={16} color={accent.ink} />
+                    <Text style={styles.hintBtnText}>
+                      {hintLoading
+                        ? (language === 'en' ? 'Thinking…' : 'Думаю…')
+                        : showTopics
+                          ? (language === 'en' ? 'Hint' : 'Подсказка')
+                          : (language === 'en' ? 'Need a hint?' : 'Нужна подсказка?')}
+                    </Text>
+                  </Pressable>
+                  {showTopics ? (
+                    <Pressable
+                      onPress={() => router.push('/topics' as never)}
+                      accessibilityRole="button"
+                      style={styles.hintBtn}
+                    >
+                      <Icon name="sparkles" size={16} color={accent.ink} />
+                      <Text style={styles.hintBtnText}>{language === 'en' ? 'Topic' : 'Тема'}</Text>
+                    </Pressable>
+                  ) : null}
+                </View>
               )}
             </View>
           )}
@@ -1253,6 +1270,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  hintPills: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing[2] },
   hintBtn: {
     flexDirection: 'row',
     alignItems: 'center',
