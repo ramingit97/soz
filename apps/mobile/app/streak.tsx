@@ -8,15 +8,18 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 
-import { HBBackButton } from '@/components/HBBackButton';
 import { HBCard } from '@/components/HBCard';
+import { HBIconBox } from '@/components/HBIconBox';
 import { HBPet } from '@/components/HBPet';
+import { Icon, type IconName } from '@/components/Icon';
 import { PaperBackground } from '@/components/PaperBackground';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { Text } from '@/components/Text';
 import { useAccent } from '@/hooks/useAccent';
 import { getProgress } from '@/services/api';
 import { todayISO, useSettings } from '@/store/settings';
 import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
+import { useCompanionName } from '@/utils/companion';
 
 const MONTH_NAMES_RU = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 const MONTH_NAMES_AZ = ['Yanvar','Fevral','Mart','Aprel','May','İyun','İyul','Avqust','Sentyabr','Oktyabr','Noyabr','Dekabr'];
@@ -75,6 +78,7 @@ export default function StreakScreen() {
   const streak = useSettings((s) => s.streak);
   const storedHue = useSettings((s) => s.petHue);
   const accent = useAccent();
+  const bot = useCompanionName();
   const isAz = lang === 'az';
 
   const today = todayISO();
@@ -116,31 +120,25 @@ export default function StreakScreen() {
   const totalDone = doneDates.size;
   const monthDone = grid.filter(d => d && doneDates.has(d)).length;
 
-  // Streak fire emoji size based on streak length
+  // Огонь растёт вместе с серией.
   const fireSize = streak >= 30 ? 56 : streak >= 14 ? 48 : streak >= 7 ? 42 : 36;
+  const medal: IconName = streak >= 30 ? 'crown' : streak >= 14 ? 'trophy' : streak >= 7 ? 'medal' : streak >= 3 ? 'award' : 'sprout';
 
   return (
-    <PaperBackground variant="honey">
-      {/* Top bar */}
-      <View style={styles.topBar}>
-        <HBBackButton inline />
-        <Text style={styles.topTitle}>
-          {isAz ? 'Ardıcıllıq' : 'Стрик'}
-        </Text>
-        <View style={{ width: 36 }} />
-      </View>
+    <PaperBackground>
+      <ScreenHeader title={isAz ? 'Seriya' : 'Серия дней'} />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
 
         {/* Hero streak card */}
         <Animated.View entering={FadeInDown.duration(500)}>
           {streak === 0 ? (
-            <HBCard depth="deep" ringColor={colors.primarySoft} style={styles.heroCard}>
+            <HBCard ringColor={accent.soft} style={styles.heroCard}>
               <View style={styles.heroPetWrap}>
                 <HBPet size={96} hue={storedHue} mood="curious" />
               </View>
               <Text style={styles.emptyTitle}>
-                {isAz ? 'Zənciri başla! 🔥' : 'Начни цепочку! 🔥'}
+                {isAz ? 'Zənciri başla!' : 'Начни цепочку!'}
               </Text>
               <Text style={styles.emptyBody}>
                 {isAz
@@ -148,19 +146,27 @@ export default function StreakScreen() {
                   : 'Проходи урок каждый день — Бобо следит за твоей серией'}
               </Text>
               <View style={styles.emptyExamples}>
-                {(['1 gün → 🌱', '7 gün → 🔥', '30 gün → 🏆'] as const).map((ex) => (
-                  <View key={ex} style={styles.examplePill}>
-                    <Text style={styles.exampleText}>{ex}</Text>
+                {/* Было только по-азербайджански и для русских детей тоже. */}
+                {(
+                  [
+                    { icon: 'sprout', ru: '1 день', az: '1 gün' },
+                    { icon: 'flame', ru: '7 дней', az: '7 gün' },
+                    { icon: 'trophy', ru: '30 дней', az: '30 gün' },
+                  ] as const
+                ).map((ex) => (
+                  <View key={ex.ru} style={styles.examplePill}>
+                    <Icon name={ex.icon} size={14} color={accent.ink} />
+                    <Text style={styles.exampleText}>{isAz ? ex.az : ex.ru}</Text>
                   </View>
                 ))}
               </View>
             </HBCard>
           ) : (
-            <HBCard depth="deep" ringColor={accent.bottom} style={styles.heroCard}>
+            <HBCard ringColor={accent.bottom} style={styles.heroCard}>
               <View style={styles.heroPetWrap}>
                 <HBPet size={80} hue={storedHue} mood="happy" />
               </View>
-              <Text style={{ fontSize: fireSize, textAlign: 'center' }}>🔥</Text>
+              <Icon name="flame" size={fireSize} color={colors.primaryDeep} fill={colors.butter} strokeWidth={1.75} />
               <Text style={styles.streakNumber}>{streak}</Text>
               <Text style={styles.streakLabel}>
                 {isAz ? 'gün ardıcıl' : 'дней подряд'}
@@ -173,21 +179,21 @@ export default function StreakScreen() {
         {totalDone > 0 && (
           <Animated.View entering={FadeInUp.duration(450).delay(100)} style={styles.statRow}>
             <HBCard depth="sm" style={styles.statCard}>
-              <Text style={styles.statEmoji}>🏆</Text>
+              <Icon name="trophy" size={20} color={accent.ink} />
               <Text style={styles.statValue}>{longest}</Text>
               <Text style={styles.statLabel}>
                 {isAz ? 'ən yaxşı' : 'рекорд'}
               </Text>
             </HBCard>
             <HBCard depth="sm" style={styles.statCard}>
-              <Text style={styles.statEmoji}>📅</Text>
+              <Icon name="calendar" size={20} color={accent.ink} />
               <Text style={styles.statValue}>{totalDone}</Text>
               <Text style={styles.statLabel}>
                 {isAz ? 'cəmi gün' : 'всего дней'}
               </Text>
             </HBCard>
             <HBCard depth="sm" style={styles.statCard}>
-              <Text style={styles.statEmoji}>✨</Text>
+              <Icon name="sparkles" size={20} color={accent.ink} />
               <Text style={styles.statValue}>{monthDone}</Text>
               <Text style={styles.statLabel}>
                 {isAz ? 'bu ay' : 'в этом мес.'}
@@ -201,12 +207,23 @@ export default function StreakScreen() {
           <HBCard depth="sm" style={styles.calCard}>
             {/* Month nav */}
             <View style={styles.monthNav}>
-              <Pressable style={styles.navBtn} onPress={prevMonth}>
-                <Text style={styles.navArrow}>‹</Text>
+              <Pressable
+                style={styles.navBtn}
+                onPress={prevMonth}
+                accessibilityRole="button"
+                accessibilityLabel={isAz ? 'Əvvəlki ay' : 'Предыдущий месяц'}
+              >
+                <Icon name="chevron-left" size={20} color={colors.ink} />
               </Pressable>
               <Text style={styles.monthTitle}>{monthName} {viewYear}</Text>
-              <Pressable style={[styles.navBtn, !canGoNext && { opacity: 0.3 }]} onPress={nextMonth} disabled={!canGoNext}>
-                <Text style={styles.navArrow}>›</Text>
+              <Pressable
+                style={[styles.navBtn, !canGoNext && { opacity: 0.3 }]}
+                onPress={nextMonth}
+                disabled={!canGoNext}
+                accessibilityRole="button"
+                accessibilityLabel={isAz ? 'Növbəti ay' : 'Следующий месяц'}
+              >
+                <Icon name="chevron-right" size={20} color={colors.ink} />
               </Pressable>
             </View>
 
@@ -219,7 +236,7 @@ export default function StreakScreen() {
 
             {/* Grid */}
             {loading ? (
-              <ActivityIndicator color={colors.primary} style={{ paddingVertical: spacing[6] }} />
+              <ActivityIndicator color={accent.bottom} style={{ paddingVertical: spacing[6] }} />
             ) : (
               <View style={styles.grid}>
                 {grid.map((date, i) => {
@@ -236,11 +253,13 @@ export default function StreakScreen() {
                         status === 'done' && shadow.sm,
                       ]}
                     >
-                      {dayNum !== null && (
-                        <Text style={[styles.cellText, { color: s.text }]}>
-                          {status === 'done' ? '✓' : String(dayNum)}
-                        </Text>
-                      )}
+                      {dayNum !== null ? (
+                        status === 'done' ? (
+                          <Icon name="check" size={14} color={s.text} strokeWidth={3} />
+                        ) : (
+                          <Text style={[styles.cellText, { color: s.text }]}>{String(dayNum)}</Text>
+                        )
+                      ) : null}
                     </View>
                   );
                 })}
@@ -259,9 +278,7 @@ export default function StreakScreen() {
         {/* Motivation */}
         <Animated.View entering={FadeInUp.duration(400).delay(260)}>
           <HBCard depth="sm" style={styles.motivCard}>
-            <Text style={{ fontSize: scaleFont(28) }}>
-              {streak >= 30 ? '🏅' : streak >= 14 ? '🥇' : streak >= 7 ? '🥈' : streak >= 3 ? '🥉' : '🌱'}
-            </Text>
+            <HBIconBox icon={medal} tint={accent.soft} iconColor={accent.ink} size={44} />
             <View style={{ flex: 1 }}>
               <Text style={styles.motivTitle}>
                 {streak >= 30
@@ -276,7 +293,7 @@ export default function StreakScreen() {
               </Text>
               <Text style={styles.motivSub}>
                 {streak >= 7
-                  ? (isAz ? 'Bobo sənin səbatınla fəxr edir 🍯' : 'Бобо гордится твоей настойчивостью 🍯')
+                  ? (isAz ? `${bot} səbrinlə fəxr edir` : `${bot} гордится твоим упорством`)
                   : (isAz ? 'Hər gün bir az irəliləyirsən' : 'Каждый день — маленький шаг вперёд')}
               </Text>
             </View>
@@ -285,10 +302,11 @@ export default function StreakScreen() {
 
         {/* Freeze tip */}
         <Animated.View entering={FadeIn.duration(400).delay(320)} style={styles.freezeTip}>
+          <Icon name="snowflake" size={16} color={colors.english} />
           <Text style={styles.freezeTipText}>
-            ❄️ {isAz
-              ? 'Bir günü buraxsan, narahat olma — Bobo seriyanı avtomatik saxlayır'
-              : 'Пропустишь день — не переживай, Бобо сам сбережёт серию'}
+            {isAz
+              ? `Bir gün buraxsan, narahat olma — ${bot} seriyanı özü saxlayacaq`
+              : `Пропустишь день — не переживай, ${bot} сам сбережёт серию`}
           </Text>
         </Animated.View>
 
@@ -318,11 +336,6 @@ const CELL_SIZE = 38;
 const CELL_GAP = 4;
 
 const styles = StyleSheet.create({
-  topBar: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: spacing[5], paddingTop: 52, paddingBottom: spacing[2],
-  },
-  topTitle: { fontFamily: fontFamily.display, fontSize: fontSize.base, color: colors.ink },
 
   scroll: { paddingHorizontal: spacing[5], paddingTop: spacing[2], paddingBottom: spacing[8], gap: spacing[4] },
 
@@ -336,21 +349,15 @@ const styles = StyleSheet.create({
     letterSpacing: -2,
   },
   streakLabel: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.base, color: colors.inkSoft },
-  streakHint: {
-    fontFamily: fontFamily.bodyMedium, fontSize: fontSize.sm, color: colors.inkSoft,
-    textAlign: 'center', marginTop: spacing[2],
-  },
 
   statRow: { flexDirection: 'row', gap: spacing[3] },
   statCard: { flex: 1, alignItems: 'center', gap: spacing[1], paddingVertical: spacing[4] },
-  statEmoji: { fontSize: 24 },
   statValue: { fontFamily: fontFamily.display, fontSize: fontSize['2xl'], color: colors.ink },
   statLabel: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize['3xs'], color: colors.inkSoft, textAlign: 'center' },
 
   calCard: { gap: spacing[4] },
   monthNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   navBtn: { padding: spacing[2] },
-  navArrow: { fontFamily: fontFamily.bodyBlack, fontSize: scaleFont(22), color: colors.ink },
   monthTitle: { fontFamily: fontFamily.display, fontSize: fontSize.lg, color: colors.ink },
 
   weekRow: { flexDirection: 'row', justifyContent: 'space-between' },
@@ -379,10 +386,10 @@ const styles = StyleSheet.create({
   motivTitle: { fontFamily: fontFamily.display, fontSize: fontSize.base, color: colors.ink },
   motivSub: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize.xs, color: colors.inkSoft, marginTop: 2 },
 
-  freezeTip: { alignItems: 'center' },
+  freezeTip: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing[2], paddingHorizontal: spacing[2] },
   freezeTipText: {
     fontFamily: fontFamily.bodyMedium, fontSize: fontSize.xs, color: colors.inkSoft,
-    textAlign: 'center', lineHeight: 18,
+    lineHeight: 18, flexShrink: 1,
   },
 
   // Empty state (streak === 0)
@@ -409,7 +416,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   examplePill: {
-    backgroundColor: colors.card,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: colors.surface,
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[2],
     borderRadius: radius.full,

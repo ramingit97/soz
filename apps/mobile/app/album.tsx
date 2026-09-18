@@ -16,12 +16,14 @@ import {
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 import { BottomTabsSpacer } from '@/components/BottomTabs';
-import { HBBackButton } from '@/components/HBBackButton';
 import { HBCard } from '@/components/HBCard';
+import { Icon } from '@/components/Icon';
 import { HBPet } from '@/components/HBPet';
 import { PaperBackground } from '@/components/PaperBackground';
 import { HBIconBox } from '@/components/HBIconBox';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { Text } from '@/components/Text';
+import { useAccent } from '@/hooks/useAccent';
 import { getLesson } from '@/data/lessons';
 import { getProgress } from '@/services/api';
 import { useSettings } from '@/store/settings';
@@ -86,6 +88,15 @@ function WordChip({
   );
 }
 
+/** «1 слово», «3 слова», «5 слов». */
+function wordsRu(n: number): string {
+  const d10 = n % 10;
+  const d100 = n % 100;
+  if (d10 === 1 && d100 !== 11) return 'слово';
+  if (d10 >= 2 && d10 <= 4 && (d100 < 12 || d100 > 14)) return 'слова';
+  return 'слов';
+}
+
 // ─── Theme section ────────────────────────────────────────────────────────────
 
 function ThemeSection({
@@ -95,6 +106,7 @@ function ThemeSection({
   words,
   paletteIdx,
   sectionIndex,
+  az,
 }: {
   themeEmoji: string;
   theme: string;
@@ -102,6 +114,7 @@ function ThemeSection({
   words: string[];
   paletteIdx: number;
   sectionIndex: number;
+  az: boolean;
 }) {
   const p = PALETTE[paletteIdx % PALETTE.length]!;
   return (
@@ -114,7 +127,9 @@ function ThemeSection({
           </HBIconBox>
           <View style={{ flex: 1 }}>
             <Text style={styles.sectionTheme}>{theme}</Text>
-            <Text style={styles.sectionDay}>День {day} · {words.length} слов</Text>
+            <Text style={styles.sectionDay}>
+              {az ? `Gün ${day} · ${words.length} söz` : `День ${day} · ${words.length} ${wordsRu(words.length)}`}
+            </Text>
           </View>
           <View style={[styles.countBadge, { backgroundColor: p.bg }]}>
             <Text style={[styles.countBadgeText, { color: p.text }]}>{words.length}</Text>
@@ -145,6 +160,7 @@ export default function AlbumScreen() {
   const currentDay = useSettings((s) => s.currentDay);
   const learningLanguages = useSettings((s) => s.learningLanguages);
   const isAz = lang === 'az';
+  const accent = useAccent();
 
   const firstLang = learningLanguages[0] ?? 'en';
 
@@ -237,12 +253,7 @@ export default function AlbumScreen() {
 
   return (
     <PaperBackground>
-      {/* Top bar */}
-      <View style={styles.topBar}>
-        <HBBackButton inline />
-        <Text style={styles.topTitle}>{isAz ? 'Söz Albumu' : 'Альбом слов'}</Text>
-        <View style={{ width: 36 }} />
-      </View>
+      <ScreenHeader title={isAz ? 'Söz albomu' : 'Альбом слов'} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -251,7 +262,7 @@ export default function AlbumScreen() {
       >
         {/* Hero */}
         <Animated.View entering={FadeInDown.duration(500)} style={styles.hero}>
-          <View style={styles.petHalo}>
+          <View style={[styles.petHalo, { backgroundColor: accent.soft }]}>
             <HBPet size={72} hue={storedHue} mood={totalWords > 0 ? 'happy' : 'curious'} />
           </View>
           <Text style={styles.heroCount}>
@@ -262,13 +273,15 @@ export default function AlbumScreen() {
           </Text>
           <View style={styles.heroMeta}>
             <View style={styles.heroChip}>
+              <Icon name="library" size={14} color={colors.inkSoft} />
               <Text style={styles.heroChipText}>
-                📚 {themeGroups.length} {isAz ? 'mövzu' : 'тем'}
+                {themeGroups.length} {isAz ? 'mövzu' : 'тем'}
               </Text>
             </View>
             <View style={styles.heroChip}>
+              <Icon name="calendar" size={14} color={colors.inkSoft} />
               <Text style={styles.heroChipText}>
-                🏅 {isAz ? `Gün ${currentDay}` : `День ${currentDay}`}
+                {isAz ? `Gün ${currentDay}` : `День ${currentDay}`}
               </Text>
             </View>
           </View>
@@ -277,7 +290,7 @@ export default function AlbumScreen() {
         {/* Search */}
         <Animated.View entering={FadeIn.duration(400).delay(100)}>
           <View style={[styles.searchBox, shadow.sm]}>
-            <Text style={styles.searchIcon}>🔍</Text>
+            <Icon name="search" size={18} color={colors.inkSoft} />
             <TextInput
               style={styles.searchInput}
               placeholder={isAz ? 'Söz axtar...' : 'Поиск слов...'}
@@ -288,8 +301,13 @@ export default function AlbumScreen() {
               autoCapitalize="none"
             />
             {query.length > 0 && (
-              <Pressable onPress={() => setQuery('')} style={styles.clearBtn}>
-                <Text style={styles.clearBtnText}>✕</Text>
+              <Pressable
+                onPress={() => setQuery('')}
+                style={styles.clearBtn}
+                accessibilityRole="button"
+                accessibilityLabel={isAz ? 'Təmizlə' : 'Очистить'}
+              >
+                <Icon name="x" size={14} color={colors.inkSoft} strokeWidth={2.5} />
               </Pressable>
             )}
           </View>
@@ -303,7 +321,7 @@ export default function AlbumScreen() {
               onPress={() => setView('themes')}
             >
               <Text style={[styles.toggleBtnText, view === 'themes' && styles.toggleBtnTextActive]}>
-                {isAz ? '📚 Mövzular' : '📚 По темам'}
+                {isAz ? 'Mövzular' : 'По темам'}
               </Text>
             </Pressable>
             <Pressable
@@ -311,7 +329,7 @@ export default function AlbumScreen() {
               onPress={() => setView('all')}
             >
               <Text style={[styles.toggleBtnText, view === 'all' && styles.toggleBtnTextActive]}>
-                {isAz ? '🔤 Bütün sözlər' : '🔤 Все слова'}
+                {isAz ? 'Bütün sözlər' : 'Все слова'}
               </Text>
             </Pressable>
           </View>
@@ -319,7 +337,7 @@ export default function AlbumScreen() {
 
         {/* Content */}
         {loading ? (
-          <ActivityIndicator color={colors.primary} style={{ marginTop: spacing[8] }} />
+          <ActivityIndicator color={accent.bottom} style={{ marginTop: spacing[8] }} />
         ) : totalWords === 0 ? (
           <EmptyAlbum isAz={isAz} storedHue={storedHue} />
         ) : view === 'themes' ? (
@@ -340,6 +358,7 @@ export default function AlbumScreen() {
                   words={g.words}
                   paletteIdx={g.paletteIdx}
                   sectionIndex={i}
+                  az={isAz}
                 />
               ))
             )}
@@ -379,15 +398,6 @@ export default function AlbumScreen() {
 }
 
 const styles = StyleSheet.create({
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing[5],
-    paddingTop: 52,
-    paddingBottom: spacing[3],
-  },
-  topTitle: { fontFamily: fontFamily.display, fontSize: fontSize.base, color: colors.ink },
 
   scroll: {
     paddingHorizontal: spacing[5],
@@ -430,6 +440,9 @@ const styles = StyleSheet.create({
     marginTop: spacing[2],
   },
   heroChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     backgroundColor: colors.bgDeep,
     borderRadius: radius.full,
     paddingHorizontal: spacing[3],
@@ -455,7 +468,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: 'rgba(125,90,42,0.08)',
   },
-  searchIcon: { fontSize: 16 },
   searchInput: {
     flex: 1,
     fontFamily: fontFamily.bodyMedium,
@@ -470,7 +482,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  clearBtnText: { fontFamily: fontFamily.bodyBold, fontSize: fontSize['3xs'], color: colors.inkSoft },
 
   // Toggle
   toggle: {},
@@ -506,14 +517,6 @@ const styles = StyleSheet.create({
   sections: { gap: spacing[3] },
   sectionCard: { gap: spacing[3] },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
-  sectionIconBox: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
   sectionEmoji: { fontSize: 24 },
   sectionTheme: {
     fontFamily: fontFamily.display,

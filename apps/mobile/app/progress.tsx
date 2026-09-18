@@ -6,6 +6,7 @@
 import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomTabs, BottomTabsSpacer } from '@/components/BottomTabs';
 import { HBCard } from '@/components/HBCard';
@@ -16,6 +17,7 @@ import { Icon } from '@/components/Icon';
 import { Text } from '@/components/Text';
 import { getLesson, STATIC_MAX_DAY } from '@/data/lessons';
 import { useSettings } from '@/store/settings';
+import { useAccent } from '@/hooks/useAccent';
 import { useCompanionName } from '@/utils/companion';
 import { colors, fontFamily, fontSize, radius, shadow, spacing, tints } from '@/theme';
 
@@ -32,6 +34,8 @@ const WORD_PALETTE: { bg: string; text: string }[] = [
 ];
 
 export default function ProgressScreen() {
+  const accent = useAccent();
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const lang = useSettings((s) => s.parentUILanguage) ?? 'ru';
   const childName = useSettings((s) => s.childName) ?? '';
@@ -62,11 +66,14 @@ export default function ProgressScreen() {
 
   return (
     <PaperBackground>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[styles.scroll, { paddingTop: insets.top + spacing[4] }]}
+      >
 
         {/* ── HEADER ── */}
         <Animated.View entering={FadeInDown.duration(500)} style={styles.header}>
-          <View style={styles.petHalo}>
+          <View style={[styles.petHalo, { backgroundColor: accent.soft }]}>
             <HBPet size={72} hue={storedHue} mood={mood} />
           </View>
           <Text style={styles.headerTitle}>
@@ -74,7 +81,7 @@ export default function ProgressScreen() {
           </Text>
           <Text style={styles.headerSub}>
             {streak >= 3
-              ? (isAz ? `Möhtəşəmsən, ${childName}! 🔥` : `Молодец, ${childName}! 🔥`)
+              ? (isAz ? `Möhtəşəmsən, ${childName}!` : `Молодец, ${childName}!`)
               : (isAz ? `Hər gün gəl, ${childName}!` : `Приходи каждый день, ${childName}!`)}
           </Text>
         </Animated.View>
@@ -84,10 +91,10 @@ export default function ProgressScreen() {
           {/* Streak */}
           <HBCard
             depth="md"
-            ringColor={streak >= 3 ? colors.primary : undefined}
+            ringColor={streak >= 3 ? accent.bottom : undefined}
             style={[styles.statCard, styles.statCardWide]}
           >
-            <Text style={styles.statEmoji}>🔥</Text>
+            <Icon name="flame" size={26} color={colors.primaryDeep} fill={colors.butter} strokeWidth={2} />
             <Text style={styles.statValue}>{streak}</Text>
             <Text style={styles.statLabel}>
               {isAz ? 'gün ardıcıl' : 'дней подряд'}
@@ -96,7 +103,7 @@ export default function ProgressScreen() {
 
           {/* Stars */}
           <HBCard depth="sm" style={styles.statCard}>
-            <Text style={styles.statEmoji}>⭐</Text>
+            <Icon name="star" size={26} color={colors.butterDeep} fill={colors.butter} strokeWidth={2} />
             <Text style={styles.statValue}>{totalStars}</Text>
             <Text style={styles.statLabel}>
               {isAz ? 'ulduz' : 'звёзд'}
@@ -105,7 +112,7 @@ export default function ProgressScreen() {
 
           {/* Words */}
           <HBCard depth="sm" style={styles.statCard}>
-            <Text style={styles.statEmoji}>📖</Text>
+            <Icon name="book-open" size={26} color={colors.accentDeep} strokeWidth={2} />
             <Text style={styles.statValue}>{uniqueWords.length}</Text>
             <Text style={styles.statLabel}>
               {isAz ? 'söz' : 'слов'}
@@ -114,7 +121,7 @@ export default function ProgressScreen() {
 
           {/* Lessons */}
           <HBCard depth="sm" style={[styles.statCard, styles.statCardWide]}>
-            <Text style={styles.statEmoji}>📅</Text>
+            <Icon name="calendar" size={26} color={accent.ink} strokeWidth={2} />
             <Text style={styles.statValue}>{lessonsCompleted}</Text>
             <Text style={styles.statLabel}>
               {isAz ? 'dərs bitirdim' : 'уроков пройдено'}
@@ -127,32 +134,32 @@ export default function ProgressScreen() {
           {/* Streak calendar */}
           <Pressable style={{ flex: 1 }} onPress={() => router.push('/streak' as any)}>
             <HBCard depth="sm" style={styles.quickCard}>
-              <View style={[styles.quickIcon, { backgroundColor: tints.primary }]}>
-                <Text style={{ fontSize: 22 }}>🔥</Text>
-              </View>
+              <HBIconBox icon="flame" tint="primary" size={44} />
               <Text style={styles.quickTitle}>
                 {isAz ? 'Seriya' : 'Серия'}
               </Text>
               <Text style={styles.quickSub}>
                 {isAz ? 'Təqvim' : 'Календарь'}
               </Text>
-              <Text style={styles.quickArrow}>›</Text>
+              <View style={styles.quickArrow}>
+                <Icon name="chevron-right" size={18} color={colors.inkSoft} />
+              </View>
             </HBCard>
           </Pressable>
 
           {/* Word album */}
           <Pressable style={{ flex: 1 }} onPress={() => router.push('/album' as any)}>
             <HBCard depth="sm" style={styles.quickCard}>
-              <View style={[styles.quickIcon, { backgroundColor: tints.sage }]}>
-                <Text style={{ fontSize: 22 }}>📖</Text>
-              </View>
+              <HBIconBox icon="book-open" tint="sage" size={44} />
               <Text style={styles.quickTitle}>
                 {isAz ? 'Sözlər' : 'Слова'}
               </Text>
               <Text style={styles.quickSub}>
                 {isAz ? 'Albom' : 'Альбом'}
               </Text>
-              <Text style={styles.quickArrow}>›</Text>
+              <View style={styles.quickArrow}>
+                <Icon name="chevron-right" size={18} color={colors.inkSoft} />
+              </View>
             </HBCard>
           </Pressable>
         </Animated.View>
@@ -195,10 +202,8 @@ export default function ProgressScreen() {
         {/* ── ACHIEVEMENTS LINK ── */}
         <Animated.View entering={FadeInUp.duration(450).delay(210)}>
           <Pressable onPress={() => router.push('/achievements' as any)}>
-            <HBCard depth="sm" ringColor={colors.butter} style={styles.reviewCard}>
-              <HBIconBox size={48} tint={tints.butter} style={{ flexShrink: 0 }}>
-                <Text style={{ fontSize: 24 }}>🏆</Text>
-              </HBIconBox>
+            <HBCard depth="sm" style={styles.reviewCard}>
+              <HBIconBox size={48} icon="trophy" tint="butter" style={{ flexShrink: 0 }} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.reviewTitle}>
                   {isAz ? 'Nailiyyətlər' : 'Достижения'}
@@ -207,7 +212,7 @@ export default function ProgressScreen() {
                   {isAz ? 'Sənin medalların və mükafatların' : 'Твои медали и награды'}
                 </Text>
               </View>
-              <Text style={[styles.quickArrow, { color: colors.butterDeep }]}>›</Text>
+              <Icon name="chevron-right" size={20} color={colors.inkSoft} />
             </HBCard>
           </Pressable>
         </Animated.View>
@@ -216,10 +221,8 @@ export default function ProgressScreen() {
         {lessonsCompleted > 0 && (
           <Animated.View entering={FadeInUp.duration(450).delay(240)}>
             <Pressable onPress={() => router.push('/review' as any)}>
-              <HBCard depth="sm" ringColor={colors.accent} style={styles.reviewCard}>
-                <HBIconBox size={48} tint={tints.sage} style={{ flexShrink: 0 }}>
-                  <Text style={{ fontSize: 24 }}>🔁</Text>
-                </HBIconBox>
+              <HBCard depth="sm" style={styles.reviewCard}>
+                <HBIconBox size={48} icon="repeat" tint="sage" style={{ flexShrink: 0 }} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.reviewTitle}>
                     {isAz ? 'Səhvləri təkrarla' : 'Повторить ошибки'}
@@ -228,7 +231,7 @@ export default function ProgressScreen() {
                     {isAz ? 'Çətin sözləri yenidən yoxla' : 'Закрепи слова, которые путал'}
                   </Text>
                 </View>
-                <Text style={[styles.quickArrow, { color: colors.accent }]}>›</Text>
+                <Icon name="chevron-right" size={20} color={colors.inkSoft} />
               </HBCard>
             </Pressable>
           </Animated.View>
@@ -300,7 +303,6 @@ export default function ProgressScreen() {
 const styles = StyleSheet.create({
   scroll: {
     paddingHorizontal: spacing[5],
-    paddingTop: spacing[14],
     paddingBottom: spacing[6],
     gap: spacing[4],
   },
@@ -348,7 +350,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing[4],
   },
   statCardWide: { flexBasis: '100%' },
-  statEmoji: { fontSize: 28, marginBottom: 2 },
   statValue: {
     fontFamily: fontFamily.display,
     fontSize: fontSize['4xl'],
@@ -371,14 +372,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[3],
     flex: 1,
   },
-  quickIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing[1],
-  },
   quickTitle: {
     fontFamily: fontFamily.display,
     fontSize: fontSize.base,
@@ -389,12 +382,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     color: colors.inkSoft,
   },
-  quickArrow: {
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize.xl,
-    color: colors.inkSoft,
-    alignSelf: 'flex-end',
-  },
+  quickArrow: { alignSelf: 'flex-end' },
 
   // Course progress
   courseCard: { gap: spacing[2] },
@@ -407,14 +395,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing[3],
-  },
-  reviewIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
   },
   reviewTitle: {
     fontFamily: fontFamily.display,

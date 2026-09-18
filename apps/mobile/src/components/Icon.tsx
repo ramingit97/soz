@@ -11,6 +11,7 @@
 import type { LucideIcon } from 'lucide-react-native';
 import ArrowLeft from 'lucide-react-native/icons/arrow-left';
 import ArrowRight from 'lucide-react-native/icons/arrow-right';
+import Award from 'lucide-react-native/icons/award';
 import Baby from 'lucide-react-native/icons/baby';
 import Backpack from 'lucide-react-native/icons/backpack';
 import Bell from 'lucide-react-native/icons/bell';
@@ -51,6 +52,7 @@ import Lock from 'lucide-react-native/icons/lock';
 import LogOut from 'lucide-react-native/icons/log-out';
 import Mail from 'lucide-react-native/icons/mail';
 import MapIcon from 'lucide-react-native/icons/map';
+import Medal from 'lucide-react-native/icons/medal';
 import MessageCircle from 'lucide-react-native/icons/message-circle';
 import MessageCircleDashed from 'lucide-react-native/icons/message-circle-dashed';
 import MessagesSquare from 'lucide-react-native/icons/messages-square';
@@ -71,12 +73,14 @@ import Rocket from 'lucide-react-native/icons/rocket';
 import Save from 'lucide-react-native/icons/save';
 import Scale from 'lucide-react-native/icons/scale';
 import School from 'lucide-react-native/icons/school';
+import Search from 'lucide-react-native/icons/search';
 import Settings from 'lucide-react-native/icons/settings';
 import Share2 from 'lucide-react-native/icons/share-2';
 import ShieldCheck from 'lucide-react-native/icons/shield-check';
 import SlidersHorizontal from 'lucide-react-native/icons/sliders-horizontal';
 import Snowflake from 'lucide-react-native/icons/snowflake';
 import Sparkles from 'lucide-react-native/icons/sparkles';
+import Sprout from 'lucide-react-native/icons/sprout';
 import Star from 'lucide-react-native/icons/star';
 import Sun from 'lucide-react-native/icons/sun';
 import Target from 'lucide-react-native/icons/target';
@@ -99,6 +103,7 @@ import { MODE_TOKENS } from '@/theme/modeTokens';
 const ICONS = {
   'arrow-left': ArrowLeft,
   'arrow-right': ArrowRight,
+  award: Award,
   baby: Baby,
   backpack: Backpack,
   bell: Bell,
@@ -139,6 +144,7 @@ const ICONS = {
   'log-out': LogOut,
   mail: Mail,
   map: MapIcon,
+  medal: Medal,
   'message-circle': MessageCircle,
   'message-circle-dashed': MessageCircleDashed,
   'messages-square': MessagesSquare,
@@ -159,12 +165,14 @@ const ICONS = {
   save: Save,
   scale: Scale,
   school: School,
+  search: Search,
   settings: Settings,
   'share-2': Share2,
   'shield-check': ShieldCheck,
   'sliders-horizontal': SlidersHorizontal,
   snowflake: Snowflake,
   sparkles: Sparkles,
+  sprout: Sprout,
   star: Star,
   sun: Sun,
   target: Target,

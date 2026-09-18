@@ -49,3 +49,14 @@ export function nearestPetHue(hue: number): PetHue {
 export function petPaletteFor(hue: number): PetPalette {
   return PALETTES[nearestPetHue(hue)];
 }
+
+/** Названия цветов для выбора в `pet-room` (карточка знакомства). */
+export const PET_COLOR_NAMES: Record<PetHue, { ru: string; az: string }> = {
+  55: { ru: 'Медовый', az: 'Bal' },
+  25: { ru: 'Коралл', az: 'Mərcan' },
+  90: { ru: 'Лимонный', az: 'Limon' },
+  175: { ru: 'Мятный', az: 'Nanə' },
+  230: { ru: 'Небесный', az: 'Göy' },
+  300: { ru: 'Сливовый', az: 'Gavalı' },
+  350: { ru: 'Розовый', az: 'Çəhrayı' },
+};

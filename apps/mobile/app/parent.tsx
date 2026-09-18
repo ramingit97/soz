@@ -292,23 +292,24 @@ export default function ParentScreen() {
             />
           </Animated.View>
 
-          {/* Отчёт AI */}
-          {currentDay >= 8 ? (
-            <Animated.View entering={FadeInUp.duration(450).delay(140)}>
-              <Pressable onPress={() => router.push('/parent-summary' as any)} accessibilityRole="button">
-                <HBCard bg={accent.soft} style={styles.row}>
-                  <HBIconBox icon="brain" tint={colors.surface} iconColor={accent.ink} size={44} />
-                  <View style={styles.flex}>
-                    <Text variant="bodyBold">{isAz ? 'Hesabat və plan' : 'Отчёт и план'}</Text>
-                    <Text variant="caption" style={{ color: colors.ink }}>
-                      {isAz ? `${bot} tərəqqini təhlil etdi` : `${bot} разобрал прогресс`}
-                    </Text>
-                  </View>
-                  <Icon name="chevron-right" size={20} color={accent.ink} />
-                </HBCard>
-              </Pressable>
-            </Animated.View>
-          ) : null}
+          {/* Отчёт — всегда: пройденные уроки и память персонажа видны с первого дня,
+              разбор ИИ появляется позже. */}
+          <Animated.View entering={FadeInUp.duration(450).delay(140)}>
+            <Pressable onPress={() => router.push('/parent-summary' as any)} accessibilityRole="button">
+              <HBCard bg={accent.soft} style={styles.row}>
+                <HBIconBox icon="brain" tint={colors.surface} iconColor={accent.ink} size={44} />
+                <View style={styles.flex}>
+                  <Text variant="bodyBold">{isAz ? 'Hesabat və plan' : 'Отчёт и план'}</Text>
+                  <Text variant="caption" style={{ color: colors.ink }}>
+                    {currentDay >= 8
+                      ? isAz ? `${bot} tərəqqini təhlil etdi` : `${bot} разобрал прогресс`
+                      : isAz ? `Keçilən dərslər və ${bot} yaddaşı` : `Пройденные уроки и память ${bot}`}
+                  </Text>
+                </View>
+                <Icon name="chevron-right" size={20} color={accent.ink} />
+              </HBCard>
+            </Pressable>
+          </Animated.View>
 
           {/* Цифры */}
           <Animated.View entering={FadeInUp.duration(450).delay(180)} style={styles.statsRow}>

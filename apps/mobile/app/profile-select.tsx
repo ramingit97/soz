@@ -26,14 +26,18 @@ import Animated, {
   withDelay,
   withSpring,
 } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 
 import { HBPet, type CompanionKind } from '@/components/HBPet';
+import { Icon } from '@/components/Icon';
+import { InlineBanner } from '@/components/InlineBanner';
 import { PaperBackground } from '@/components/PaperBackground';
 import { ParentalGateModal, useParentalGate } from '@/components/ParentalGate';
 import { Text } from '@/components/Text';
 import { getChildren, type ChildProfile } from '@/services/api';
 import { todayISO, useSettings } from '@/store/settings';
+import { useAccent } from '@/hooks/useAccent';
 import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing, tints } from '@/theme';
 import { KID_MAX_AGE } from '@/theme/mode';
 
@@ -91,7 +95,7 @@ function RingAvatar({
       </View>
       {todayDone && (
         <View style={ring.checkBadge}>
-          <Text style={ring.checkText}>✓</Text>
+          <Icon name="check" size={12} color={colors.white} strokeWidth={3} />
         </View>
       )}
     </View>
@@ -112,12 +116,6 @@ const ring = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.card,
   },
-  checkText: {
-    color: colors.white,
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize.xs,
-    lineHeight: 14,
-  },
 });
 
 // ─── Child card ──────────────────────────────────────────────────────────────
@@ -127,12 +125,14 @@ function ChildCard({
   index,
   localChildId,
   storedHue,
+  az,
   onPress,
 }: {
   child: ChildProfile;
   index: number;
   localChildId: string | null;
   storedHue: number;
+  az: boolean;
   onPress: () => void;
 }) {
   const scale = useSharedValue(0.88);
@@ -168,17 +168,20 @@ function ChildCard({
         <View style={styles.chipsRow}>
           {child.streak > 0 && (
             <View style={styles.chip}>
-              <Text style={styles.chipText}>🔥 {child.streak}</Text>
+              <Icon name="flame" size={13} color={colors.primaryDeep} strokeWidth={2.25} />
+              <Text style={styles.chipText}>{child.streak}</Text>
             </View>
           )}
           <View style={styles.chip}>
-            <Text style={styles.chipText}>⭐ {child.totalStars}</Text>
+            <Icon name="star" size={13} color={colors.butterDeep} fill={colors.butter} strokeWidth={2} />
+            <Text style={styles.chipText}>{child.totalStars}</Text>
           </View>
         </View>
 
         <View style={[styles.dayChip, todayDone && styles.dayChipDone]}>
+          {todayDone ? <Icon name="check" size={13} color={colors.accentDeep} strokeWidth={3} /> : null}
           <Text style={[styles.dayChipText, todayDone && styles.dayChipTextDone]}>
-            {todayDone ? '✓ Готово' : `День ${child.currentDay}`}
+            {todayDone ? (az ? 'Hazır' : 'Готово') : az ? `Gün ${child.currentDay}` : `День ${child.currentDay}`}
           </Text>
         </View>
       </Pressable>
@@ -188,7 +191,7 @@ function ChildCard({
 
 // ─── Add child card ──────────────────────────────────────────────────────────
 
-function AddChildCard({ onPress, index }: { onPress: () => void; index: number }) {
+function AddChildCard({ onPress, index, az }: { onPress: () => void; index: number; az: boolean }) {
   const scale = useSharedValue(0.88);
   const opacity = useSharedValue(0);
   useEffect(() => {
@@ -208,9 +211,9 @@ function AddChildCard({ onPress, index }: { onPress: () => void; index: number }
         onPress={onPress}
       >
         <View style={styles.addCircle}>
-          <Text style={styles.addPlus}>+</Text>
+          <Icon name="plus" size={28} color={colors.inkSoft} strokeWidth={2.5} />
         </View>
-        <Text style={styles.addLabel}>Добавить{'\n'}ребёнка</Text>
+        <Text style={styles.addLabel}>{az ? 'Uşaq\nəlavə et' : 'Добавить\nребёнка'}</Text>
       </Pressable>
     </Animated.View>
   );
@@ -224,6 +227,8 @@ export default function ProfileSelectScreen() {
   const syncChild = useSettings((s) => s.syncChild);
   const lang = useSettings((s) => s.parentUILanguage) ?? 'ru';
   const isAz = lang === 'az';
+  const accent = useAccent();
+  const insets = useSafeAreaInsets();
 
   // Parental gate — adding a child must be confirmed by the adult
   const parentalGate = useParentalGate();
@@ -291,13 +296,14 @@ export default function ProfileSelectScreen() {
 
   const handleParent = () => {
     Haptics.selectionAsync().catch(() => {});
-    // Gate the parent area behind the math challenge — a child shouldn't be able
-    // to wander into the parent report / settings just by tapping the button.
+    // Родительский раздел — за PIN: ребёнок не должен попадать туда одним нажатием.
+    // Ведём в хаб `/parent` (дети, расписание, аккаунт, отчёт), а не сразу в отчёт:
+    // иначе до хаба нельзя было добраться вовсе.
     parentalGate.run(() => {
       if (displayChildren.length > 0 && !localChildId) {
         syncChild(displayChildren[0]!);
       }
-      router.replace('/parent-summary' as any);
+      router.push('/parent' as never);
     });
   };
 
@@ -311,12 +317,12 @@ export default function ProfileSelectScreen() {
   return (
     <PaperBackground>
       <ScrollView
-        contentContainerStyle={styles.scroll}
+        contentContainerStyle={[styles.scroll, { paddingTop: insets.top + spacing[8] }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
         <Animated.View entering={FadeInDown.duration(500)} style={styles.header}>
-          <View style={styles.petHalo}>
+          <View style={[styles.petHalo, { backgroundColor: accent.soft }]}>
             <HBPet size={80} hue={storedHue} mood="happy" />
           </View>
           <Text style={styles.heading}>
@@ -330,7 +336,7 @@ export default function ProfileSelectScreen() {
         {/* Child grid / loader */}
         {loading ? (
           <Animated.View entering={FadeIn.duration(400)} style={styles.loader}>
-            <ActivityIndicator color={colors.primary} size="large" />
+            <ActivityIndicator color={accent.bottom} size="large" />
           </Animated.View>
         ) : (
           <View style={styles.grid}>
@@ -341,20 +347,22 @@ export default function ProfileSelectScreen() {
                 index={i}
                 localChildId={localChildId}
                 storedHue={storedHue}
+                az={isAz}
                 onPress={() => handleSelectChild(child)}
               />
             ))}
-            <AddChildCard index={displayChildren.length} onPress={handleAddChild} />
+            <AddChildCard index={displayChildren.length} onPress={handleAddChild} az={isAz} />
           </View>
         )}
 
         {/* Offline warning */}
         {apiError && displayChildren.length > 0 && (
-          <Animated.View entering={FadeIn.duration(400)} style={styles.warningBox}>
-            <Text style={styles.warningText}>
-              ⚠️ {isAz ? 'Məlumatları yeniləmək alınmadı. Sonuncu yadda saxlanan göstərilir.' : 'Не удалось обновить данные. Показаны последние сохранённые.'}
-            </Text>
-          </Animated.View>
+          <InlineBanner
+            tone="warning"
+            icon="wifi-off"
+            style={styles.warningBox}
+            text={isAz ? 'Məlumatları yeniləmək alınmadı. Sonuncu yadda saxlanan göstərilir.' : 'Не удалось обновить данные. Показаны последние сохранённые.'}
+          />
         )}
 
         {/* Parent strip */}
@@ -364,7 +372,7 @@ export default function ProfileSelectScreen() {
             onPress={handleParent}
           >
             <View style={styles.parentIcon}>
-              <Text style={{ fontSize: 16 }}>🔒</Text>
+              <Icon name="lock" size={16} color={colors.inkSoft} />
             </View>
             <Text style={styles.parentText}>
               {isAz ? 'Mən valideynəm' : 'Я родитель'}
@@ -374,7 +382,7 @@ export default function ProfileSelectScreen() {
                 <View key={i} style={styles.pinDot} />
               ))}
             </View>
-            <Text style={styles.parentArrow}>›</Text>
+            <Icon name="chevron-right" size={20} color={colors.inkSoft} />
           </Pressable>
         </Animated.View>
       </ScrollView>
@@ -391,7 +399,6 @@ const styles = StyleSheet.create({
   scroll: {
     flexGrow: 1,
     alignItems: 'center',
-    paddingTop: 72,
     paddingBottom: 48,
     paddingHorizontal: spacing[5],
   },
@@ -468,6 +475,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
     backgroundColor: colors.bgDeep,
     borderRadius: radius.full,
     paddingHorizontal: spacing[2],
@@ -479,6 +489,9 @@ const styles = StyleSheet.create({
     fontSize: fontSize['2xs'],
   },
   dayChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
     backgroundColor: colors.primarySoft,
     borderRadius: radius.full,
     paddingHorizontal: spacing[3],
@@ -488,13 +501,13 @@ const styles = StyleSheet.create({
     backgroundColor: tints.sage,
   },
   dayChipText: {
-    color: colors.primary,
+    color: colors.primaryDeep,
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize['3xs'],
     letterSpacing: 0.3,
   },
   dayChipTextDone: {
-    color: colors.accent,
+    color: colors.accentDeep,
   },
 
   addCard: {
@@ -517,36 +530,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  addPlus: {
-    color: colors.primary,
-    fontFamily: fontFamily.display,
-    fontSize: fontSize['3xl'],
-    lineHeight: 34,
-  },
   addLabel: {
-    color: colors.primary,
+    color: colors.primaryDeep,
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.xs,
     textAlign: 'center',
     lineHeight: 18,
   },
 
-  warningBox: {
-    backgroundColor: tints.butter,
-    borderRadius: radius.lg,
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[3],
-    marginBottom: spacing[5],
-    maxWidth: 320,
-    borderWidth: 1,
-    borderColor: colors.butter,
-  },
-  warningText: {
-    color: colors.inkSoft,
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.xs,
-    textAlign: 'center',
-  },
+  warningBox: { marginBottom: spacing[5], maxWidth: 360, alignSelf: 'stretch' },
 
   parentArea: {
     width: '100%',
@@ -593,10 +585,5 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: colors.inkSoft,
     opacity: 0.35,
-  },
-  parentArrow: {
-    color: colors.inkSoft,
-    fontSize: scaleFont(22),
-    fontFamily: fontFamily.bodyBold,
   },
 });

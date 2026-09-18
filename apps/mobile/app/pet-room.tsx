@@ -21,14 +21,18 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { BottomTabs, BottomTabsSpacer } from '@/components/BottomTabs';
-import { HBBackButton } from '@/components/HBBackButton';
+import { Icon, type IconName } from '@/components/Icon';
+import { PetMeetCard } from '@/components/PetMeetCard';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { HBPet } from '@/components/HBPet';
 import { PaperBackground } from '@/components/PaperBackground';
 import { Text } from '@/components/Text';
 import { DEFAULT_STATS, loadPetStats, savePetStats } from '@/services/petCare';
 import { playSfx } from '@/services/sfx';
 import { useSettings } from '@/store/settings';
+import { useAccent } from '@/hooks/useAccent';
 import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing, tints } from '@/theme';
+import { useCompanionName } from '@/utils/companion';
 
 type RoomTab = 'room' | 'feed' | 'play' | 'care';
 type PetMoodType = 'happy' | 'curious' | 'sleepy' | 'sad';
@@ -53,13 +57,15 @@ function statMood(s: Stat): PetMoodType {
 
 // ─── Stat bar ────────────────────────────────────────────────────────────────
 
-function StatBar({ emoji, label, value, color }: {
-  emoji: string; label: string; value: number; color: string;
+function StatBar({ icon, label, value, color }: {
+  icon: IconName; label: string; value: number; color: string;
 }) {
   const pct = Math.max(0, Math.min(100, value));
   return (
     <View style={bar.row}>
-      <Text style={bar.emoji}>{emoji}</Text>
+      <View style={bar.icon}>
+        <Icon name={icon} size={20} color={color} strokeWidth={2.25} />
+      </View>
       <View style={{ flex: 1, gap: 3 }}>
         <View style={bar.labelRow}>
           <Text style={bar.label}>{label}</Text>
@@ -75,7 +81,7 @@ function StatBar({ emoji, label, value, color }: {
 
 const bar = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
-  emoji: { fontSize: 20, width: 28 },
+  icon: { width: 28, alignItems: 'center' },
   labelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   label: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.xs, color: colors.ink },
   pct: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize['2xs'] },
@@ -90,11 +96,11 @@ const bar = StyleSheet.create({
 
 // ─── Tab bar ─────────────────────────────────────────────────────────────────
 
-const TABS: { key: RoomTab; emoji: string; labelRu: string; labelAz: string }[] = [
-  { key: 'room', emoji: '🏠', labelRu: 'Комната', labelAz: 'Otaq' },
-  { key: 'feed', emoji: '🍎', labelRu: 'Кормить', labelAz: 'Yemək' },
-  { key: 'play', emoji: '🎮', labelRu: 'Играть', labelAz: 'Oyna' },
-  { key: 'care', emoji: '🛁', labelRu: 'Уход', labelAz: 'Qayğı' },
+const TABS: { key: RoomTab; icon: IconName; labelRu: string; labelAz: string }[] = [
+  { key: 'room', icon: 'house', labelRu: 'Комната', labelAz: 'Otaq' },
+  { key: 'feed', icon: 'utensils', labelRu: 'Кормить', labelAz: 'Yemək' },
+  { key: 'play', icon: 'gamepad-2', labelRu: 'Играть', labelAz: 'Oyna' },
+  { key: 'care', icon: 'heart', labelRu: 'Уход', labelAz: 'Qayğı' },
 ];
 
 // ─── Feed tab items ───────────────────────────────────────────────────────────
@@ -152,7 +158,10 @@ export default function PetRoomScreen() {
   const childName = useSettings((s) => s.childName) ?? '';
   const childId = useSettings((s) => s.childId);
   const storedHue = useSettings((s) => s.petHue);
+  const petName = useSettings((s) => s.petName);
   const isAz = lang === 'az';
+  const bot = useCompanionName();
+  const accent = useAccent();
 
   const [tab, setTab] = useState<RoomTab>('room');
   const [stats, setStats] = useState<Stat>({ ...DEFAULT_STATS });
@@ -247,15 +256,8 @@ export default function PetRoomScreen() {
   })();
 
   return (
-    <PaperBackground variant="honey">
-      {/* Top bar */}
-      <View style={styles.topBar}>
-        <HBBackButton inline />
-        <Text style={styles.topTitle}>
-          {isAz ? 'Bobo-nun otağı' : 'Комната Бобо'}
-        </Text>
-        <View style={{ width: 36 }} />
-      </View>
+    <PaperBackground>
+      <ScreenHeader title={isAz ? `${bot} otağı` : `Комната ${bot}`} />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
 
@@ -281,9 +283,7 @@ export default function PetRoomScreen() {
 
         {/* Mood + name */}
         <Animated.View entering={FadeIn.duration(400).delay(200)} style={styles.nameRow}>
-          <Text style={styles.petName}>
-            {isAz ? 'Bobo' : 'Бобо'}
-          </Text>
+          <Text style={styles.petName}>{bot}</Text>
           <View style={[styles.moodBadge, { backgroundColor: avg >= 70 ? tints.sage : avg >= 45 ? '#FFF8D6' : tints.berry }]}>
             <Text style={[styles.moodText, { color: avg >= 70 ? colors.accent : avg >= 45 ? '#9C7E00' : colors.berry }]}>
               {moodLabel}
@@ -291,13 +291,16 @@ export default function PetRoomScreen() {
           </View>
         </Animated.View>
 
+        {/* Имя и цвет ещё не выбраны — знакомство (раньше это был шаг онбординга). */}
+        {petName === null ? <PetMeetCard /> : null}
+
         {/* Stat bars */}
         <Animated.View entering={FadeInUp.duration(450).delay(150)} style={[styles.statsCard, shadow.sm]}>
-          <StatBar emoji="🍯" label={isAz ? 'Ac deyil' : 'Голод'} value={stats.hunger} color={colors.butter} />
+          <StatBar icon="utensils" label={isAz ? 'Toxluq' : 'Сытость'} value={stats.hunger} color={colors.butterDeep} />
           <View style={styles.statDivider} />
-          <StatBar emoji="💛" label={isAz ? 'Sevgi' : 'Любовь'} value={stats.love} color={colors.berry} />
+          <StatBar icon="heart" label={isAz ? 'Sevgi' : 'Любовь'} value={stats.love} color={colors.berry} />
           <View style={styles.statDivider} />
-          <StatBar emoji="⚡" label={isAz ? 'Enerji' : 'Энергия'} value={stats.energy} color={colors.accent} />
+          <StatBar icon="zap" label={isAz ? 'Enerji' : 'Энергия'} value={stats.energy} color={colors.accentDeep} />
         </Animated.View>
 
         {/* Tab bar */}
@@ -307,9 +310,11 @@ export default function PetRoomScreen() {
               key={t.key}
               style={[styles.tabBtn, tab === t.key && styles.tabBtnActive]}
               onPress={() => setTab(t.key)}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: tab === t.key }}
             >
-              <Text style={styles.tabEmoji}>{t.emoji}</Text>
-              <Text style={[styles.tabLabel, tab === t.key && { color: colors.primary }]}>
+              <Icon name={t.icon} size={18} color={tab === t.key ? accent.ink : colors.inkSoft} />
+              <Text style={[styles.tabLabel, tab === t.key && { color: accent.ink }]}>
                 {isAz ? t.labelAz : t.labelRu}
               </Text>
             </Pressable>
@@ -320,7 +325,7 @@ export default function PetRoomScreen() {
         {tab === 'room' && (
           <Animated.View entering={FadeIn.duration(350)} style={styles.tabContent}>
             <Text style={styles.sectionLabel}>
-              {isAz ? 'Bobo-nun evi 🏡' : 'Дом Бобо 🏡'}
+              {isAz ? `${bot} evi` : `Дом ${bot}`}
             </Text>
             <View style={styles.roomGrid}>
               <RoomItem emoji="🛏️" label={isAz ? 'Çarpayı' : 'Кровать'} />
@@ -328,9 +333,12 @@ export default function PetRoomScreen() {
               <RoomItem emoji="🎨" label={isAz ? 'Rəsm' : 'Рисунки'} />
               <RoomItem emoji="🏆" label={isAz ? 'Kuboklar' : 'Кубки'} />
             </View>
-            <Text style={styles.tipText}>
-              {isAz ? '💡 Bobo-ya toxun — sevinir!' : '💡 Потрогай Бобо — он радуется!'}
-            </Text>
+            <View style={styles.tipRow}>
+              <Icon name="lightbulb" size={16} color={colors.inkSoft} />
+              <Text style={styles.tipText}>
+                {isAz ? 'Dostuna toxun — sevinəcək!' : `Потрогай ${bot} — он обрадуется!`}
+              </Text>
+            </View>
           </Animated.View>
         )}
 
@@ -383,7 +391,7 @@ export default function PetRoomScreen() {
         {tab === 'care' && (
           <Animated.View entering={FadeIn.duration(350)} style={styles.tabContent}>
             <Text style={styles.sectionLabel}>
-              {isAz ? 'Bobo-ya qayğı göstər' : 'Позаботься о Бобо'}
+              {isAz ? 'Qayğı göstər' : `Позаботься о ${bot}`}
             </Text>
             <View style={styles.actionGrid}>
               {CARE_ACTIONS.map((action) => (
@@ -405,11 +413,11 @@ export default function PetRoomScreen() {
 
         {/* Lesson nudge */}
         <Animated.View entering={FadeInUp.duration(400).delay(350)} style={styles.nudgeCard}>
-          <Text style={{ fontSize: 22 }}>📚</Text>
+          <Icon name="book-open" size={22} color={accent.ink} />
           <Text style={styles.nudgeText}>
             {isAz
-              ? `${childName}, dərs keçsən Bobo daha çox xoşbəxt olacaq!`
-              : `${childName}, после урока Бобо будет ещё счастливее!`}
+              ? `${childName}, dərsdən sonra ${bot} daha xoşbəxt olacaq!`
+              : `${childName}, после урока ${bot} будет ещё счастливее!`}
           </Text>
           <Pressable
             style={styles.nudgeBtn}
@@ -456,15 +464,6 @@ const room = StyleSheet.create({
 });
 
 const styles = StyleSheet.create({
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing[5],
-    paddingTop: 52,
-    paddingBottom: spacing[2],
-  },
-  topTitle: { fontFamily: fontFamily.display, fontSize: fontSize.base, color: colors.ink },
 
   scroll: {
     paddingHorizontal: spacing[5],
@@ -547,13 +546,10 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   tabBtnActive: {
-    backgroundColor: colors.card,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.8)',
-    borderBottomWidth: 2,
-    borderBottomColor: 'rgba(125,90,42,0.08)',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
   },
-  tabEmoji: { fontSize: 16 },
   tabLabel: {
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize['3xs'],
@@ -570,11 +566,12 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   roomGrid: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing[2] },
+  tipRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing[2] },
   tipText: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.sm,
     color: colors.inkSoft,
-    textAlign: 'center',
+    flexShrink: 1,
   },
 
   actionGrid: {

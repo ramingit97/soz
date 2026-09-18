@@ -1,224 +1,122 @@
-import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
+/**
+ * Домик персонажа: за каждый пройденный день открывается предмет. Эмодзи
+ * предметов — их рисунок (контент), интерфейс вокруг — на токенах и иконках.
+ */
+import { ScrollView, StyleSheet, View } from 'react-native';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
-import { Bobo } from '@/components/Bobo';
-import { HBBackButton } from '@/components/HBBackButton';
+import { HBCard } from '@/components/HBCard';
+import { HBIconBox } from '@/components/HBIconBox';
+import { HBPet } from '@/components/HBPet';
+import { Icon } from '@/components/Icon';
+import { PaperBackground } from '@/components/PaperBackground';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { Text } from '@/components/Text';
+import { useTheme } from '@/hooks/useTheme';
 import { HOUSE_ITEMS, getNextItem, getUnlockedItems } from '@/services/boboHouse';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, gradients, radius, scaleFont, shadow, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, radius, scaleFont, spacing } from '@/theme';
 import { useCompanionName } from '@/utils/companion';
 
 export default function BoboHouseScreen() {
-  const router = useRouter();
-  const lang = useSettings((s) => s.parentUILanguage) ?? 'ru';
   const currentDay = useSettings((s) => s.currentDay);
-  const isAz = lang === 'az';
+  const isAz = useSettings((s) => s.parentUILanguage) === 'az';
   const bot = useCompanionName();
+  const { t, accent } = useTheme();
 
   const unlocked = getUnlockedItems(currentDay);
   const nextItem = getNextItem(currentDay);
   const total = HOUSE_ITEMS.length;
 
   return (
-    <View style={styles.root}>
-      <LinearGradient
-        colors={gradients.night}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
+    <PaperBackground>
+      {/* Без падежного окончания у имени: «Bobo evi» — имя может быть любым. */}
+      <ScreenHeader title={isAz ? `${bot} evi` : `Дом ${bot}`} />
 
-      {/* Stars */}
-      {['✨', '⭐', '💫', '✨', '⭐', '✨'].map((s, i) => (
-        <Animated.Text
-          key={i}
-          entering={FadeIn.duration(800).delay(i * 200)}
-          style={[
-            styles.star,
-            {
-              top: 40 + i * 60,
-              left: i % 2 === 0 ? 20 + i * 10 : undefined,
-              right: i % 2 !== 0 ? 30 + i * 12 : undefined,
-              fontSize: fontSize.sm + (i % 3) * 6,
-            },
-          ]}
-        >
-          {s}
-        </Animated.Text>
-      ))}
-
-      <HBBackButton />
-
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <Animated.View entering={FadeInDown.duration(600)} style={styles.header}>
-          <View style={styles.boboHalo}>
-            <Bobo size={120} mood="happy" />
-          </View>
-          <Text style={styles.title}>
-            {isAz ? `${bot}-nun evi` : `Дом ${bot}`}
-          </Text>
-          <Text style={styles.subtitle}>
-            {isAz
-              ? `${unlocked.length} / ${total} əşya toplandı`
-              : `${unlocked.length} / ${total} предметов собрано`}
-          </Text>
-        </Animated.View>
-
-        {nextItem && (
-          <Animated.View
-            entering={FadeInUp.duration(500).delay(200)}
-            style={[styles.nextCard, shadow.md]}
-          >
-            <Text style={{ fontSize: 36 }}>🎁</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.nextLabel}>
-                {isAz ? 'NÖVBƏTİ HƏDİYYƏ' : 'СЛЕДУЮЩИЙ ПОДАРОК'}
+      <ScrollView
+        contentContainerStyle={[styles.scroll, { paddingHorizontal: t.density.padX, gap: t.density.gap }]}
+        showsVerticalScrollIndicator={false}
+      >
+        <Animated.View entering={FadeInDown.duration(450)}>
+          <HBCard style={styles.hero}>
+            <HBPet size={t.mascot.inline + 16} mood="happy" onTap={() => {}} />
+            <View style={styles.flex}>
+              <Text style={[styles.count, { color: accent.ink }]}>
+                {unlocked.length}/{total}
               </Text>
-              <Text style={styles.nextName}>
-                {isAz ? nextItem.nameAz : nextItem.nameRu} {nextItem.emoji}
-              </Text>
-              <Text style={styles.nextHint}>
-                {isAz
-                  ? `${nextItem.unlockDay}-ci günü tamamla`
-                  : `Открой день ${nextItem.unlockDay}`}
+              <Text variant="body" tone="secondary">
+                {isAz ? 'əşya toplandı' : 'предметов собрано'}
               </Text>
             </View>
-          </Animated.View>
-        )}
+          </HBCard>
+        </Animated.View>
 
-        <Animated.View entering={FadeInUp.duration(500).delay(300)} style={styles.grid}>
-          {HOUSE_ITEMS.map((item, i) => {
+        {nextItem ? (
+          <Animated.View entering={FadeInUp.duration(450).delay(120)}>
+            <HBCard bg={accent.soft} style={styles.row}>
+              <HBIconBox icon="gift" tint={colors.surface} iconColor={accent.ink} size={48} />
+              <View style={styles.flex}>
+                <Text variant="label" style={{ color: accent.ink }}>
+                  {isAz ? 'Növbəti hədiyyə' : 'Следующий подарок'}
+                </Text>
+                <Text variant="bodyBold">
+                  {isAz ? nextItem.nameAz : nextItem.nameRu} {nextItem.emoji}
+                </Text>
+                <Text variant="caption" style={{ color: colors.ink }}>
+                  {isAz ? `${nextItem.unlockDay}-ci günü bitir` : `Пройди день ${nextItem.unlockDay}`}
+                </Text>
+              </View>
+            </HBCard>
+          </Animated.View>
+        ) : null}
+
+        <Animated.View entering={FadeInUp.duration(450).delay(200)} style={styles.grid}>
+          {HOUSE_ITEMS.map((item) => {
             const isUnlocked = item.unlockDay < currentDay;
             return (
-              <Animated.View
+              <View
                 key={item.id}
-                entering={FadeInUp.duration(300).delay(i * 30)}
-                style={[
-                  styles.itemCard,
-                  isUnlocked ? styles.itemUnlocked : styles.itemLocked,
-                ]}
+                style={[styles.item, isUnlocked ? styles.itemOpen : styles.itemLocked]}
+                accessibilityLabel={isUnlocked ? (isAz ? item.nameAz : item.nameRu) : isAz ? 'Qapalıdır' : 'Закрыто'}
               >
-                <Text style={[styles.itemEmoji, !isUnlocked && styles.itemEmojiLocked]}>
-                  {isUnlocked ? item.emoji : '·'}
-                </Text>
-                {isUnlocked && (
-                  <Text style={styles.itemDay}>
-                    {isAz ? `G${item.unlockDay}` : `Д${item.unlockDay}`}
-                  </Text>
+                {isUnlocked ? (
+                  <>
+                    <Text style={styles.itemEmoji}>{item.emoji}</Text>
+                    <Text style={styles.itemDay}>{isAz ? `G${item.unlockDay}` : `Д${item.unlockDay}`}</Text>
+                  </>
+                ) : (
+                  <Icon name="lock" size={18} color={colors.textMuted} />
                 )}
-              </Animated.View>
+              </View>
             );
           })}
         </Animated.View>
 
-        <Text style={styles.footer}>
-          {isAz
-            ? `Hər dərs ${bot}-nun evi üçün yeni əşya açır 🌟`
-            : 'Каждый урок открывает новый предмет для дома 🌟'}
+        <Text variant="caption" tone="secondary" align="center">
+          {isAz ? `Hər dərs ${bot} evi üçün yeni əşya açır` : `Каждый урок открывает новый предмет для дома ${bot}`}
         </Text>
       </ScrollView>
-    </View>
+    </PaperBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 },
-  star: { position: 'absolute', color: 'rgba(255,255,255,0.5)' },
-  scroll: {
-    paddingHorizontal: spacing[5],
-    paddingTop: spacing[16] ?? 64,
-    paddingBottom: spacing[12],
-    gap: spacing[4],
-  },
-  header: { alignItems: 'center', gap: spacing[2] },
-  boboHalo: {
-    padding: spacing[4],
-    borderRadius: radius.full,
-    backgroundColor: 'rgba(255, 203, 71, 0.15)',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 203, 71, 0.3)',
-  },
-  title: {
-    fontFamily: fontFamily.display,
-    fontSize: fontSize['3xl'],
-    color: colors.accentYellow,
-    textAlign: 'center',
-    marginTop: spacing[2],
-  },
-  subtitle: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize.base,
-    color: 'rgba(255,255,255,0.8)',
-  },
-  nextCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[3],
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 203, 71, 0.4)',
-    borderRadius: radius.xl,
-    padding: spacing[4],
-  },
-  nextLabel: {
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize['3xs'],
-    color: colors.accentYellow,
-    letterSpacing: 1,
-  },
-  nextName: {
-    fontFamily: fontFamily.display,
-    fontSize: fontSize.lg,
-    color: colors.cream,
-    marginTop: 4,
-  },
-  nextHint: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.xs,
-    color: 'rgba(255,255,255,0.6)',
-    marginTop: 2,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing[2],
-    justifyContent: 'space-between',
-  },
-  itemCard: {
+  scroll: { paddingTop: spacing[2], paddingBottom: spacing[10] },
+  flex: { flex: 1, minWidth: 0 },
+  hero: { flexDirection: 'row', alignItems: 'center', gap: spacing[4] },
+  count: { fontFamily: fontFamily.display, fontSize: scaleFont(36), lineHeight: scaleFont(42) },
+  row: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2], justifyContent: 'space-between' },
+  item: {
     width: '18.5%',
     aspectRatio: 1,
     borderRadius: radius.lg,
     alignItems: 'center',
     justifyContent: 'center',
-    position: 'relative',
-  },
-  itemUnlocked: {
-    backgroundColor: 'rgba(255, 203, 71, 0.18)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 203, 71, 0.5)',
-  },
-  itemLocked: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
   },
-  itemEmoji: { fontSize: 28 },
-  itemEmojiLocked: { fontSize: 18, color: 'rgba(255,255,255,0.25)' },
-  itemDay: {
-    position: 'absolute',
-    bottom: 3,
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: scaleFont(9),
-    color: colors.accentYellow,
-  },
-  footer: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.sm,
-    color: 'rgba(255,255,255,0.5)',
-    textAlign: 'center',
-    marginTop: spacing[2],
-  },
+  itemOpen: { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
+  itemLocked: { backgroundColor: colors.bgDeep, borderColor: colors.bgDeep },
+  itemEmoji: { fontSize: scaleFont(24), lineHeight: scaleFont(30) },
+  itemDay: { fontFamily: fontFamily.bodyBold, fontSize: fontSize['3xs'], color: colors.inkSoft },
 });

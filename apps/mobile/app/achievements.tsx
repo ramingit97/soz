@@ -1,10 +1,7 @@
 /**
- * Honeybear · Achievements / Badges.
- *
- * Hero card with most-recent badge + delta points.
- * Filter chips: All / Earned / Soon / Locked.
- * 3-column grid of badge tiles (earned = colored circle, locked = dashed).
- * Bottom: progress to next badge.
+ * Значки ребёнка: последний открытый, фильтр, сетка значков, ближайший к
+ * открытию. Эмодзи здесь — рисунок самого значка (контент), замки и галочки —
+ * иконки интерфейса.
  */
 
 import * as Haptics from 'expo-haptics';
@@ -15,10 +12,11 @@ import Animated, { FadeIn, FadeInDown, FadeInUp, ZoomIn } from 'react-native-rea
 
 import { BottomTabs, BottomTabsSpacer } from '@/components/BottomTabs';
 import { DieCutBadge } from '@/components/DieCutBadge';
-import { HBBackButton } from '@/components/HBBackButton';
 import { HBCard } from '@/components/HBCard';
+import { Icon } from '@/components/Icon';
 import { PaperBackground } from '@/components/PaperBackground';
 import { PopNumber } from '@/components/PopNumber';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { StarParticle } from '@/components/StarParticle';
 import { Text } from '@/components/Text';
 import { useAccent } from '@/hooks/useAccent';
@@ -35,7 +33,6 @@ interface Badge {
   emoji: string;
   labelRu: string;
   labelAz: string;
-  hint?: string;
   color: string;
   /** Human-readable unlock requirement (shown on the tile + in the detail modal). */
   reqRu: string;
@@ -52,37 +49,37 @@ const ALL_BADGES: Badge[] = [
   { id: 'first', emoji: '🏆', labelRu: 'Первый урок', labelAz: 'İlk dərs', color: colors.butter,
     reqRu: 'Заверши первый урок', reqAz: 'İlk dərsi bitir',
     check: (s) => s.currentDay > 1, progress: (s) => pct(s.currentDay - 1, 1) },
-  { id: 'flame7', emoji: '🔥', labelRu: 'Огонёк', labelAz: 'Alov', hint: '7 дней', color: colors.berry,
+  { id: 'flame7', emoji: '🔥', labelRu: 'Огонёк', labelAz: 'Alov', color: colors.berry,
     reqRu: 'Стрик 7 дней', reqAz: '7 günlük seriya',
     check: (s) => s.streak >= 7, progress: (s) => pct(s.streak, 7) },
-  { id: 'food', emoji: '🍎', labelRu: 'Гурман', labelAz: 'Qida bilici', hint: '30 звёзд', color: '#E58A66',
+  { id: 'food', emoji: '🍎', labelRu: 'Гурман', labelAz: 'Qida bilici', color: '#E58A66',
     reqRu: 'Собери 30 звёзд', reqAz: '30 ulduz topla',
     check: (s) => s.totalStars >= 30, progress: (s) => pct(s.totalStars, 30) },
-  { id: 'family', emoji: '👨‍👩‍👧', labelRu: 'Семья', labelAz: 'Ailə', hint: '5 дней', color: colors.accent,
+  { id: 'family', emoji: '👨‍👩‍👧', labelRu: 'Семья', labelAz: 'Ailə', color: colors.accent,
     reqRu: 'Пройди 5 дней', reqAz: '5 gün keç',
     check: (s) => s.currentDay > 5, progress: (s) => pct(s.currentDay - 1, 5) },
-  { id: 'colors', emoji: '🎨', labelRu: 'Художник', labelAz: 'Rəssam', hint: '7 дней', color: '#9C7EE6',
+  { id: 'colors', emoji: '🎨', labelRu: 'Художник', labelAz: 'Rəssam', color: '#9C7EE6',
     reqRu: 'Пройди 7 дней', reqAz: '7 gün keç',
     check: (s) => s.currentDay > 7, progress: (s) => pct(s.currentDay - 1, 7) },
-  { id: 'bee', emoji: '🐝', labelRu: 'Пчёлка', labelAz: 'Arıcıq', hint: '10 уроков', color: colors.butter,
+  { id: 'bee', emoji: '🐝', labelRu: 'Пчёлка', labelAz: 'Arıcıq', color: colors.butter,
     reqRu: 'Пройди 10 дней', reqAz: '10 gün keç',
     check: (s) => s.currentDay > 10, progress: (s) => pct(s.currentDay - 1, 10) },
-  { id: 'magic', emoji: '🪄', labelRu: 'Магия', labelAz: 'Sehr', hint: '14 дней', color: '#9C7EE6',
+  { id: 'magic', emoji: '🪄', labelRu: 'Магия', labelAz: 'Sehr', color: '#9C7EE6',
     reqRu: 'Стрик 14 дней', reqAz: '14 günlük seriya',
     check: (s) => s.streak >= 14, progress: (s) => pct(s.streak, 14) },
-  { id: 'climb', emoji: '🏔', labelRu: 'Покоритель', labelAz: 'Fəth edən', hint: '15 дней', color: colors.accent,
+  { id: 'climb', emoji: '🏔', labelRu: 'Покоритель', labelAz: 'Fəth edən', color: colors.accent,
     reqRu: 'Пройди 15 дней', reqAz: '15 gün keç',
     check: (s) => s.currentDay > 15, progress: (s) => pct(s.currentDay - 1, 15) },
-  { id: 'travel', emoji: '🌍', labelRu: 'Путешеств.', labelAz: 'Səyahətçi', hint: '20 дней', color: colors.berry,
+  { id: 'travel', emoji: '🌍', labelRu: 'Путешеств.', labelAz: 'Səyahətçi', color: colors.berry,
     reqRu: 'Пройди 20 дней', reqAz: '20 gün keç',
     check: (s) => s.currentDay > 20, progress: (s) => pct(s.currentDay - 1, 20) },
-  { id: 'animal', emoji: '🦊', labelRu: 'Друг зверей', labelAz: 'Heyvan dostu', hint: '25 дней', color: '#E58A66',
+  { id: 'animal', emoji: '🦊', labelRu: 'Друг зверей', labelAz: 'Heyvan dostu', color: '#E58A66',
     reqRu: 'Пройди 25 дней', reqAz: '25 gün keç',
     check: (s) => s.currentDay > 25, progress: (s) => pct(s.currentDay - 1, 25) },
-  { id: 'stars50', emoji: '⭐', labelRu: '50 звёзд', labelAz: '50 ulduz', hint: '50 звёзд', color: colors.butter,
+  { id: 'stars50', emoji: '⭐', labelRu: '50 звёзд', labelAz: '50 ulduz', color: colors.butter,
     reqRu: 'Собери 50 звёзд', reqAz: '50 ulduz topla',
     check: (s) => s.totalStars >= 50, progress: (s) => pct(s.totalStars, 50) },
-  { id: 'sharp', emoji: '🎯', labelRu: 'Мастер', labelAz: 'Usta', hint: '100 звёзд', color: colors.berry,
+  { id: 'sharp', emoji: '🎯', labelRu: 'Мастер', labelAz: 'Usta', color: colors.berry,
     reqRu: 'Собери 100 звёзд', reqAz: '100 ulduz topla',
     check: (s) => s.totalStars >= 100, progress: (s) => pct(s.totalStars, 100) },
 ];
@@ -129,24 +126,25 @@ export default function AchievementsScreen() {
 
   return (
     <PaperBackground>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-        <Animated.View entering={FadeInDown.duration(400)} style={styles.topBar}>
-          <HBBackButton inline />
-          <Text style={styles.title}>
-            {isAz ? 'Mənim nişanlarım' : 'Мои значки'}
-          </Text>
-          <View style={[styles.countChip, shadow.sm]}>
+      <ScreenHeader
+        title={isAz ? 'Mənim nişanlarım' : 'Мои значки'}
+        right={
+          <View style={styles.countChip}>
             <PopNumber value={`${earnedCount} / ${total}`} style={styles.countText} />
           </View>
-        </Animated.View>
+        }
+      />
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
 
         <Animated.View entering={FadeIn.duration(500).delay(80)}>
           <Pressable onPress={() => setSelected(recent)}>
-            <HBCard style={styles.heroCard} depth="deep" bg={tints.butter}>
+            <HBCard style={styles.heroCard} bg={tints.butter}>
               <DieCutBadge size={64} tilt={-6} edge={3.5} bg={recent.earned ? colors.card : colors.bgDeep}>
-                <Text style={{ fontSize: scaleFont(32), opacity: recent.earned ? 1 : 0.5 }}>
-                  {recent.earned ? recent.emoji : '🔒'}
-                </Text>
+                {recent.earned ? (
+                  <Text style={{ fontSize: scaleFont(32) }}>{recent.emoji}</Text>
+                ) : (
+                  <Icon name="lock" size={28} color={colors.inkSoft} />
+                )}
               </DieCutBadge>
               <View style={{ flex: 1 }}>
                 <Text style={styles.heroKicker}>
@@ -157,8 +155,8 @@ export default function AchievementsScreen() {
                 <Text style={styles.heroLabel}>{isAz ? recent.labelAz : recent.labelRu}</Text>
                 <Text style={styles.heroHint}>{isAz ? recent.reqAz : recent.reqRu}</Text>
               </View>
-              <View style={[styles.deltaBadge, recent.earned && { backgroundColor: colors.accent }]}>
-                <Text style={styles.deltaText}>{recent.earned ? '✓' : '🔒'}</Text>
+              <View style={[styles.deltaBadge, recent.earned && { backgroundColor: colors.accentDeep }]}>
+                <Icon name={recent.earned ? 'check' : 'lock'} size={16} color={recent.earned ? colors.white : colors.inkSoft} strokeWidth={2.5} />
               </View>
             </HBCard>
           </Pressable>
@@ -169,16 +167,17 @@ export default function AchievementsScreen() {
             <Pressable
               key={f.id}
               onPress={() => setFilter(f.id)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: filter === f.id }}
               style={[
                 styles.filterChip,
-                filter === f.id && styles.filterChipActive,
-                shadow.sm,
+                filter === f.id && { backgroundColor: accent.bottom, borderColor: accent.bottom },
               ]}
             >
-              <Text style={[styles.filterText, filter === f.id && { color: colors.white }]}>
+              <Text style={[styles.filterText, filter === f.id && { color: accent.text }]}>
                 {isAz ? f.labelAz : f.labelRu}
               </Text>
-              <Text style={[styles.filterCount, filter === f.id && { color: 'rgba(255,255,255,0.85)' }]}>
+              <Text style={[styles.filterCount, filter === f.id && { color: accent.text }]}>
                 {f.n}
               </Text>
             </Pressable>
@@ -211,13 +210,12 @@ export default function AchievementsScreen() {
                   </DieCutBadge>
                 ) : (
                   <View style={[styles.tileBadge, { backgroundColor: colors.bgDeep }]}>
-                    <Text style={{ fontSize: 22, opacity: 0.5 }}>🔒</Text>
+                    <Icon name="lock" size={20} color={colors.textMuted} />
                   </View>
                 )}
                 <Text style={[styles.tileLabel, !b.earned && { opacity: 0.6 }]}>
                   {isAz ? b.labelAz : b.labelRu}
                 </Text>
-                {b.hint && <Text style={[styles.tileHint, !b.earned && { opacity: 0.7 }]}>{b.hint}</Text>}
               </Pressable>
             </Animated.View>
           ))}
@@ -245,7 +243,7 @@ export default function AchievementsScreen() {
           <Animated.View entering={FadeInUp.duration(400).delay(200)}>
             <HBCard style={styles.progressCard} depth="sm">
               <View style={styles.progressIcon}>
-                <Text style={{ fontSize: 18 }}>🎉</Text>
+                <Icon name="party-popper" size={18} color={accent.ink} />
               </View>
               <Text style={[styles.progressLabel, { flex: 1 }]}>
                 {isAz ? 'Bütün nişanlar açıldı!' : 'Все значки открыты!'}
@@ -284,15 +282,17 @@ function BadgeModal({ badge, isAz, onClose }: {
               </View>
             ) : null}
             <DieCutBadge size={96} tilt={-4} edge={4} bg={badge.earned ? badge.color : colors.bgDeep}>
-              <Text style={{ fontSize: scaleFont(52), opacity: badge.earned ? 1 : 0.5 }}>
-                {badge.earned ? badge.emoji : '🔒'}
-              </Text>
+              {badge.earned ? (
+                <Text style={{ fontSize: scaleFont(52) }}>{badge.emoji}</Text>
+              ) : (
+                <Icon name="lock" size={40} color={colors.inkSoft} />
+              )}
             </DieCutBadge>
             <Text style={modal.title}>{isAz ? badge.labelAz : badge.labelRu}</Text>
             <View style={[modal.statusPill, { backgroundColor: badge.earned ? tints.sage : colors.bgDeep }]}>
               <Text style={[modal.statusText, { color: badge.earned ? colors.accent : colors.inkSoft }]}>
                 {badge.earned
-                  ? (isAz ? 'Açıldı ✓' : 'Открыто ✓')
+                  ? (isAz ? 'Açıldı' : 'Открыто')
                   : (isAz ? 'Hələ qapalı' : 'Ещё закрыто')}
               </Text>
             </View>
@@ -367,21 +367,13 @@ const modal = StyleSheet.create({
 const styles = StyleSheet.create({
   scroll: {
     paddingHorizontal: spacing[5],
-    paddingTop: spacing[12],
+    paddingTop: spacing[2],
     gap: spacing[3],
   },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  title: {
-    fontFamily: fontFamily.display,
-    fontSize: fontSize.lg,
-    color: colors.ink,
-  },
   countChip: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
     paddingHorizontal: spacing[3],
     paddingVertical: 6,
     borderRadius: radius.full,
@@ -397,15 +389,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing[3],
     paddingVertical: spacing[3],
-  },
-  heroBadge: {
-    width: 64,
-    height: 64,
-    borderRadius: radius.xl,
-    backgroundColor: colors.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-    transform: [{ rotate: '-6deg' }],
   },
   heroKicker: {
     fontFamily: fontFamily.bodyBlack,
@@ -430,26 +413,18 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: radius.md,
   },
-  deltaText: {
-    color: colors.white,
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize['2xs'],
-  },
 
   filterRow: { flexDirection: 'row', gap: 6 },
   filterChip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: colors.card,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
     paddingHorizontal: spacing[3],
     paddingVertical: 7,
     borderRadius: radius.full,
-  },
-  filterChipActive: {
-    backgroundColor: colors.primary,
-    borderBottomWidth: 3,
-    borderBottomColor: colors.primaryDeep,
   },
   filterText: {
     fontFamily: fontFamily.bodyBlack,
@@ -498,11 +473,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     color: colors.ink,
     textAlign: 'center',
-  },
-  tileHint: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: scaleFont(9),
-    color: colors.inkSoft,
   },
 
   progressCard: {

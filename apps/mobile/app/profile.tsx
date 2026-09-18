@@ -1,33 +1,30 @@
 /**
- * Profile tab — child identity, parent area, settings, logout.
- * Acts as the "drawer replacement" for settings-level navigation.
+ * Вкладка «Профиль» — кто учится, вход в родительский раздел (за PIN), память
+ * и домик персонажа, смена профиля, ночной режим, аккаунт и правовые ссылки.
  */
 
 import Constants from 'expo-constants';
 import * as Haptics from 'expo-haptics';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useRef } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomTabs, BottomTabsSpacer } from '@/components/BottomTabs';
+import { HBCard } from '@/components/HBCard';
+import { HBIconBox } from '@/components/HBIconBox';
+import { HBPet } from '@/components/HBPet';
+import { Icon, type IconName } from '@/components/Icon';
 import { PaperBackground } from '@/components/PaperBackground';
 import { ParentalGateModal, useParentalGate } from '@/components/ParentalGate';
 import { Text } from '@/components/Text';
+import { useTheme } from '@/hooks/useTheme';
 import { deleteAccount } from '@/services/api';
 import { cancelAllReminders } from '@/services/notifications';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, radius, semantic, spacing, tints } from '@/theme';
 import { useCompanionName } from '@/utils/companion';
-
-const AVATAR_COLORS = ['#7C3AED', '#059669', '#DC2626', '#D97706', '#2563EB', '#DB2777'];
-
-function avatarColor(name: string): string {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) | 0;
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length] ?? '#7C3AED';
-}
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -56,9 +53,8 @@ export default function ProfileScreen() {
     }
   };
 
-  const initial = childName.charAt(0).toUpperCase() || 'B';
-  const color = avatarColor(childName || 'B');
-
+  const { t, accent } = useTheme();
+  const insets = useSafeAreaInsets();
   const handleAction = (action: () => void) => {
     Haptics.selectionAsync().catch(() => {});
     action();
@@ -95,33 +91,35 @@ export default function ProfileScreen() {
     );
   };
 
-  const items = [
+  const items: { icon: IconName; label: string; sub: string; onPress: () => void }[] = [
     {
-      icon: '📊',
+      icon: 'chart-column',
       label: isAz ? 'Valideyn kabineti' : 'Кабинет родителя',
-      sub: isAz ? 'Tərəqqi və analiz' : 'Прогресс и анализ',
-      onPress: () => handleAction(() => router.push('/parent-summary' as any)),
+      sub: isAz ? 'Uşaqlar, tərəqqi, cədvəl' : 'Дети, прогресс, расписание',
+      // За PIN родителя: раньше ребёнок открывал родительский раздел одним
+      // нажатием, а хаб `/parent` был недостижим вовсе — вели сразу в отчёт.
+      onPress: () => parentalGate.run(() => router.push('/parent' as never)),
     },
     {
-      icon: '🧠',
+      icon: 'brain',
       label: isAz ? `${bot} nəyi xatırlayır` : `Что ${bot} помнит`,
       sub: isAz ? 'Sənin haqqında faktlar' : 'Факты о тебе',
       onPress: () => handleAction(() => router.push('/memory' as any)),
     },
     {
-      icon: '🏠',
+      icon: 'house',
       label: isAz ? `${bot} evi` : `Дом ${bot}`,
       sub: isAz ? 'Hədiyyələr və qurmaqlar' : 'Награды и постройки',
       onPress: () => handleAction(() => router.push('/bobo-house' as any)),
     },
     {
-      icon: '👥',
+      icon: 'users',
       label: isAz ? 'Profili dəyiş' : 'Сменить профиль',
       sub: isAz ? 'Başqa uşaq seç' : 'Выбрать другого ребёнка',
       onPress: () => handleAction(() => router.replace('/profile-select' as any)),
     },
     {
-      icon: '🌙',
+      icon: 'moon',
       label: isAz ? 'Yataq rejimi' : 'Ночной режим',
       sub: bedtimeMode === 'on'
         ? (isAz ? 'Həmişə açıq' : 'Всегда включён')
@@ -136,7 +134,7 @@ export default function ProfileScreen() {
     ...(isPremium
       ? []
       : [{
-          icon: '👑',
+          icon: 'crown' as IconName,
           label: isAz ? 'Premium al' : 'Получить Premium',
           sub: isAz ? '30 günü aç' : 'Открой все 30 дней',
           onPress: () => parentalGate.run(() => router.push('/paywall' as any)),
@@ -145,90 +143,81 @@ export default function ProfileScreen() {
 
   return (
     <PaperBackground>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-
-        <Animated.View entering={FadeInDown.duration(500)} style={styles.header}>
-          <View style={[styles.avatar, { backgroundColor: color }]}>
-            <Text style={styles.avatarText}>{initial}</Text>
-          </View>
-          <Text style={styles.name}>{childName || 'Bobo'}</Text>
-          {childAge > 0 && (
-            <Text style={styles.subtitle}>
-              {isAz ? `${childAge} yaş` : `${childAge} лет`}
-            </Text>
-          )}
-          {isPremium && (
-            <View style={styles.premiumBadge}>
-              <Text style={styles.premiumText}>👑 PREMIUM</Text>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[
+          styles.scroll,
+          { paddingTop: insets.top + spacing[4], paddingHorizontal: t.density.padX, gap: t.density.gap },
+        ]}
+      >
+        {/* Кто учится */}
+        <Animated.View entering={FadeInDown.duration(450)}>
+          <HBCard style={styles.identity}>
+            <HBPet size={t.mascot.inline + 8} mood="happy" onTap={() => {}} />
+            <View style={styles.flex}>
+              <Text variant="title" numberOfLines={1}>{childName || bot}</Text>
+              {childAge > 0 ? (
+                <Text variant="caption" tone="secondary">{isAz ? `${childAge} yaş` : `${childAge} лет`}</Text>
+              ) : null}
             </View>
-          )}
+            {isPremium ? (
+              <View style={[styles.premium, { backgroundColor: tints.butter }]}>
+                <Icon name="crown" size={14} color="#7F6628" fill={colors.butter} strokeWidth={2} />
+                <Text style={styles.premiumText}>Premium</Text>
+              </View>
+            ) : null}
+          </HBCard>
         </Animated.View>
 
-        {/* Action list */}
-        <Animated.View entering={FadeInUp.duration(500).delay(100)} style={styles.section}>
+        {/* Разделы */}
+        <Animated.View entering={FadeInUp.duration(450).delay(80)} style={styles.list}>
           {items.map((item, i) => (
-            <Pressable
-              key={i}
-              style={({ pressed }) => [styles.row, shadow.sm, pressed && { opacity: 0.7 }]}
-              onPress={item.onPress}
-            >
-              <View style={styles.rowIconWrap}>
-                <Text style={styles.rowIcon}>{item.icon}</Text>
-              </View>
-              <View style={styles.rowText}>
-                <Text style={styles.rowLabel}>{item.label}</Text>
-                <Text style={styles.rowSub}>{item.sub}</Text>
-              </View>
-              <Text style={styles.rowArrow}>›</Text>
+            <Pressable key={i} onPress={item.onPress} accessibilityRole="button">
+              {({ pressed }) => (
+                <HBCard style={[styles.row, pressed && styles.pressed]}>
+                  <HBIconBox icon={item.icon} tint={accent.soft} iconColor={accent.ink} size={40} />
+                  <View style={styles.flex}>
+                    <Text variant="bodyBold" numberOfLines={1}>{item.label}</Text>
+                    <Text variant="caption" tone="secondary" numberOfLines={1}>{item.sub}</Text>
+                  </View>
+                  <Icon name="chevron-right" size={20} color={colors.inkSoft} />
+                </HBCard>
+              )}
             </Pressable>
           ))}
         </Animated.View>
 
-        {/* Account / Logout */}
-        {authToken && (
-          <Animated.View entering={FadeIn.duration(500).delay(200)} style={styles.accountSection}>
-            <Text style={styles.accountLabel}>
-              {isAz ? 'HESAB' : 'АККАУНТ'}
-            </Text>
-            {userEmail && (
-              <Text style={styles.email}>{userEmail}</Text>
-            )}
-            <Pressable onPress={handleLogout} style={styles.logoutBtn}>
-              <Text style={styles.logoutText}>
-                {isAz ? 'Çıxış' : 'Выйти'}
-              </Text>
-            </Pressable>
+        {/* Аккаунт */}
+        {authToken ? (
+          <Animated.View entering={FadeIn.duration(450).delay(160)}>
+            <HBCard style={styles.account}>
+              <Text variant="label" tone="secondary">{isAz ? 'Hesab' : 'Аккаунт'}</Text>
+              {userEmail ? <Text variant="body">{userEmail}</Text> : null}
+              <Pressable onPress={handleLogout} accessibilityRole="button" style={styles.logout} hitSlop={6}>
+                <Icon name="log-out" size={16} color={semantic.danger} />
+                <Text variant="bodyBold" style={{ color: semantic.danger }}>{isAz ? 'Çıxış' : 'Выйти'}</Text>
+              </Pressable>
+            </HBCard>
           </Animated.View>
-        )}
+        ) : null}
 
-        {/* Legal — required visibility for App Store / COPPA */}
-        <Animated.View entering={FadeIn.duration(500).delay(300)} style={styles.legalRow}>
+        {/* Правовое — должно быть на виду (Google Play, COPPA) */}
+        <Animated.View entering={FadeIn.duration(450).delay(240)} style={styles.legalRow}>
           <Pressable onPress={() => router.push('/legal/privacy' as any)} style={styles.legalLink}>
-            <Text style={styles.legalText}>
-              {isAz ? 'Məxfilik' : 'Конфиденциальность'}
-            </Text>
+            <Text variant="caption" tone="secondary">{isAz ? 'Məxfilik' : 'Конфиденциальность'}</Text>
           </Pressable>
-          <Text style={styles.legalDot}>·</Text>
+          <Text variant="caption" tone="secondary">·</Text>
           <Pressable onPress={() => router.push('/legal/privacy' as any)} style={styles.legalLink}>
-            <Text style={styles.legalText}>
-              {isAz ? 'Şərtlər' : 'Условия'}
-            </Text>
+            <Text variant="caption" tone="secondary">{isAz ? 'Şərtlər' : 'Условия'}</Text>
           </Pressable>
-          <Text style={styles.legalDot}>·</Text>
-          <Pressable
-            onPress={() => parentalGate.run(handleDeleteAccount)}
-            style={styles.legalLink}
-          >
-            <Text style={styles.legalText}>
-              {isAz ? 'Hesabı sil' : 'Удалить аккаунт'}
-            </Text>
+          <Text variant="caption" tone="secondary">·</Text>
+          <Pressable onPress={() => parentalGate.run(handleDeleteAccount)} style={styles.legalLink}>
+            <Text variant="caption" style={{ color: semantic.danger }}>{isAz ? 'Hesabı sil' : 'Удалить аккаунт'}</Text>
           </Pressable>
         </Animated.View>
 
-        <Text style={styles.coppaNote}>
-          {isAz
-            ? 'Söz uşaqlar üçündür (5+). Valideyn nəzarəti ilə.'
-            : 'Söz создан для детей 5+. С родительским контролем.'}
+        <Text variant="caption" tone="secondary" align="center">
+          {isAz ? 'Söz uşaqlar üçündür (5+). Valideyn nəzarəti ilə.' : 'Söz создан для детей 5+. С родительским контролем.'}
         </Text>
 
         <Pressable onPress={onVersionTap} hitSlop={8} style={styles.versionTap}>
@@ -245,157 +234,25 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: {
-    paddingHorizontal: spacing[6],
-    paddingTop: spacing[12],
-  },
-
-  header: {
+  scroll: { paddingBottom: spacing[4] },
+  flex: { flex: 1, minWidth: 0 },
+  identity: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
+  premium: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing[6],
-    gap: spacing[2],
-  },
-  avatar: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    color: colors.white,
-    fontFamily: fontFamily.display,
-    fontSize: scaleFont(40),
-  },
-  name: {
-    fontFamily: fontFamily.display,
-    fontSize: fontSize['3xl'],
-    color: colors.ink,
-    letterSpacing: -0.5,
-    marginTop: spacing[2],
-  },
-  subtitle: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.sm,
-    color: colors.inkSoft,
-  },
-  premiumBadge: {
-    backgroundColor: '#FFFBEA',
-    borderWidth: 1,
-    borderColor: colors.accentYellow,
-    paddingHorizontal: spacing[3],
+    gap: 4,
+    paddingHorizontal: spacing[2],
     paddingVertical: 4,
     borderRadius: radius.full,
-    marginTop: spacing[2],
   },
-  premiumText: {
-    color: '#B45309',
-    fontFamily: fontFamily.bodyBlack,
-    fontSize: fontSize.xs,
-    letterSpacing: 1,
-  },
-
-  section: {
-    gap: spacing[2],
-    marginBottom: spacing[6],
-  },
-  row: {
-    backgroundColor: colors.white,
-    borderRadius: radius.xl,
-    paddingVertical: spacing[3],
-    paddingHorizontal: spacing[4],
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[3],
-  },
-  rowIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.lg,
-    backgroundColor: colors.cream,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  rowIcon: { fontSize: 22 },
-  rowText: { flex: 1 },
-  rowLabel: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize.base,
-    color: colors.ink,
-  },
-  rowSub: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.xs,
-    color: colors.inkSoft,
-    marginTop: 2,
-  },
-  rowArrow: {
-    fontSize: fontSize['2xl'],
-    color: colors.inkSoft,
-    fontFamily: fontFamily.bodyBold,
-  },
-
-  accountSection: {
-    backgroundColor: colors.white,
-    borderRadius: radius.xl,
-    padding: spacing[4],
-    gap: spacing[2],
-    ...shadow.sm,
-  },
-  accountLabel: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize.xs,
-    color: colors.inkSoft,
-    letterSpacing: 1.5,
-  },
-  email: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.sm,
-    color: colors.inkSoft,
-  },
-  logoutBtn: {
-    paddingVertical: spacing[2],
-    alignSelf: 'flex-start',
-  },
-  logoutText: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: fontSize.sm,
-    color: colors.error,
-  },
-
-  legalRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: spacing[2],
-    marginTop: spacing[6],
-    flexWrap: 'wrap',
-  },
-  legalLink: {
-    paddingVertical: spacing[1],
-    paddingHorizontal: spacing[2],
-  },
-  legalText: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.xs,
-    color: colors.inkSoft,
-  },
-  legalDot: {
-    color: colors.inkSoft,
-    fontSize: fontSize.base,
-  },
-  versionTap: { alignSelf: 'center', paddingVertical: spacing[2], marginTop: spacing[2] },
-  versionText: {
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize['2xs'],
-    color: colors.textMuted,
-  },
-  coppaNote: {
-    textAlign: 'center',
-    fontFamily: fontFamily.bodyMedium,
-    fontSize: fontSize.xs,
-    color: colors.inkSoft,
-    marginTop: spacing[3],
-    fontStyle: 'italic',
-  },
+  premiumText: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize['2xs'], color: '#7F6628' },
+  list: { gap: spacing[2] },
+  row: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
+  pressed: { opacity: 0.8 },
+  account: { gap: spacing[1] },
+  logout: { flexDirection: 'row', alignItems: 'center', gap: spacing[2], alignSelf: 'flex-start', paddingVertical: spacing[1] },
+  legalRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: spacing[1] },
+  legalLink: { paddingVertical: spacing[1], paddingHorizontal: spacing[1] },
+  versionTap: { alignSelf: 'center', paddingVertical: spacing[2] },
+  versionText: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize['2xs'], color: colors.textMuted },
 });
