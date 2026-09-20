@@ -6,10 +6,9 @@
  */
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, {
-  FadeIn,
   FadeInDown,
   FadeInUp,
   useAnimatedStyle,
@@ -18,9 +17,9 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { AnswerSheet } from '@/components/lesson/AnswerSheet';
 import { HBButton } from '@/components/HBButton';
 import { HBCard } from '@/components/HBCard';
-import { Icon, type IconName } from '@/components/Icon';
 import { LessonHeader } from '@/components/LessonHeader';
 import { PaperBackground } from '@/components/PaperBackground';
 import { Text } from '@/components/Text';
@@ -47,6 +46,47 @@ const WORD_SEPARATOR = String.fromCharCode(1);
 const shuffled = (words: string[]) => [...words].sort(() => Math.random() - 0.5);
 const answerText = (ex: GrammarExercise) => (Array.isArray(ex.correct) ? ex.correct.join(' ') : ex.correct);
 
+/**
+ * Правило одной строкой — то, на чём упражнение тренирует. Берём из самого
+ * задания: вставленное слово и есть правило в миниатюре.
+ */
+function ruleFor(ex: GrammarExercise, az: boolean): string | null {
+  if (ex.kind !== 'fill_blank') return null;
+  const answer = Array.isArray(ex.correct) ? ex.correct.join(' ') : ex.correct;
+  return ex.prompt.replace(BLANK, answer);
+}
+
+const BLANK = /_{2,}/;
+
+/**
+ * Фраза с пропуском: вместо «___» — подчёркнутый слот, в который встаёт
+ * выбранное слово (макет D). Пока ответа нет, слот пустой и тянется на ширину
+ * трёх букв, чтобы строка не прыгала.
+ */
+function BlankSentence({
+  prompt,
+  filled,
+  slotColor,
+}: {
+  prompt: string;
+  filled: string | null;
+  slotColor: string;
+}) {
+  const { mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
+  const [before, after] = prompt.split(BLANK);
+  if (after === undefined) return <Text variant="headline">{prompt}</Text>;
+  return (
+    <Text variant="headline">
+      {before}
+      <Text variant="headline" style={[styles.slot, { color: slotColor, borderBottomColor: slotColor }]}>
+        {filled ? ` ${filled} ` : '     '}
+      </Text>
+      {after}
+    </Text>
+  );
+}
+
 export default function GrammarScreen() {
   const router = useRouter();
   const { lang = 'en', day = '1' } = useLocalSearchParams<{ lang: string; day: string }>();
@@ -54,17 +94,21 @@ export default function GrammarScreen() {
   // Сначала план из куррикулума для ВСЕХ дней: в нём грамматика по уровню (подростку
   // B2 нельзя показывать статичное A1 «My name is Bobo»). Встроенный набор —
   // только запасной вариант без сети или до кэша.
-  const aiLesson = getLesson(lang, dayNum);
-  const rawExercises: GrammarExercise[] =
-    aiLesson?.grammar ?? STATIC_GRAMMAR[lang]?.[dayNum] ?? STATIC_GRAMMAR.en?.[1] ?? [];
-  // Решаемость: у сгенерированного order_words в `correct` бывают слова, которых
-  // нет среди плиток («...soccer in summer» без плитки «in») — такое не собрать.
-  // Если наборы слов расходятся, плитки строятся из правильного ответа.
-  const exercises: GrammarExercise[] = rawExercises.map((ex) => {
-    if (ex.kind !== 'order_words' || !Array.isArray(ex.correct)) return ex;
-    const key = (a: string[]) => a.map((w) => w.trim()).sort().join(WORD_SEPARATOR);
-    return key(ex.options) === key(ex.correct) ? ex : { ...ex, options: [...ex.correct] };
-  });
+  // Упражнения собираются один раз на урок: массив строился заново на каждом
+  // рендере, и его элементы меняли ссылку под уже начатым упражнением.
+  const exercises: GrammarExercise[] = useMemo(() => {
+    const aiLesson = getLesson(lang, dayNum);
+    const raw: GrammarExercise[] =
+      aiLesson?.grammar ?? STATIC_GRAMMAR[lang]?.[dayNum] ?? STATIC_GRAMMAR.en?.[1] ?? [];
+    // Решаемость: у сгенерированного order_words в `correct` бывают слова, которых
+    // нет среди плиток («...soccer in summer» без плитки «in») — такое не собрать.
+    // Если наборы слов расходятся, плитки строятся из правильного ответа.
+    return raw.map((ex) => {
+      if (ex.kind !== 'order_words' || !Array.isArray(ex.correct)) return ex;
+      const key = (a: string[]) => a.map((w) => w.trim()).sort().join(WORD_SEPARATOR);
+      return key(ex.options) === key(ex.correct) ? ex : { ...ex, options: [...ex.correct] };
+    });
+  }, [lang, dayNum]);
 
   const [exerciseIndex, setExerciseIndex] = useState(0);
   const [state, setState] = useState<ExerciseState>('idle');
@@ -195,17 +239,21 @@ export default function GrammarScreen() {
     }, 800);
   };
 
-  const result: { icon: IconName; color: string; bg: string; text: string } | null =
+  const sheet: { tone: 'correct' | 'wrong' | 'reveal'; title: string; subtitle: string | null } | null =
     state === 'correct'
-      ? { icon: 'circle-check', color: RIGHT.ink, bg: RIGHT.bg, text: az ? 'Düzdür!' : 'Верно!' }
+      ? {
+          tone: 'correct',
+          title: az ? 'Düzdür!' : 'Верно!',
+          // Короткое правило: на чём именно ребёнок сейчас потренировался.
+          subtitle: ruleFor(exercise, az),
+        }
       : state === 'wrong'
-        ? { icon: 'refresh-cw', color: WRONG.ink, bg: WRONG.bg, text: az ? 'Yenidən cəhd et' : 'Попробуй снова' }
+        ? { tone: 'wrong', title: az ? 'Yenidən cəhd et' : 'Попробуй снова', subtitle: null }
         : state === 'reveal'
           ? {
-              icon: 'lightbulb',
-              color: '#7F6628',
-              bg: '#FFF6D6',
-              text: az ? `Düzgün cavab: ${answerText(exercise)}` : `Правильный ответ: ${answerText(exercise)}`,
+              tone: 'reveal',
+              title: az ? 'Düzgün cavab' : 'Правильный ответ',
+              subtitle: answerText(exercise),
             }
           : null;
 
@@ -219,7 +267,15 @@ export default function GrammarScreen() {
       >
         <Animated.View entering={FadeInDown.duration(400)} style={cardAnimStyle}>
           <HBCard style={styles.promptCard}>
-            <Text variant="headline">{exercise.prompt}</Text>
+            {isOrderWords ? (
+              <Text variant="headline">{exercise.prompt}</Text>
+            ) : (
+              <BlankSentence
+                prompt={exercise.prompt}
+                filled={selected}
+                slotColor={state === 'wrong' ? c.error : c.accent}
+              />
+            )}
 
             {isOrderWords ? (
               <View style={[styles.sentenceBox, { backgroundColor: accent.soft }]}>
@@ -244,14 +300,6 @@ export default function GrammarScreen() {
               </View>
             ) : null}
 
-            {result ? (
-              <Animated.View entering={FadeIn.duration(200)} style={[styles.result, { backgroundColor: result.bg }]}>
-                <Icon name={result.icon} size={16} color={result.color} strokeWidth={2.5} />
-                <Text variant="bodyBold" style={[styles.resultText, { color: result.color }]}>
-                  {result.text}
-                </Text>
-              </Animated.View>
-            ) : null}
           </HBCard>
         </Animated.View>
 
@@ -297,6 +345,8 @@ export default function GrammarScreen() {
           ) : null}
         </Animated.View>
       </ScrollView>
+
+      {sheet ? <AnswerSheet tone={sheet.tone} title={sheet.title} subtitle={sheet.subtitle} /> : null}
     </PaperBackground>
   );
 }
@@ -305,6 +355,7 @@ const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   scroll: { paddingTop: spacing[2], paddingBottom: spacing[8] },
 
   promptCard: { gap: spacing[3], minHeight: 120, justifyContent: 'center' },
+  slot: { borderBottomWidth: 2 },
 
   sentenceBox: { borderRadius: radius.lg, padding: spacing[3], minHeight: 52, justifyContent: 'center' },
   sentenceWords: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] },

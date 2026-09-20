@@ -7,7 +7,7 @@
  */
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, {
   FadeIn,
@@ -21,6 +21,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { HBButton } from '@/components/HBButton';
+import { AnswerSheet } from '@/components/lesson/AnswerSheet';
 import { HBCard } from '@/components/HBCard';
 import { Icon } from '@/components/Icon';
 import { LessonHeader } from '@/components/LessonHeader';
@@ -41,15 +42,20 @@ const WRONG_BY_MODE = byMode((t) => ({ bg: t.c.errorSoft, border: t.c.error, ink
 export default function WordGameScreen() {
   const router = useRouter();
   const { lang = 'en', day = '1' } = useLocalSearchParams<{ lang: string; day: string }>();
-  const lesson = getLesson(lang, Number(day));
-  // Mix in 1-2 review rounds from past days (spaced repetition)
-  const todayRounds = lesson?.wordGame ?? [];
-  const reviewRounds = pickReviewRounds(lang, Number(day));
-  const rounds = buildWordGameWithReviews(todayRounds, reviewRounds);
+  // Раунды собираются один раз на урок. Раньше список строился заново на
+  // каждом рендере: массив и его элементы меняли ссылку по десять раз за
+  // раунд, и подпись под ответом успевала взять слово из чужого раунда.
+  const rounds = useMemo(() => {
+    const lesson = getLesson(lang, Number(day));
+    const todayRounds = lesson?.wordGame ?? [];
+    return buildWordGameWithReviews(todayRounds, pickReviewRounds(lang, Number(day)));
+  }, [lang, day]);
 
   const [roundIndex, setRoundIndex] = useState(0);
   const [answerState, setAnswerState] = useState<AnswerState>('idle');
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  /** Что показать в плашке: берётся в момент ответа, чтобы не поехало на смене раунда. */
+  const [feedback, setFeedback] = useState<{ title: string; subtitle: string | null } | null>(null);
   const [correctCount, setCorrectCount] = useState(0);
   const recordLessonError = useSettings((s) => s.recordLessonError);
   const childId = useSettings((s) => s.childId);
@@ -81,6 +87,12 @@ export default function WordGameScreen() {
 
     if (option === currentRound.correct) {
       setAnswerState('correct');
+      setFeedback({
+        title: az ? 'Düzdür!' : 'Верно!',
+        subtitle: az
+          ? `${currentRound.correct} ${currentRound.emoji}`
+          : `${currentRound.correct} — это ${currentRound.emoji}`,
+      });
       setCorrectCount((c) => c + 1);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       cardScale.value = withSequence(withSpring(1.04, { damping: 8 }), withSpring(1));
@@ -90,12 +102,14 @@ export default function WordGameScreen() {
           setRoundIndex((i) => i + 1);
           setAnswerState('idle');
           setSelectedOption(null);
+          setFeedback(null);
         } else {
           finish();
         }
       }, 900);
     } else {
       setAnswerState('wrong');
+      setFeedback({ title: az ? 'Yenidən cəhd et!' : 'Попробуй ещё!', subtitle: null });
       recordLessonError({
         kind: 'word_game',
         prompt: currentRound.emoji,
@@ -113,6 +127,7 @@ export default function WordGameScreen() {
       setTimeout(() => {
         setAnswerState('idle');
         setSelectedOption(null);
+        setFeedback(null);
       }, 700);
     }
   };
@@ -190,22 +205,16 @@ export default function WordGameScreen() {
           })}
         </Animated.View>
 
-        <View style={styles.feedbackArea}>
-          {answerState !== 'idle' ? (
-            <Animated.View entering={FadeInUp.duration(250)} style={styles.feedbackRow}>
-              <Icon
-                name={answerState === 'correct' ? 'circle-check' : 'refresh-cw'}
-                size={20}
-                color={answerState === 'correct' ? RIGHT.ink : WRONG.ink}
-                strokeWidth={2.5}
-              />
-              <Text variant="bodyBold" style={{ color: answerState === 'correct' ? RIGHT.ink : WRONG.ink }}>
-                {answerState === 'correct' ? (az ? 'Düzdür!' : 'Верно!') : (az ? 'Yenidən cəhd et!' : 'Попробуй ещё!')}
-              </Text>
-            </Animated.View>
-          ) : null}
-        </View>
+        <View style={styles.feedbackArea} />
       </ScrollView>
+
+      {feedback ? (
+        <AnswerSheet
+          tone={answerState === 'correct' ? 'correct' : 'wrong'}
+          title={feedback.title}
+          subtitle={feedback.subtitle}
+        />
+      ) : null}
     </PaperBackground>
   );
 }
