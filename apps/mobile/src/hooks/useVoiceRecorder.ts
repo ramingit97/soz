@@ -13,8 +13,12 @@ import { createSpeechEndDetector, levelFromDb } from '@/utils/speechEnd';
 import { readAsBase64, type EncodedMedia } from '@/utils/recording';
 
 export interface VoiceStartOptions {
-  /** Ребёнок замолчал, речи не было или вышло время — пора вызвать stop(). */
-  onAutoStop: () => void;
+  /**
+   * Ребёнок замолчал, речи не было или вышло время — пора вызвать stop().
+   * `heardSpeech` — была ли вообще речь: по нему «живой разговор» понимает,
+   * что рядом никого нет, и останавливает цикл вместо записи тишины по кругу.
+   */
+  onAutoStop: (heardSpeech: boolean) => void;
   /** Громкость 0..1 для волны на экране. */
   onLevel?: (level: number) => void;
   /** Пауза, после которой реплика считается законченной. Для одного слова — короче. */
@@ -60,7 +64,7 @@ export function useVoiceRecorder(): VoiceRecorder {
         if (valid !== undefined) onLevel?.(levelFromDb(valid));
         if (detector.push(Date.now() - startedAt, valid)) {
           clearTimer();
-          onAutoStop();
+          onAutoStop(detector.heardSpeech());
         }
       }, POLL_MS);
     },

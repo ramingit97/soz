@@ -72,11 +72,19 @@ declare const __DEV__: boolean;
 type Mood = 'idle' | 'recording' | 'thinking' | 'playing';
 
 /** Что сейчас сказать полоской над микрофоном. */
+/**
+ * Пауза между концом реплики Бобо и новым включением микрофона в живом
+ * разговоре. Меньше 300 мс — на Android запись стартует, пока аудиосессия ещё
+ * в режиме воспроизведения, и приходит пустой файл.
+ */
+const LIVE_GAP_MS = 350;
+
 type Banner =
   | { kind: 'failure'; msg: TalkFailureMessage }
   | { kind: 'consent' }
   | { kind: 'mic' }
-  | { kind: 'reported' };
+  | { kind: 'reported' }
+  | { kind: 'silence' };
 
 interface Turn {
   role: 'child' | 'bobo';
@@ -199,6 +207,26 @@ export default function TalkScreen() {
   const [hint, setHint] = useState<string | null>(null);
   const [hintLoading, setHintLoading] = useState(false);
   const [banner, setBanner] = useState<Banner | null>(null);
+  /**
+   * Живой разговор: нажал микрофон один раз — дальше как звонок. Бобо сам
+   * слышит, что ребёнок замолчал, отвечает и снова слушает.
+   *
+   * Владелец 2026-09-20: «в голосовом чате приходится нажимать кнопку, когда
+   * заканчиваю говорить». Автоостановка записи была и раньше; не хватало
+   * обратного — микрофон не включался сам после ответа.
+   */
+  const [live, setLive] = useState(false);
+  const liveRef = useRef(false);
+  liveRef.current = live;
+  /** Экран ещё на месте: отложенное включение микрофона не должно пережить уход. */
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      liveRef.current = false;
+    };
+  }, []);
   const { c, mode: uiMode, t, accent } = useTheme();
   const styles = stylesByMode[uiMode];
 
@@ -429,13 +457,35 @@ export default function TalkScreen() {
       setMood('recording');
       // Запись останавливается сама, когда ребёнок замолчал (ref — чтобы
       // автостоп вызвал свежую stopRecording, а не версию с mood 'idle').
-      await voice.start({ onAutoStop: () => stopRecordingRef.current?.(), onLevel });
+      await voice.start({
+        onAutoStop: (heardSpeech) => {
+          if (heardSpeech) stopRecordingRef.current?.();
+          else cancelRecordingRef.current?.();
+        },
+        onLevel,
+      });
     } catch (e) {
       console.warn('record start failed', e);
       resetLevel();
       setMood('idle');
     }
   }, [permissionGranted, mood, voice, onLevel, resetLevel, meterDead, audioConsent]);
+
+  /**
+   * Речи так и не было: запись обрывается, на сервер ничего не уходит и живой
+   * разговор останавливается. Иначе цикл писал бы тишину по кругу и жёг квоту.
+   */
+  const cancelRecording = useCallback(async () => {
+    resetLevel();
+    setLive(false);
+    setMood('idle');
+    try {
+      await voice.stop();
+    } catch {
+      /* записывать было нечего */
+    }
+    setBanner({ kind: 'silence' });
+  }, [voice, resetLevel]);
 
   const stopRecording = useCallback(async () => {
     if (mood !== 'recording') return;
@@ -551,6 +601,15 @@ export default function TalkScreen() {
       } else {
         setMood('idle');
       }
+
+      // Живой разговор: снова слушаем. Пауза нужна, чтобы плеер успел отпустить
+      // аудиосессию — без неё запись на Android стартует в режиме playback и
+      // приходит пустой.
+      if (liveRef.current && !convoDoneRef.current) {
+        setTimeout(() => {
+          if (mountedRef.current && liveRef.current) startRecordingRef.current?.();
+        }, LIVE_GAP_MS);
+      }
     } catch (e) {
       console.warn('talk failed', e);
       setBanner({ kind: 'failure', msg: talkFailureMessage(e, bot) });
@@ -560,10 +619,28 @@ export default function TalkScreen() {
 
   const stopRecordingRef = useRef<(() => void) | null>(null);
   stopRecordingRef.current = () => { void stopRecording(); };
+  const cancelRecordingRef = useRef<(() => void) | null>(null);
+  cancelRecordingRef.current = () => { void cancelRecording(); };
+  const startRecordingRef = useRef<(() => void) | null>(null);
+  startRecordingRef.current = () => { void startRecording(); };
   const handleMicPress = useCallback(() => {
-    if (mood === 'recording') void stopRecording();
-    else void startRecording();
+    if (mood === 'recording') {
+      // «Я договорил» — отправляем сразу, не дожидаясь паузы. Живой режим
+      // остаётся включённым: после ответа Бобо микрофон откроется сам.
+      void stopRecording();
+      return;
+    }
+    setBanner((b) => (b?.kind === 'silence' ? null : b));
+    setLive(true);
+    void startRecording();
   }, [mood, startRecording, stopRecording]);
+
+  /** Пауза: выйти из живого разговора, оставшись на экране. */
+  const handlePauseLive = useCallback(() => {
+    Haptics.selectionAsync().catch(() => {});
+    setLive(false);
+    if (mood === 'recording') void stopRecording();
+  }, [mood, stopRecording]);
 
   const playAudio = async (base64: string, mimeType: string) => {
     if (!base64) {
@@ -647,11 +724,20 @@ export default function TalkScreen() {
   const boboMood = mood === 'recording' ? 'listening' : mood === 'thinking' ? 'thinking' : 'happy';
 
   const moodLabel = {
-    idle: language === 'en' ? 'Tap to talk' : 'Нажми и говори',
+    idle: live
+      ? (language === 'en' ? 'Live chat' : 'Живой разговор')
+      : (language === 'en' ? 'Tap to talk' : 'Нажми и говори'),
     recording: language === 'en' ? 'Listening...' : 'Слушаю...',
     thinking: language === 'en' ? `${bot} is thinking...` : `${bot} думает...`,
     playing: language === 'en' ? `${bot} is talking` : `${bot} говорит`,
   }[mood];
+
+  /** Подсказка под микрофоном: в живом разговоре кнопку жать не нужно. */
+  const liveHint = mood === 'recording'
+    ? (az ? 'Sussan, cavab verəcəyəm' : 'Замолчишь — отвечу сам')
+    : mood === 'idle'
+      ? (az ? 'Mikrofon özü açılacaq' : 'Микрофон откроется сам')
+      : null;
 
   const statusDotColor = mood === 'recording' ? c.berry : mood === 'thinking' ? c.butterDeep : accent.bottom;
 
@@ -697,6 +783,20 @@ export default function TalkScreen() {
               az
                 ? `${bot} səni eşitsin deyə, telefon ayarlarında Söz üçün mikrofona icazə ver.`
                 : `Чтобы ${bot} тебя слышал, разреши Söz доступ к микрофону в настройках телефона.`
+            }
+            onClose={close}
+            closeLabel={closeLabel}
+          />
+        );
+      case 'silence':
+        return (
+          <InlineBanner
+            tone="info"
+            icon="mic"
+            text={
+              az
+                ? `${bot} səsini eşitmədi. Hazır olanda mikrofona toxun.`
+                : `${bot} ничего не услышал. Нажми микрофон, когда будешь готов.`
             }
             onClose={close}
             closeLabel={closeLabel}
@@ -1018,6 +1118,23 @@ export default function TalkScreen() {
               disabled={mood === 'thinking' || mood === 'playing'}
               accessibilityLabel={moodLabel}
             />
+            {live ? (
+              <Animated.View entering={FadeIn.duration(200)} style={styles.liveRow}>
+                {liveHint ? (
+                  <Text variant="caption" tone="secondary" align="center">{liveHint}</Text>
+                ) : null}
+                <Pressable
+                  onPress={handlePauseLive}
+                  accessibilityRole="button"
+                  accessibilityLabel={az ? 'Söhbəti dayandır' : 'Остановить разговор'}
+                  hitSlop={8}
+                  style={styles.livePause}
+                >
+                  <Icon name="pause" size={16} color={c.inkSoft} />
+                  <Text variant="caption" tone="secondary">{az ? 'Dayandır' : 'Пауза'}</Text>
+                </Pressable>
+              </Animated.View>
+            ) : null}
           </View>
           {/* Место под плавающие вкладки — иначе они закрывали половину микрофона. */}
           {!fromLesson && <BottomTabsSpacer />}
@@ -1076,6 +1193,18 @@ function Celebration({
 }
 
 const stylesByMode = makeModeStyles((t) => StyleSheet.create({
+  liveRow: { alignItems: 'center', gap: 6, marginTop: 10 },
+  livePause: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 18,
+    backgroundColor: t.c.card,
+    borderWidth: 1,
+    borderColor: t.c.surfaceBorder,
+  },
   container: {
     flex: 1,
   },

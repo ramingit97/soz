@@ -66,6 +66,7 @@ import PartyPopper from 'lucide-react-native/icons/party-popper';
 import PawPrint from 'lucide-react-native/icons/paw-print';
 import Pencil from 'lucide-react-native/icons/pencil';
 import Plane from 'lucide-react-native/icons/plane';
+import Pause from 'lucide-react-native/icons/pause';
 import Play from 'lucide-react-native/icons/play';
 import Plus from 'lucide-react-native/icons/plus';
 import RefreshCw from 'lucide-react-native/icons/refresh-cw';
@@ -159,6 +160,7 @@ const ICONS = {
   'paw-print': PawPrint,
   pencil: Pencil,
   plane: Plane,
+  pause: Pause,
   play: Play,
   plus: Plus,
   'refresh-cw': RefreshCw,

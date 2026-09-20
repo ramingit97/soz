@@ -70,7 +70,7 @@ export function useVoiceRecorder(): VoiceRecorder {
         onLevel?.(levelFromDb(db));
         if (!autoStopped && detector.push(performance.now() - startedAt, db)) {
           autoStopped = true;
-          onAutoStop();
+          onAutoStop(detector.heardSpeech());
         }
       };
       source.connect(processor);
