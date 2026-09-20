@@ -10,7 +10,7 @@ import { StyleSheet, View } from 'react-native';
 import { Icon } from '../Icon';
 import { Text } from '../Text';
 import { useTheme } from '@/hooks/useTheme';
-import { spacing } from '@/theme';
+import { fontSize, spacing } from '@/theme';
 import { makeModeStyles } from '@/theme/modeTokens';
 import { weekStrip } from '@/utils/weekStrip';
 
@@ -87,5 +87,5 @@ const stylesByMode = makeModeStyles((t) => StyleSheet.create({
     backgroundColor: t.c.card,
   },
   today: { width: 6, height: 6, borderRadius: 3 },
-  label: { fontSize: 11 },
+  label: { fontSize: fontSize['2xs'] },
 }));

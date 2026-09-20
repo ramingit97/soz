@@ -144,6 +144,7 @@ export function HomeHero(p: Props) {
                       variant="caption"
                       tone={current ? 'primary' : 'secondary'}
                       numberOfLines={2}
+                      align="center"
                       style={styles.gemLabel}
                     >
                       {stepShort(step, az)}
@@ -280,7 +281,7 @@ const stylesByMode = makeModeStyles((t) => StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: t.c.bgDeep,
   },
-  gemLabel: { textAlign: 'center', lineHeight: 14 },
+  gemLabel: { lineHeight: 14 },
   gemChest: { width: 44, alignItems: 'center', paddingTop: 5 },
   stepRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
   stepText: { flex: 1, minWidth: 0 },
