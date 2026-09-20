@@ -13,11 +13,13 @@
 
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 import { BottomTabs, BottomTabsSpacer } from '@/components/BottomTabs';
 import { HBCard } from '@/components/HBCard';
+import { InlineBanner } from '@/components/InlineBanner';
 import { HBChip } from '@/components/HBChip';
 import { HBIconBox } from '@/components/HBIconBox';
 import { HBPet } from '@/components/HBPet';
@@ -121,15 +123,20 @@ function AdultHome() {
               {isAz ? 'Bu gün nə üzərində işləyək?' : 'Над чем поработаем сегодня?'}
             </Text>
           </View>
+          {/* Иконки, а не эмодзи: в детской шапке они уже нарисованные, и
+              рядом эмодзи выглядели бы чужеродно. */}
           {streak > 0 && (
-            <HBChip label={String(streak)} leadingIcon={<Text style={{ fontSize: 14 }}>🔥</Text>} />
+            <HBChip label={String(streak)} leadingIcon={<Icon name="flame" size={16} color="#FF7A2F" />} />
           )}
-          <HBChip label={String(totalStars)} leadingIcon={<Text style={{ fontSize: 14 }}>⭐</Text>} />
+          <HBChip
+            label={String(totalStars)}
+            leadingIcon={<Icon name="star" size={16} color={c.goldDeep} fill={c.gold} />}
+          />
         </Animated.View>
 
         <Animated.View entering={FadeInUp.duration(500).delay(80)}>
           <HBCard style={styles.goalCard} depth="sm">
-            <Text style={styles.goalLabel}>{isAz ? '🎯 Hədəfin' : '🎯 Твоя цель'}</Text>
+            <Text style={styles.goalLabel}>{isAz ? 'Hədəfin' : 'Твоя цель'}</Text>
             <Text style={styles.adultGoalText}>{adultGoalLabel(goal, isAz)}</Text>
           </HBCard>
         </Animated.View>
@@ -215,6 +222,8 @@ export default function HomeScreen() {
   const bot = useCompanionName();
   const data = useHomeData();
   const parentalGate = useParentalGate();
+  /** Короткое сообщение под шапкой: урок ещё собирается. */
+  const [notice, setNotice] = useState<string | null>(null);
 
   // Adult learners get a talk-hub home instead of the kid lesson flow.
   if (profileType === 'adult') return <AdultHome />;
@@ -245,7 +254,9 @@ export default function HomeScreen() {
     // day is still generating.
     if (!data.ensureTodayLesson()) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
-      Alert.alert('', isAz ? `${bot} bu dərsi hələ yığır — bir dəqiqə!` : `${bot} ещё собирает этот урок — секундочку!`);
+      // Инлайн-баннер, а не системный диалог: `Alert.alert` в вебе пустышка,
+      // а на телефоне перекрывает экран ради одной строки.
+      setNotice(isAz ? `${bot} bu dərsi hələ yığır — bir dəqiqə!` : `${bot} ещё собирает этот урок — секундочку!`);
       return;
     }
     const focus = lesson?.focus;
@@ -310,6 +321,18 @@ export default function HomeScreen() {
                 childLevel,
               ].filter(Boolean).join(', ')}
               isAz={isAz}
+            />
+          </Animated.View>
+        ) : null}
+
+        {notice ? (
+          <Animated.View entering={FadeInDown.duration(250)}>
+            <InlineBanner
+              tone="info"
+              icon="sparkles"
+              text={notice}
+              onClose={() => setNotice(null)}
+              closeLabel={isAz ? 'Bağla' : 'Закрыть'}
             />
           </Animated.View>
         ) : null}
