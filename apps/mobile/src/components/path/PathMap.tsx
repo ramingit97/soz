@@ -17,7 +17,7 @@ import { HBPet } from '../HBPet';
 import { Icon } from '../Icon';
 import { Text } from '../Text';
 import { useTheme } from '@/hooks/useTheme';
-import { spacing } from '@/theme';
+import { fontSize, spacing } from '@/theme';
 import { makeModeStyles } from '@/theme/modeTokens';
 import { WORLDS, worldForDay } from '@/data/worlds';
 
@@ -172,7 +172,7 @@ const stylesByMode = makeModeStyles((t) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dayNum: { fontFamily: t.font.display, fontSize: 20, color: '#5A3C00' },
+  dayNum: { fontFamily: t.font.display, fontSize: fontSize.xl, color: '#5A3C00' },
   pet: { position: 'absolute', top: 6 },
   tip: {
     position: 'absolute',

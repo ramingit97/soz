@@ -1,0 +1,26 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "soz-web",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-c",
+        "cd apps/mobile && EXPO_PUBLIC_API_URL=https://soz-api.fly.dev CI=1 BROWSER=none NODE_OPTIONS=--max-old-space-size=1800 ../../node_modules/.bin/expo start --web --port 8099 --max-workers 2"
+      ],
+      "port": 8099
+    },
+    {
+      "name": "mockups",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8098",
+        "--directory",
+        "context/mockups"
+      ],
+      "port": 8098
+    }
+  ]
+}
