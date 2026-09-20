@@ -23,6 +23,7 @@ import { HBIconBox } from '@/components/HBIconBox';
 import { HBPet } from '@/components/HBPet';
 import { Icon } from '@/components/Icon';
 import { HomeHeader } from '@/components/home/HomeHeader';
+import { HomeScene } from '@/components/scene/HomeScene';
 import { HomeHero } from '@/components/home/HomeHero';
 import { PaperBackground } from '@/components/PaperBackground';
 import { ParentalGateModal, useParentalGate } from '@/components/ParentalGate';
@@ -33,7 +34,7 @@ import { track } from '@/services/analytics';
 import { useSettings } from '@/store/settings';
 import { fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
 import { useCompanionName, withCompanionName } from '@/utils/companion';
-import { deriveHomeState, resumeStep, todayPlanSteps } from '@/utils/homeState';
+import { deriveHomeState, resumeStep, todayPlanSteps, type HomeState } from '@/utils/homeState';
 import { lessonStepRoute } from '@/utils/lessonFlow';
 import { makeModeStyles } from '@/theme/modeTokens';
 import { useTheme } from '@/hooks/useTheme';
@@ -167,8 +168,35 @@ function AdultHome() {
   );
 }
 
+/**
+ * Высота сцены под содержимым. При 520 dp трава острова приходится примерно на
+ * 324 dp от верха экрана — как раз под ноги Бобо, а карточка урока ложится на
+ * нижний край острова, как лист в макете.
+ */
+const SCENE_HEIGHT = 520;
+
+/** Что Бобо говорит с острова — по состоянию главного экрана. */
+function sceneLine(state: HomeState, az: boolean, name: string, bot: string, theme: string | null): string {
+  const hi = az ? `Salam, ${name}!` : `Салам, ${name}!`;
+  switch (state) {
+    case 'lesson':
+      return theme ? `${hi} ${az ? 'Bu gün:' : 'Сегодня:'} ${theme}` : hi;
+    case 'quiz':
+      return `${hi} ${az ? 'Həftəni yoxlayaq' : 'Проверим неделю'}`;
+    case 'done':
+      return az ? 'Əla iş! Sabah görüşərik' : 'Отличная работа! Увидимся завтра';
+    case 'preparing':
+    case 'generating':
+      return az ? 'Sənin dərsini yığıram…' : 'Собираю твой урок…';
+    case 'error':
+      return az ? 'İnternet itdi deyəsən' : 'Кажется, пропал интернет';
+    default:
+      return hi;
+  }
+}
+
 export default function HomeScreen() {
-  const { c, mode: uiMode } = useTheme();
+  const { c, mode: uiMode, t } = useTheme();
   const homeStyles = homeStylesByMode[uiMode];
   const router = useRouter();
   const isAz = useSettings((s) => s.parentUILanguage) === 'az';
@@ -235,6 +263,9 @@ export default function HomeScreen() {
     // Верхний инсет обязателен: у шапки больше нет жёсткого paddingTop 48, и без
     // него приветствие уезжало бы под системную строку на телефоне.
     <PaperBackground edges={['top', 'bottom']}>
+      {/* Сцена под содержимым: остров Бобо в закатном небе (макет C).
+          Только у детей: у взрослых фон ровный тёмно-синий (макет D). */}
+      {uiMode === 'kid' ? <HomeScene height={SCENE_HEIGHT} /> : null}
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={homeStyles.scroll}>
         <Animated.View entering={FadeInDown.duration(450)}>
           <HomeHeader
@@ -248,6 +279,23 @@ export default function HomeScreen() {
             onPetPress={() => router.push('/pet-room' as never)}
           />
         </Animated.View>
+
+        {uiMode === 'kid' ? (
+        <Animated.View entering={FadeInDown.duration(450).delay(60)} style={homeStyles.stage}>
+          <View style={homeStyles.bubble}>
+            <Text variant="bodyBold" align="center">
+              {sceneLine(state, isAz, childName, bot, lesson?.theme ?? null)}
+            </Text>
+          </View>
+          <View style={homeStyles.bubbleTail} />
+          <HBPet
+            size={t.mascot.hero}
+            hue={petHue}
+            mood={data.doneToday ? 'sleepy' : 'happy'}
+            onTap={() => router.push('/pet-room' as never)}
+          />
+        </Animated.View>
+        ) : null}
 
         {thread ? (
           <Animated.View entering={FadeInDown.duration(450).delay(40)}>
@@ -316,6 +364,24 @@ const homeStylesByMode = makeModeStyles((t) => StyleSheet.create({
     paddingTop: spacing[4],
     paddingBottom: spacing[4],
     gap: spacing[4],
+  },
+  stage: { alignItems: 'center', gap: 0 },
+  bubble: {
+    backgroundColor: t.c.surface,
+    borderRadius: 22,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+    marginHorizontal: spacing[2],
+    ...shadow.sm,
+  },
+  // Хвостик пузыря — повёрнутый квадрат, как в макете.
+  bubbleTail: {
+    width: 18,
+    height: 18,
+    marginTop: -9,
+    borderRadius: 4,
+    transform: [{ rotate: '45deg' }],
+    backgroundColor: t.c.surface,
   },
   askCard: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
   askText: { flex: 1, minWidth: 0 },

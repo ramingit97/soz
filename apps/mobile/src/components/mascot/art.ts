@@ -84,7 +84,7 @@ export interface PetArtInput {
 
 const INK = '#2E2320';
 const MOUTH_DARK = '#4A2E22';
-const SCREEN = '#2B2C3A';
+const SCREEN = '#121A3A';  // тёмный экран лица робота — фон взрослого режима
 const WHITE = '#FFFFFF';
 
 const line = (d: string, stroke: string, sw: number, op?: number): Prim => ({
@@ -389,8 +389,28 @@ function furGradient(p: PetPalette): Grad {
   return { id: 'fur', cx: 0.38, cy: 0.3, r: 0.75, stops: [[0, p.light], [0.55, p.body], [1, p.deep]] };
 }
 
+/**
+ * Корпус робота — холодный и нейтральный, как в макете D: светло-синий пластик,
+ * тёмный экран лица, мятное свечение глаз, золотая лампочка антенны.
+ *
+ * Выбранный ребёнком оттенок на робота не переносится намеренно. Цвет выбирают
+ * в комнате питомца, а это детский путь: у одиннадцатилетнего, которому достаётся
+ * робот, в сторе лежит оттенок по умолчанию (мёд), и робот выходил бы бежевым
+ * вместо холодного корпуса из макета.
+ */
+const ROBOT_PALETTE: PetPalette = {
+  light: '#F4F7FF',
+  body: '#E4EAFF',
+  deep: '#C9D5FF',
+  cheek: '#FFC93C',
+  muzzle: '#FFFFFF',
+  glow: '#3DE0D0',
+};
+
 export function petArt(input: PetArtInput): PetArt {
-  return input.kind === 'robot' ? robot(input) : bear(input);
+  return input.kind === 'robot'
+    ? robot({ ...input, palette: ROBOT_PALETTE })
+    : bear(input);
 }
 
 /** Мелкий размер рисуется упрощённо. Порог — из плана редизайна (раздел C). */

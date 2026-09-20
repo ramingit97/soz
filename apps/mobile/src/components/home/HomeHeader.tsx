@@ -31,6 +31,11 @@ interface Props {
 export function HomeHeader(p: Props) {
   const { c, mode: uiMode } = useTheme();
   const styles = stylesByMode[uiMode];
+  // В детском режиме шапка лежит на закатном небе сцены: пилюли «стеклянные»,
+  // подписи белые. У взрослых фон ровный, и чипы остаются карточными.
+  const onScene = uiMode === 'kid';
+  const chipBg = onScene ? c.glass : undefined;
+  const chipInk = onScene ? c.textOnDark : undefined;
   return (
     <View style={styles.wrap}>
       <View style={styles.row}>
@@ -46,24 +51,32 @@ export function HomeHeader(p: Props) {
         >
           <HBPet size={34} hue={p.petHue} mood={p.petMood} />
         </Pressable>
-        <Text variant="headline" numberOfLines={2} style={styles.greeting}>
+        <Text
+          variant="headline"
+          numberOfLines={2}
+          style={[styles.greeting, onScene && { color: c.textOnDark }]}
+        >
           {p.isAz ? `Salam, ${p.childName}!` : `Привет, ${p.childName}!`}
         </Text>
         {p.streak > 0 ? (
           <HBChip
+            bg={chipBg}
+            color={chipInk}
             label={String(p.streak)}
             leadingIcon={
               <Icon
                 name={p.freezeUsed ? 'snowflake' : 'flame'}
                 size={16}
-                color={p.freezeUsed ? c.english : c.primaryDeep}
+                color={p.freezeUsed ? c.english : '#FF7A2F'}
               />
             }
           />
         ) : null}
         <HBChip
+          bg={chipBg}
+          color={chipInk}
           label={String(p.totalStars)}
-          leadingIcon={<Icon name="star" size={16} color={c.butterDeep} fill={c.butter} />}
+          leadingIcon={<Icon name="star" size={16} color={c.goldDeep} fill={c.gold} />}
         />
       </View>
     </View>
@@ -77,9 +90,9 @@ const stylesByMode = makeModeStyles((t) => StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: t.c.surface,
+    backgroundColor: t.mode === 'kid' ? t.c.glass : t.c.surface,
     borderWidth: 1,
-    borderColor: t.c.surfaceBorder,
+    borderColor: t.mode === 'kid' ? t.c.glassBorder : t.c.surfaceBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },

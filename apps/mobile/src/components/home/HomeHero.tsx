@@ -9,6 +9,7 @@
  */
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
+import { Chest } from '../scene/Chest';
 import { HBButton } from '../HBButton';
 import { HBCard } from '../HBCard';
 import { HBIconBox } from '../HBIconBox';
@@ -75,6 +76,18 @@ function stepText(step: PlanStep, p: Props): { title: string; subtitle: string }
   }
 }
 
+/** Подпись под самоцветом в детском ряду шагов — одно слово. */
+function stepShort(step: PlanStep, az: boolean): string {
+  switch (step) {
+    case 'words': return az ? 'Sözlər' : 'Слова';
+    case 'reading': return az ? 'Oxu' : 'Чтение';
+    case 'grammar': return az ? 'Qaydalar' : 'Правила';
+    case 'listening': return az ? 'Dinləmə' : 'Слушать';
+    case 'talk': return az ? 'Söhbət' : 'Разговор';
+    case 'quiz': return az ? 'Test' : 'Тест';
+  }
+}
+
 export function HomeHero(p: Props) {
   const { c, mode: uiMode } = useTheme();
   const styles = stylesByMode[uiMode];
@@ -87,6 +100,7 @@ export function HomeHero(p: Props) {
     const done = p.state === 'done';
     const start = p.state === 'quiz' ? p.onStartQuiz : p.onStart;
     const started = !done && p.doneSteps.length > 0;
+    const firstUndone = p.steps.find((st) => !p.doneSteps.includes(st));
     const title = done
       ? az ? 'Dərs tamamlandı!' : 'Урок выполнен!'
       : p.theme ?? (az ? 'Günün dərsi' : 'Урок дня');
@@ -101,29 +115,68 @@ export function HomeHero(p: Props) {
                 <Text variant="caption" tone="secondary">{p.theme}</Text>
               ) : null}
             </View>
-            {kid ? <HBPet size={64} hue={p.petHue} mood={done ? 'sleepy' : 'happy'} /> : null}
+            {kid ? null : <HBPet size={44} mood={done ? 'sleepy' : 'happy'} />}
           </View>
 
-          <View style={styles.steps}>
-            {p.steps.map((step) => {
-              const t = stepText(step, p);
-              const stepDone = done || p.doneSteps.includes(step);
-              return (
-                <View key={step} style={styles.stepRow}>
-                  <HBIconBox
-                    icon={stepDone ? 'check' : STEP_ICON[step]}
-                    tint={stepDone ? c.tints.sage : accent.soft}
-                    iconColor={stepDone ? c.accentDeep : accent.ink}
-                    size={40}
-                  />
-                  <View style={styles.stepText}>
-                    <Text variant="bodyBold" numberOfLines={1}>{t.title}</Text>
-                    <Text variant="caption" tone="secondary" numberOfLines={1}>{t.subtitle}</Text>
+          {kid ? (
+            // Дорожка самоцветов с сундуком на конце (макет C): ребёнок видит
+            // все три шага разом и то, ради чего он их проходит.
+            <View style={styles.gemRow}>
+              {p.steps.map((step) => {
+                const stepDone = done || p.doneSteps.includes(step);
+                const current = !done && !stepDone && step === firstUndone;
+                return (
+                  <View key={step} style={styles.gem}>
+                    <View
+                      style={[
+                        styles.gemDot,
+                        stepDone && { backgroundColor: c.successSoft },
+                        current && { backgroundColor: c.gold },
+                      ]}
+                    >
+                      <Icon
+                        name={stepDone ? 'check' : STEP_ICON[step]}
+                        size={24}
+                        color={stepDone ? c.successDeep : current ? '#5A3C00' : c.textMuted}
+                      />
+                    </View>
+                    <Text
+                      variant="caption"
+                      tone={current ? 'primary' : 'secondary'}
+                      numberOfLines={2}
+                      style={styles.gemLabel}
+                    >
+                      {stepShort(step, az)}
+                    </Text>
                   </View>
-                </View>
-              );
-            })}
-          </View>
+                );
+              })}
+              <View style={styles.gemChest}>
+                <Chest size={38} open={done} />
+              </View>
+            </View>
+          ) : (
+            <View style={styles.steps}>
+              {p.steps.map((step) => {
+                const t = stepText(step, p);
+                const stepDone = done || p.doneSteps.includes(step);
+                return (
+                  <View key={step} style={styles.stepRow}>
+                    <HBIconBox
+                      icon={stepDone ? 'check' : STEP_ICON[step]}
+                      tint={stepDone ? c.successSoft : accent.soft}
+                      iconColor={stepDone ? c.successDeep : accent.ink}
+                      size={40}
+                    />
+                    <View style={styles.stepText}>
+                      <Text variant="bodyBold" numberOfLines={1}>{t.title}</Text>
+                      <Text variant="caption" tone="secondary" numberOfLines={1}>{t.subtitle}</Text>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          )}
 
           {done ? (
             <HBButton full icon="message-circle" label={az ? `${p.bot} ilə danış` : `Поговорить с ${p.bot}`} onPress={p.onTalk} />
@@ -217,6 +270,18 @@ const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   headText: { flex: 1, minWidth: 0, gap: spacing[1] },
   title: { marginTop: spacing[0.5] },
   steps: { gap: spacing[2] },
+  gemRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
+  gem: { alignItems: 'center', gap: 7, width: 70 },
+  gemDot: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: t.c.bgDeep,
+  },
+  gemLabel: { textAlign: 'center', lineHeight: 14 },
+  gemChest: { width: 44, alignItems: 'center', paddingTop: 5 },
   stepRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
   stepText: { flex: 1, minWidth: 0 },
   actions: { gap: spacing[1] },
