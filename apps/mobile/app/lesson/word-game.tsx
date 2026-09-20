@@ -35,8 +35,8 @@ import { byMode, makeModeStyles } from '@/theme/modeTokens';
 
 type AnswerState = 'idle' | 'correct' | 'wrong';
 
-const RIGHT_BY_MODE = byMode((t) => ({ bg: '#E3F7EF', border: '#7AC9B5', ink: t.c.accentDeep }));
-const WRONG_BY_MODE = byMode((t) => ({ bg: '#FDE3E8', border: '#F5A3B2', ink: t.c.berryDeep }));
+const RIGHT_BY_MODE = byMode((t) => ({ bg: t.c.successSoft, border: t.c.success, ink: t.c.successDeep }));
+const WRONG_BY_MODE = byMode((t) => ({ bg: t.c.errorSoft, border: t.c.error, ink: t.c.berryDeep }));
 
 export default function WordGameScreen() {
   const router = useRouter();
@@ -265,11 +265,22 @@ const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   scoreText: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize.sm, color: t.c.ink },
 
   emojiArea: { alignItems: 'center' },
+  // У детей картинка выглядит наклейкой: толстая белая рамка и лёгкий наклон
+  // (макет C). У взрослых — ровная карточка без поворота.
   emojiCard: {
-    width: 136,
-    height: 136,
+    width: t.mode === 'kid' ? 168 : 136,
+    height: t.mode === 'kid' ? 152 : 136,
     alignItems: 'center',
     justifyContent: 'center',
+    ...(t.mode === 'kid'
+      ? {
+          borderWidth: 7,
+          borderColor: t.c.white,
+          backgroundColor: t.c.bgDeep,
+          borderRadius: 32,
+          transform: [{ rotate: '-3deg' }],
+        }
+      : null),
   },
   hintEmoji: { fontSize: scaleFont(64), lineHeight: scaleFont(80) },
   badge: {
@@ -295,8 +306,12 @@ const stylesByMode = makeModeStyles((t) => StyleSheet.create({
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[4],
     borderRadius: radius.xl,
-    borderWidth: 1.5,
+    borderWidth: t.mode === 'kid' ? 3 : 1.5,
     borderColor: t.c.surfaceBorder,
+    // Нижняя грань — тот же объём, что у кнопки: вариант ответа выглядит
+    // нажимаемым, а не полем ввода.
+    borderBottomWidth: t.mode === 'kid' ? 6 : 1.5,
+    borderBottomColor: t.c.borderStrong,
     backgroundColor: t.c.surface,
     alignItems: 'center',
     justifyContent: 'center',

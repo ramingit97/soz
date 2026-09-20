@@ -40,8 +40,8 @@ interface GrammarExercise {
 
 type ExerciseState = 'idle' | 'correct' | 'wrong' | 'reveal';
 
-const RIGHT_BY_MODE = byMode((t) => ({ bg: '#E3F7EF', border: '#7AC9B5', ink: t.c.accentDeep }));
-const WRONG_BY_MODE = byMode((t) => ({ bg: '#FDE3E8', border: '#F5A3B2', ink: t.c.berryDeep }));
+const RIGHT_BY_MODE = byMode((t) => ({ bg: t.c.successSoft, border: t.c.success, ink: t.c.successDeep }));
+const WRONG_BY_MODE = byMode((t) => ({ bg: t.c.errorSoft, border: t.c.error, ink: t.c.berryDeep }));
 const WORD_SEPARATOR = String.fromCharCode(1);
 
 const shuffled = (words: string[]) => [...words].sort(() => Math.random() - 0.5);
