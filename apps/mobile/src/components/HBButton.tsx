@@ -27,11 +27,14 @@ import Animated, {
 
 import { Icon, type IconName } from './Icon';
 import { Text } from './Text';
-import { useAccent } from '@/hooks/useAccent';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { useUIMode } from '@/hooks/useUIMode';
-import { colors, fontSize, shadow, spacing } from '@/theme';
-import { MODE_TOKENS } from '@/theme/modeTokens';
+import { fontSize, shadow, spacing } from '@/theme';
+import { MODE_TOKENS, byMode, makeModeStyles } from '@/theme/modeTokens';
+
+/** Высота нижней грани — объём «конфеты». */
+const EDGE = 4;
+import { useTheme } from '@/hooks/useTheme';
 
 interface HBButtonProps extends Omit<PressableProps, 'children' | 'style'> {
   label: string;
@@ -50,18 +53,22 @@ interface HBButtonProps extends Omit<PressableProps, 'children' | 'style'> {
   style?: StyleProp<ViewStyle>;
 }
 
-const VARIANT_COLORS: Record<
-  NonNullable<HBButtonProps['variant']>,
-  { top: string; bottom: string; text: string }
-> = {
-  // Matte: top only ~3% lighter than bottom (no plastic sheen)
-  primary: { top: '#EC9C64', bottom: colors.primary, text: '#FFFFFF' },
-  accent: { top: '#86D0BE', bottom: colors.accent, text: '#FFFFFF' },
-  butter: { top: '#F7D972', bottom: colors.butter, text: colors.ink },
-  berry: { top: '#E86A80', bottom: colors.berry, text: '#FFFFFF' },
-  soft: { top: colors.surface, bottom: colors.surface, text: colors.ink },
-  ghost: { top: 'transparent', bottom: 'transparent', text: colors.inkSoft },
-};
+/**
+ * Цвета вариантов кнопки по возрастному режиму.
+ *
+ * `edge` — нижняя грань: именно она делает кнопку объёмной «конфетой» в макете
+ * C и даёт опору жёлтой кнопке в макете D. У плоских вариантов её нет.
+ */
+type VariantColors = { top: string; bottom: string; text: string; edge?: string };
+
+const VARIANT_COLORS_BY_MODE = byMode<Record<NonNullable<HBButtonProps['variant']>, VariantColors>>((t) => ({
+  primary: { top: t.c.cta, bottom: t.c.ctaBottom, text: t.c.ctaText, edge: t.c.ctaEdge },
+  accent: { top: t.c.primary, bottom: t.c.primaryDeep, text: '#FFFFFF', edge: t.c.primaryDeep },
+  butter: { top: t.c.gold, bottom: t.c.goldDeep, text: t.mode === 'kid' ? '#5A3C00' : t.c.bg, edge: t.c.goldDeep },
+  berry: { top: t.c.berry, bottom: t.c.berryDeep, text: '#FFFFFF', edge: t.c.berryDeep },
+  soft: { top: t.c.surface, bottom: t.c.surface, text: t.c.ink },
+  ghost: { top: 'transparent', bottom: 'transparent', text: t.c.inkSoft },
+}));
 
 export function HBButton({
   label,
@@ -79,14 +86,13 @@ export function HBButton({
   onPressOut,
   ...rest
 }: HBButtonProps) {
-  // The primary CTA wears the app accent (= the pet's color). Default honey hue
-  // resolves to the brand peach, so unchanged for anyone who kept the default.
-  // Other variants stay their explicit semantic color.
-  const accent = useAccent();
-  const t = MODE_TOKENS[useUIMode()];
-  const v = variant === 'primary'
-    ? { top: accent.top, bottom: accent.bottom, text: accent.text }
-    : VARIANT_COLORS[variant];
+  const { mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
+  // Главное действие носит цвет режима: зелёная «конфета» у детей, жёлтая
+  // кнопка у взрослых (макеты C и D). Цвет питомца на кнопку больше не влияет.
+  const mode = useUIMode();
+  const t = MODE_TOKENS[mode];
+  const v = VARIANT_COLORS_BY_MODE[mode][variant];
   const isFlat = variant === 'soft' || variant === 'ghost';
   const inactive = !!disabled || loading;
   const padV = size === 'lg' ? 14 : size === 'md' ? 11 : 8;
@@ -165,6 +171,7 @@ export function HBButton({
               paddingHorizontal: padH,
               backgroundColor: v.bottom,
             },
+            v.edge && !inactive && { borderBottomWidth: EDGE, borderBottomColor: v.edge },
             variant === 'soft' ? styles.softBorder : !isFlat && styles.highlight,
           ]}
         >
@@ -179,7 +186,7 @@ export function HBButton({
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   inner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -189,11 +196,11 @@ const styles = StyleSheet.create({
   },
   highlight: {
     borderTopWidth: 1.5,
-    borderTopColor: colors.highlightWarm,
+    borderTopColor: t.c.highlightWarm,
   },
   softBorder: {
     borderWidth: 1.5,
-    borderColor: colors.surfaceBorder,
+    borderColor: t.c.surfaceBorder,
   },
   inactive: {
     opacity: 0.45,
@@ -202,4 +209,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-});
+}));

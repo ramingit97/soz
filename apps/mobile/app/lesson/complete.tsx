@@ -62,10 +62,11 @@ import { useSettings } from '@/store/settings';
 import { isMatureLearner, kidModeForDay } from '@/utils/lessonFlow';
 import { kidModeLabel } from '@/utils/lessonModes';
 import { useCompanionName } from '@/utils/companion';
-import { colors, fontFamily, fontSize, scaleFont, spacing, tints } from '@/theme';
+import { fontFamily, fontSize, scaleFont, spacing } from '@/theme';
+import { byMode, makeModeStyles } from '@/theme/modeTokens';
 
 const { width: SW, height: SH } = Dimensions.get('window');
-const CONFETTI_COLORS = [colors.primary, colors.accent, colors.butter, colors.berry];
+const CONFETTI_COLORS_BY_MODE = byMode((t) => ([t.c.primary, t.c.accent, t.c.butter, t.c.berry]));
 
 interface ConfettiProps {
   x: number;
@@ -140,7 +141,9 @@ export default function LessonCompleteScreen() {
   const az = parentLang === 'az';
   const scheduleHour = useSettings((s) => s.scheduleHour);
   const scheduleDays = useSettings((s) => s.scheduleDays);
-  const { t, accent } = useTheme();
+  const { c: palette, mode: uiMode, t, accent } = useTheme();
+  const styles = stylesByMode[uiMode];
+  const CONFETTI_COLORS = CONFETTI_COLORS_BY_MODE[uiMode];
   const insets = useSafeAreaInsets();
 
   // Уведомления спрашиваем после первого урока: экран разрешения из онбординга
@@ -311,7 +314,7 @@ export default function LessonCompleteScreen() {
         <Animated.View style={[styles.counterWrap, counterStyle]}>
           <Text style={[styles.plusText, { color: accent.ink }]}>+</Text>
           <AnimatedCount value={stars} delay={600} duration={900} tickSound style={[styles.counterText, { color: accent.ink }]} />
-          <Icon name="star" size={40} color={colors.butterDeep} fill={colors.butter} strokeWidth={2} />
+          <Icon name="star" size={40} color={palette.butterDeep} fill={palette.butter} strokeWidth={2} />
         </Animated.View>
 
         <Animated.View entering={FadeInUp.duration(500).delay(400)} style={styles.titleArea}>
@@ -332,11 +335,11 @@ export default function LessonCompleteScreen() {
 
         <Animated.View entering={FadeInUp.duration(450).delay(550)}>
           <HBCard style={styles.statsCard}>
-            <Stat icon="star" color={colors.butterDeep} fill={colors.butter} value={`+${stars}`} label={az ? 'Ulduz' : 'Звёзды'} />
+            <Stat icon="star" color={palette.butterDeep} fill={palette.butter} value={`+${stars}`} label={az ? 'Ulduz' : 'Звёзды'} />
             <View style={styles.rule} />
             <Stat icon="book-open" color={accent.ink} value={String(wordsLearned)} label={az ? 'Söz' : 'Слова'} />
             <View style={styles.rule} />
-            <Stat icon="target" color={colors.accentDeep} value={`${accuracy}%`} label={az ? 'Dəqiqlik' : 'Точность'} />
+            <Stat icon="target" color={palette.accentDeep} value={`${accuracy}%`} label={az ? 'Dəqiqlik' : 'Точность'} />
           </HBCard>
         </Animated.View>
 
@@ -344,12 +347,12 @@ export default function LessonCompleteScreen() {
           <Animated.View entering={FadeInUp.duration(450).delay(650)} exiting={FadeOut.duration(150)}>
             <HBCard bg={accent.soft} style={styles.notifyCard}>
               <View style={styles.row}>
-                <HBIconBox icon="bell" tint={colors.surface} iconColor={accent.ink} size={40} />
+                <HBIconBox icon="bell" tint={palette.surface} iconColor={accent.ink} size={40} />
                 <View style={styles.flex}>
                   <Text variant="bodyBold">
                     {az ? `${bot} dərsi xatırlatsın?` : `${bot} будет напоминать про урок?`}
                   </Text>
-                  <Text variant="caption" style={{ color: colors.ink }}>
+                  <Text variant="caption" style={{ color: palette.ink }}>
                     {az
                       ? `Hər gün saat ${scheduleHour}:00-da — seriya qırılmasın.`
                       : `Каждый день в ${scheduleHour}:00 — чтобы не терять серию.`}
@@ -367,8 +370,8 @@ export default function LessonCompleteScreen() {
         {collectible ? (
           <Animated.View entering={FadeInUp.duration(450).delay(700)}>
             <Pressable onPress={() => router.push('/bobo-house' as any)} accessibilityRole="button">
-              <HBCard bg={tints.butter} style={styles.row}>
-                <DieCutBadge size={46} tilt={-6} edge={3} bg={colors.butter} delay={750}>
+              <HBCard bg={palette.tints.butter} style={styles.row}>
+                <DieCutBadge size={46} tilt={-6} edge={3} bg={palette.butter} delay={750}>
                   <Text style={styles.collectibleEmoji}>{collectible.emoji}</Text>
                 </DieCutBadge>
                 <View style={styles.flex}>
@@ -377,7 +380,7 @@ export default function LessonCompleteScreen() {
                     {az ? collectible.nameAz : collectible.nameRu}
                   </Text>
                 </View>
-                <Icon name="chevron-right" size={20} color={colors.inkSoft} />
+                <Icon name="chevron-right" size={20} color={palette.inkSoft} />
               </HBCard>
             </Pressable>
           </Animated.View>
@@ -407,6 +410,8 @@ export default function LessonCompleteScreen() {
 }
 
 function Stat({ icon, color, fill, value, label }: { icon: IconName; color: string; fill?: string; value: string; label: string }) {
+  const { mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   return (
     <View style={styles.statCol}>
       <Icon name={icon} size={20} color={color} fill={fill} strokeWidth={2.25} />
@@ -418,7 +423,7 @@ function Stat({ icon, color, fill, value, label }: { icon: IconName; color: stri
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   content: { paddingBottom: spacing[8] },
 
   petWrap: { alignItems: 'center' },
@@ -434,7 +439,7 @@ const styles = StyleSheet.create({
   statsCard: { flexDirection: 'row', paddingVertical: spacing[3] },
   statCol: { flex: 1, alignItems: 'center', gap: 2 },
   statValue: { fontFamily: fontFamily.display, fontSize: fontSize.xl },
-  rule: { width: 1, backgroundColor: colors.bgDeep, marginVertical: spacing[1] },
+  rule: { width: 1, backgroundColor: t.c.bgDeep, marginVertical: spacing[1] },
 
   notifyCard: { gap: spacing[3] },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
@@ -442,4 +447,4 @@ const styles = StyleSheet.create({
   collectibleEmoji: { fontSize: scaleFont(22), lineHeight: scaleFont(28) },
 
   buttons: { gap: spacing[1], marginTop: spacing[2] },
-});
+}));

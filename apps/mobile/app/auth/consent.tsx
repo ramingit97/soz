@@ -26,12 +26,15 @@ import { Text } from '@/components/Text';
 import { useAccent } from '@/hooks/useAccent';
 import { UIModeProvider } from '@/hooks/useUIMode';
 import { useSettings } from '@/store/settings';
-import { colors, radius, spacing } from '@/theme';
-import { MODE_TOKENS } from '@/theme/modeTokens';
+import { radius, spacing } from '@/theme';
+import { MODE_TOKENS, makeModeStyles } from '@/theme/modeTokens';
 import { useCompanionName } from '@/utils/companion';
 import { consentLabel } from '@/utils/consent';
+import { useTheme } from '@/hooks/useTheme';
 
 export default function ConsentScreen() {
+  const { mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const router = useRouter();
   const { then } = useLocalSearchParams<{ then?: string }>();
   const isAz = useSettings((s) => s.parentUILanguage) === 'az';
@@ -120,7 +123,7 @@ export default function ConsentScreen() {
 
 const CHECKBOX = 24;
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   scroll: { paddingTop: spacing[2], paddingBottom: spacing[10], gap: spacing[4] },
   intro: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
   flex: { flex: 1, minWidth: 0 },
@@ -131,11 +134,11 @@ const styles = StyleSheet.create({
     height: CHECKBOX,
     borderRadius: radius.sm,
     borderWidth: 2,
-    borderColor: colors.borderStrong,
-    backgroundColor: colors.surface,
+    borderColor: t.c.borderStrong,
+    backgroundColor: t.c.surface,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 1,
   },
   policyLink: { alignSelf: 'flex-start', marginLeft: CHECKBOX + spacing[3] },
-});
+}));

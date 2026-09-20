@@ -22,11 +22,15 @@ import { OnboardingStep } from '@/components/OnboardingStep';
 import { Text } from '@/components/Text';
 import { useAccent } from '@/hooks/useAccent';
 import { useSettings, type ProfileType } from '@/store/settings';
-import { colors, radius, spacing } from '@/theme';
+import { radius, spacing } from '@/theme';
 import { useCompanionName } from '@/utils/companion';
 import { consentLabel } from '@/utils/consent';
+import { makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 export default function ProfileTypeScreen() {
+  const { mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const router = useRouter();
   const isAz = useSettings((s) => s.parentUILanguage) === 'az';
   const startNewProfileSetup = useSettings((s) => s.startNewProfileSetup);
@@ -112,7 +116,7 @@ export default function ProfileTypeScreen() {
 
 const CHECKBOX = 24;
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   consentRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -124,12 +128,12 @@ const styles = StyleSheet.create({
     height: CHECKBOX,
     borderRadius: radius.sm,
     borderWidth: 2,
-    borderColor: colors.borderStrong,
-    backgroundColor: colors.surface,
+    borderColor: t.c.borderStrong,
+    backgroundColor: t.c.surface,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 1,
   },
   consentText: { flex: 1 },
   policyLink: { alignSelf: 'flex-start', marginLeft: CHECKBOX + spacing[3] },
-});
+}));

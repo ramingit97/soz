@@ -20,7 +20,8 @@ import { Text } from '@/components/Text';
 import { useTheme } from '@/hooks/useTheme';
 import { getDuePhrases, gradePhrase, type SrsCard } from '@/services/srs';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, spacing } from '@/theme';
+import { fontFamily, fontSize, spacing } from '@/theme';
+import { makeModeStyles } from '@/theme/modeTokens';
 
 export default function PhrasesScreen() {
   const router = useRouter();
@@ -28,7 +29,8 @@ export default function PhrasesScreen() {
   const childId = useSettings((s) => s.childId);
   const petHue = useSettings((s) => s.petHue);
   const isAz = lang === 'az';
-  const { t, accent } = useTheme();
+  const { c: palette, mode: uiMode, t, accent } = useTheme();
+  const styles = stylesByMode[uiMode];
 
   const [queue, setQueue] = useState<SrsCard[]>([]);
   const [idx, setIdx] = useState(0);
@@ -98,7 +100,7 @@ export default function PhrasesScreen() {
                   <Text style={[styles.back, { color: accent.ink }]}>{card.translation}</Text>
                 ) : (
                   <View style={styles.hint}>
-                    <Icon name="book-open" size={16} color={colors.inkSoft} />
+                    <Icon name="book-open" size={16} color={palette.inkSoft} />
                     <Text variant="caption" tone="secondary">{isAz ? 'Tərcüməni göstər' : 'Показать перевод'}</Text>
                   </View>
                 )}
@@ -118,15 +120,15 @@ export default function PhrasesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   body: { flex: 1, paddingBottom: spacing[8] },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing[3] },
   note: { maxWidth: 300 },
   cardWrap: { flex: 1, justifyContent: 'center', gap: spacing[5] },
   card: { alignItems: 'center', justifyContent: 'center', gap: spacing[4], minHeight: 200, paddingVertical: spacing[8] },
-  front: { fontFamily: fontFamily.display, fontSize: fontSize['2xl'], color: colors.ink, textAlign: 'center' },
+  front: { fontFamily: fontFamily.display, fontSize: fontSize['2xl'], color: t.c.ink, textAlign: 'center' },
   back: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.lg, textAlign: 'center' },
   hint: { flexDirection: 'row', alignItems: 'center', gap: spacing[1] },
   gradeRow: { flexDirection: 'row', gap: spacing[3] },
   flex: { flex: 1 },
-});
+}));

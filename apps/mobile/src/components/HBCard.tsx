@@ -12,8 +12,9 @@
 import { StyleSheet, View, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
 
 import { useUIMode } from '@/hooks/useUIMode';
-import { colors, shadow } from '@/theme';
-import { MODE_TOKENS } from '@/theme/modeTokens';
+import { shadow } from '@/theme';
+import { MODE_TOKENS, makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 interface HBCardProps extends ViewProps {
   padded?: boolean;
@@ -36,6 +37,8 @@ export function HBCard({
   style,
   ...rest
 }: HBCardProps) {
+  const { c, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const t = MODE_TOKENS[useUIMode()];
   const depthStyle =
     depth === 'sm'
@@ -50,7 +53,7 @@ export function HBCard({
     <View
       {...rest}
       style={[
-        { borderRadius: t.card.radius, backgroundColor: bg ?? colors.surface },
+        { borderRadius: t.card.radius, backgroundColor: bg ?? c.surface },
         padded && { padding: t.density.cardPad },
         !bg && !ringColor && styles.border,
         rim && styles.rim,
@@ -64,13 +67,13 @@ export function HBCard({
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   border: {
     borderWidth: 1,
-    borderColor: colors.surfaceBorder,
+    borderColor: t.c.surfaceBorder,
   },
   rim: {
     borderTopWidth: 1.5,
-    borderTopColor: colors.highlightWarm,
+    borderTopColor: t.c.highlightWarm,
   },
-});
+}));

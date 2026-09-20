@@ -8,7 +8,9 @@ import { StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 
 import { Text } from '@/components/Text';
 import { useAccent } from '@/hooks/useAccent';
-import { colors, fontFamily, fontSize, radius, spacing } from '@/theme';
+import { useTheme } from '@/hooks/useTheme';
+import { fontFamily, fontSize, radius, spacing } from '@/theme';
+import { makeModeStyles } from '@/theme/modeTokens';
 
 interface Props extends TextInputProps {
   label: string;
@@ -17,6 +19,8 @@ interface Props extends TextInputProps {
 }
 
 export const Field = forwardRef<TextInput, Props>(function Field({ label, labelRight, style, onFocus, onBlur, ...rest }, ref) {
+  const { c, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const accent = useAccent();
   const [focused, setFocused] = useState(false);
   return (
@@ -29,7 +33,7 @@ export const Field = forwardRef<TextInput, Props>(function Field({ label, labelR
       </View>
       <TextInput
         ref={ref}
-        placeholderTextColor={colors.textMuted}
+        placeholderTextColor={c.textMuted}
         accessibilityLabel={label}
         {...rest}
         onFocus={(e) => {
@@ -40,24 +44,24 @@ export const Field = forwardRef<TextInput, Props>(function Field({ label, labelR
           setFocused(false);
           onBlur?.(e);
         }}
-        style={[styles.input, { borderColor: focused ? accent.bottom : colors.surfaceBorder }, style]}
+        style={[styles.input, { borderColor: focused ? accent.bottom : c.surfaceBorder }, style]}
       />
     </View>
   );
 });
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   wrap: { gap: spacing[1] },
   labelRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  label: { color: colors.ink, fontSize: fontSize.sm },
+  label: { color: t.c.ink, fontSize: fontSize.sm },
   input: {
     minHeight: 52,
     borderWidth: 1.5,
     borderRadius: radius.lg,
     paddingHorizontal: spacing[4],
-    backgroundColor: colors.surface,
+    backgroundColor: t.c.surface,
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize.base,
-    color: colors.ink,
+    color: t.c.ink,
   },
-});
+}));

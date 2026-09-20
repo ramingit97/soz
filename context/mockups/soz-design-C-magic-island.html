@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Söz — вариант C, волшебный остров</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;800;900&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#2A1E5C; --ink2:#6A5F9A; --ink3:#A59CCB; --lav:#EDE7FF; --lav2:#DCD2FA; --lav3:#CDBDF5;
+    --vio:#6C4DF2; --vio-d:#4B30C9; --g1:#8BEA5C; --g2:#36C759; --g-d:#1F9A43;
+    --sun:#FFC83A; --sun-d:#E59A00; --pink:#FF6FA5; --aqua:#38D6E8; --aqua-d:#1A9FB8;
+  }
+  *{box-sizing:border-box;margin:0}
+  body{background:#E9E6F5;color:var(--ink);font-family:Nunito,system-ui,sans-serif;padding:40px 24px 64px}
+  header{max-width:1320px;margin:0 auto 32px}
+  header a{font-size:14px;color:var(--ink2);text-decoration:none;font-weight:800}
+  header h1{font-family:"M PLUS Rounded 1c";font-weight:900;font-size:33px;letter-spacing:-.5px;line-height:1.15;margin-top:8px}
+  header p{margin-top:8px;color:var(--ink2);font-weight:700;font-size:17px;max-width:64ch;line-height:1.45}
+  .row{max-width:1320px;margin:0 auto;display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}
+  figure{width:308px}
+  figcaption{margin-top:14px;font-size:14.5px;line-height:1.45;color:var(--ink2);font-weight:700}
+  figcaption b{display:block;color:var(--ink);font-weight:900;font-size:16.5px;margin-bottom:3px}
+  .phone{width:308px;height:650px;border-radius:44px;border:9px solid #140E33;background:#fff;position:relative;overflow:hidden;box-shadow:0 26px 54px -18px rgba(42,30,92,.55)}
+  .abs{position:absolute} svg{display:block}
+  .r{font-family:"M PLUS Rounded 1c",Nunito,sans-serif}
+
+  .glass{display:inline-flex;align-items:center;gap:5px;height:36px;padding:0 11px 0 7px;border-radius:18px;white-space:nowrap;background:rgba(255,255,255,.24);border:1.5px solid rgba(255,255,255,.55);color:#fff;font-weight:900;font-size:14px;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);text-shadow:0 1px 0 rgba(42,30,92,.35)}
+  .flag{width:24px;height:24px;border-radius:12px;background:#fff;color:var(--vio);font-size:10.5px;font-weight:900;display:grid;place-items:center;text-shadow:none}
+  .xbtn{width:38px;height:38px;border-radius:19px;display:grid;place-items:center}
+  .candy{display:flex;align-items:center;justify-content:center;gap:10px;height:62px;border-radius:24px;font-family:"M PLUS Rounded 1c";font-weight:900;font-size:21px;color:#fff;background:linear-gradient(var(--g1),var(--g2));box-shadow:0 7px 0 var(--g-d),0 14px 22px -8px rgba(31,154,67,.6);position:relative;text-shadow:0 2px 0 rgba(21,110,48,.45)}
+  .candy:before{content:"";position:absolute;left:14px;right:14px;top:6px;height:18px;border-radius:14px;background:linear-gradient(rgba(255,255,255,.55),rgba(255,255,255,0))}
+  .candy.white{background:#fff;color:#1F9A43;text-shadow:none;box-shadow:0 7px 0 #BFEBC8}
+  .candy.white:before{display:none}
+  .bubble{background:#fff;border-radius:24px;padding:12px 16px;font-weight:800;font-size:15.5px;line-height:1.3;box-shadow:0 5px 0 rgba(42,30,92,.18)}
+  .tail:after{content:"";position:absolute;left:50%;bottom:-9px;margin-left:-10px;width:20px;height:20px;background:#fff;transform:rotate(45deg);border-radius:4px;box-shadow:4px 4px 0 rgba(42,30,92,.12)}
+
+  .sheet{left:0;right:0;bottom:0;background:#fff;border-radius:34px 34px 0 0;padding:18px 20px 82px;box-shadow:0 -8px 30px rgba(42,30,92,.25)}
+  .daychip{display:inline-block;background:var(--lav);color:var(--vio);font-weight:900;font-size:12.5px;border-radius:11px;padding:3px 10px}
+  .steps{display:flex;justify-content:space-between;position:relative;margin:10px 2px 12px}
+  .steps:before{content:"";position:absolute;left:30px;right:22px;top:22px;height:6px;border-radius:3px;background:repeating-linear-gradient(90deg,var(--lav2) 0 10px,transparent 10px 18px)}
+  .step{position:relative;display:flex;flex-direction:column;align-items:center;gap:7px;font-size:11.5px;font-weight:800;color:var(--ink3);width:68px}
+  .gem{width:50px;height:50px;border-radius:25px;display:grid;place-items:center;background:radial-gradient(circle at 34% 28%,#fff,#E6DEFF 60%,#CFC2F7);box-shadow:0 5px 0 #BDAEEE;color:#9D8FD6}
+  .step.now{color:var(--ink)}
+  .step.now .gem{background:radial-gradient(circle at 34% 28%,#FFF1A8,#FFC83A 55%,#F2A100);box-shadow:0 5px 0 var(--sun-d);color:#7A4A00;animation:ring 1.8s ease-out infinite}
+  .tabbar{left:12px;right:12px;bottom:10px;height:60px;border-radius:26px;background:var(--lav);display:flex;justify-content:space-around;align-items:center}
+  .tb{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;font-weight:800;color:var(--ink3);width:64px}
+  .tb.on{color:var(--vio)}
+  .tb.on i{width:44px;height:30px;border-radius:15px;background:linear-gradient(#8E73FF,#6C4DF2);display:grid;place-items:center;color:#fff;box-shadow:0 3px 0 var(--vio-d)}
+  .tb i{display:grid;place-items:center;height:30px}
+
+  .tube{flex:1;height:20px;border-radius:10px;background:var(--lav2);box-shadow:inset 0 3px 0 rgba(42,30,92,.12);position:relative}
+  .tube span{position:absolute;left:0;top:0;bottom:0;width:48%;border-radius:10px;background:linear-gradient(var(--g1),var(--g2));overflow:hidden}
+  .tube span:before{content:"";position:absolute;left:6px;right:6px;top:3px;height:5px;border-radius:3px;background:rgba(255,255,255,.55)}
+  .tube span:after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.6) 50%,transparent 70%);background-size:120px 100%;background-repeat:no-repeat;animation:shine 2.6s infinite}
+  .sticker{border-radius:32px;border:7px solid #fff;background:linear-gradient(#CBE6FF,#E8D9FF);height:158px;display:grid;place-items:center;transform:rotate(-3deg);box-shadow:0 9px 0 var(--lav3),0 22px 30px -12px rgba(108,77,242,.45)}
+  .ans{height:56px;border-radius:22px;background:#fff;border:3px solid var(--lav2);box-shadow:0 6px 0 var(--lav3);display:grid;place-items:center;font-family:"M PLUS Rounded 1c";font-weight:900;font-size:21px;position:relative}
+  .ans.ok{background:linear-gradient(var(--g1),var(--g2));border-color:#2DB850;box-shadow:0 6px 0 var(--g-d);color:#fff;text-shadow:0 2px 0 rgba(21,110,48,.4)}
+  .say{width:46px;height:46px;border-radius:17px;background:linear-gradient(#6DE7F3,#23B9D2);box-shadow:0 5px 0 var(--aqua-d);display:grid;place-items:center;color:#fff;flex:none}
+  .good{left:0;right:0;bottom:0;background:linear-gradient(#7FE35F,#36C759);border-radius:34px 34px 0 0;padding:24px 20px 20px;color:#fff}
+
+  .night{background:linear-gradient(#1B1452,#3D2A9E 45%,#8459E6 80%,#C48BF0)}
+  .mine{background:linear-gradient(90deg,#FF7FB0,#FF9F5A);color:#fff;border-radius:22px 22px 6px 22px;padding:11px 16px;font-weight:900;font-size:16px;box-shadow:0 5px 0 rgba(120,30,80,.35)}
+  .ear2{width:112px;height:112px;border-radius:56px;background:#fff;display:grid;place-items:center;box-shadow:0 0 0 6px rgba(56,214,232,.9),0 0 0 7px #fff;animation:ripple 2s ease-out infinite}
+  .wave{display:flex;align-items:center;gap:5px;height:48px}
+  .wave s{display:block;width:7px;border-radius:4px;background:linear-gradient(#8E73FF,#6C4DF2);transform-origin:center;animation:eq 1s ease-in-out infinite}
+  .wave s:nth-child(2){animation-delay:.15s}.wave s:nth-child(3){animation-delay:.3s}.wave s:nth-child(4){animation-delay:.1s}.wave s:nth-child(5){animation-delay:.25s}.wave s:nth-child(6){animation-delay:.4s}
+  .gmini{width:50px;height:50px;border-radius:25px;background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.5);display:grid;place-items:center;color:#fff}
+
+  .party{background:linear-gradient(#4B30C9,#8C5BE8 45%,#FF8FB0 85%,#FFC58F)}
+  .burst{left:50%;top:160px;width:620px;height:620px;margin:-310px 0 0 -310px;border-radius:50%;background:repeating-conic-gradient(rgba(255,255,255,.2) 0 10deg,transparent 10deg 20deg);animation:spin 40s linear infinite;-webkit-mask:radial-gradient(closest-side,#000 35%,transparent);mask:radial-gradient(closest-side,#000 35%,transparent)}
+  .conf i{position:absolute;top:0;width:9px;height:14px;border-radius:3px;animation:fall 4.5s linear infinite}
+  .bigstar{animation:pop .7s cubic-bezier(.3,1.4,.5,1) both;filter:drop-shadow(0 5px 0 rgba(122,60,0,.35))}
+  .stat{flex:1;background:#fff;border-radius:20px;padding:10px 4px 9px;text-align:center;box-shadow:0 5px 0 rgba(42,30,92,.2)}
+  .stat b{display:block;font-family:"M PLUS Rounded 1c";font-weight:900;font-size:21px;line-height:1.1}
+  .stat span{font-weight:800;font-size:11.5px;color:var(--ink2)}
+  .gift{border-radius:24px;padding:10px 12px;display:flex;align-items:center;gap:10px;background:linear-gradient(#FFF3C2,#FFD86B);box-shadow:0 5px 0 #E0A92A;font-weight:900;font-size:14.5px;line-height:1.2;color:#6B4300}
+  .gift em{font-style:normal;margin-left:auto;background:#fff;color:#B87400;font-weight:900;font-size:13.5px;border-radius:14px;padding:8px 13px;white-space:nowrap;box-shadow:0 3px 0 #E8C15A}
+
+  .badge{width:46px;height:46px;border-radius:23px;display:grid;place-items:center;font-family:"M PLUS Rounded 1c";font-weight:900;font-size:19px;border:3px solid #fff}
+  .badge.ok{background:linear-gradient(var(--g1),var(--g2));box-shadow:0 5px 0 var(--g-d);color:#fff}
+  .badge.cur{background:radial-gradient(circle at 34% 28%,#FFF1A8,#FFC83A 55%,#F2A100);box-shadow:0 5px 0 var(--sun-d);color:#7A4A00;animation:ring 1.8s ease-out infinite}
+  .badge.lock{background:linear-gradient(#E9E2FF,#CFC2F7);box-shadow:0 5px 0 #A99ADF;color:#8F80CC}
+  .tip{background:#fff;border-radius:18px;padding:8px 12px 9px;box-shadow:0 5px 0 rgba(42,30,92,.22);font-family:"M PLUS Rounded 1c";font-weight:900;font-size:14.5px;line-height:1.2}
+  .tip span{display:block;font-family:Nunito;font-size:12px;font-weight:800;color:var(--ink2)}
+  .land{background:rgba(255,255,255,.94);border-radius:14px;padding:5px 10px;font-weight:900;font-size:12.5px;box-shadow:0 3px 0 rgba(42,30,92,.2);white-space:nowrap}
+
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+  @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+  @keyframes hi{0%,100%{transform:rotate(0)}50%{transform:rotate(-18deg)}}
+  @keyframes blink{0%,91%,100%{transform:scaleY(1)}95%{transform:scaleY(.08)}}
+  @keyframes drift{from{transform:translateX(-22px)}to{transform:translateX(22px)}}
+  @keyframes twinkle{0%,100%{opacity:.25}50%{opacity:1}}
+  @keyframes ring{0%{box-shadow:0 5px 0 var(--sun-d),0 0 0 0 rgba(255,200,58,.8)}100%{box-shadow:0 5px 0 var(--sun-d),0 0 0 15px rgba(255,200,58,0)}}
+  @keyframes eq{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}
+  @keyframes ripple{0%{box-shadow:0 0 0 6px rgba(56,214,232,.9),0 0 0 7px #fff,0 0 0 8px rgba(255,255,255,.5)}100%{box-shadow:0 0 0 6px rgba(56,214,232,.9),0 0 0 7px #fff,0 0 0 40px rgba(255,255,255,0)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes fall{0%{transform:translateY(-40px) rotate(0)}100%{transform:translateY(700px) rotate(540deg)}}
+  @keyframes pop{0%{transform:scale(0) rotate(-30deg)}70%{transform:scale(1.18) rotate(6deg)}100%{transform:scale(1) rotate(0)}}
+  @keyframes shine{0%{background-position:-120px 0}60%,100%{background-position:260px 0}}
+  @keyframes fallwater{to{stroke-dashoffset:-24}}
+  .live{animation:bob 3.2s ease-in-out infinite}
+  .isl{animation:floaty 5s ease-in-out infinite}
+  .isl2{animation:floaty 6s ease-in-out -2s infinite}
+  .b-arm{transform-origin:158px 178px;animation:hi 1.6s ease-in-out infinite}
+  .b-eyes{transform-origin:110px 92px;animation:blink 4.2s infinite}
+  .cloud{animation:drift 10s ease-in-out infinite alternate}
+  .tw{animation:twinkle 2.4s ease-in-out infinite}
+  .water{stroke-dasharray:6 6;animation:fallwater .8s linear infinite}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <radialGradient id="gHead" cx=".36" cy=".28" r=".8"><stop offset="0" stop-color="#FDD09A"/><stop offset=".5" stop-color="#EDA55E"/><stop offset="1" stop-color="#C47634"/></radialGradient>
+    <radialGradient id="gBody" cx=".36" cy=".25" r=".85"><stop offset="0" stop-color="#F6BB78"/><stop offset=".6" stop-color="#E19850"/><stop offset="1" stop-color="#BC6E2E"/></radialGradient>
+    <radialGradient id="gBelly" cx=".4" cy=".3" r=".8"><stop offset="0" stop-color="#FFF6E6"/><stop offset="1" stop-color="#F1CFA0"/></radialGradient>
+    <radialGradient id="gEar" cx=".36" cy=".3" r=".8"><stop offset="0" stop-color="#EDA55E"/><stop offset="1" stop-color="#B0642A"/></radialGradient>
+    <radialGradient id="gEarIn" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#FFDCC0"/><stop offset="1" stop-color="#EE9F84"/></radialGradient>
+    <radialGradient id="gNose" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#70503F"/><stop offset="1" stop-color="#22140F"/></radialGradient>
+    <linearGradient id="gScarf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5FE6F2"/><stop offset="1" stop-color="#1597B5"/></linearGradient>
+    <linearGradient id="gGrass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A4F587"/><stop offset="1" stop-color="#43C466"/></linearGradient>
+    <linearGradient id="gEarth" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C58449"/><stop offset="1" stop-color="#5E3520"/></linearGradient>
+    <linearGradient id="gMist" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D9D0F7"/><stop offset="1" stop-color="#9A8AD6"/></linearGradient>
+    <linearGradient id="gMistE" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9787D3"/><stop offset="1" stop-color="#5A4A9E"/></linearGradient>
+    <linearGradient id="gStar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF08A"/><stop offset="1" stop-color="#FFAE00"/></linearGradient>
+    <linearGradient id="gRoof" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF8FB0"/><stop offset="1" stop-color="#E8386A"/></linearGradient>
+    <linearGradient id="gWall" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FFF8EA"/><stop offset="1" stop-color="#F3DDBB"/></linearGradient>
+    <linearGradient id="gTower" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#F6DFB9"/><stop offset="1" stop-color="#C79C68"/></linearGradient>
+    <linearGradient id="gWater" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C9F6FF"/><stop offset="1" stop-color="#C9F6FF" stop-opacity="0"/></linearGradient>
+    <radialGradient id="gTree" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#6FE08A"/><stop offset="1" stop-color="#1F8F4E"/></radialGradient>
+    <radialGradient id="gGlow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FFF6C9" stop-opacity=".95"/><stop offset="1" stop-color="#FFF6C9" stop-opacity="0"/></radialGradient>
+    <radialGradient id="gAura" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#7DF0FF" stop-opacity=".75"/><stop offset=".55" stop-color="#C58BFF" stop-opacity=".35"/><stop offset="1" stop-color="#C58BFF" stop-opacity="0"/></radialGradient>
+    <linearGradient id="gCloud" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#FFD3E4"/></linearGradient>
+
+    <symbol id="bobo" viewBox="0 0 220 250">
+      <ellipse cx="110" cy="240" rx="72" ry="9" fill="#1B0F45" opacity=".22"/>
+      <ellipse cx="78" cy="229" rx="27" ry="14" fill="url(#gBody)"/><ellipse cx="142" cy="229" rx="27" ry="14" fill="url(#gBody)"/>
+      <ellipse cx="76" cy="231" rx="13" ry="6.5" fill="#F9D8AE"/><ellipse cx="144" cy="231" rx="13" ry="6.5" fill="#F9D8AE"/>
+      <ellipse cx="110" cy="188" rx="59" ry="53" fill="url(#gBody)"/>
+      <ellipse cx="110" cy="198" rx="37" ry="35" fill="url(#gBelly)"/>
+      <ellipse cx="55" cy="188" rx="17" ry="28" fill="url(#gBody)" transform="rotate(20 55 188)"/>
+      <path d="M56 150 Q110 180 164 150 L161 172 Q110 200 59 172Z" fill="url(#gScarf)"/>
+      <path d="M140 168 l23 38 q-13 9 -27 3 l-9 -34Z" fill="#1597B5"/>
+      <ellipse cx="110" cy="152" rx="52" ry="11" fill="#6A3510" opacity=".28"/>
+      <circle cx="48" cy="50" r="31" fill="url(#gEar)"/><circle cx="172" cy="50" r="31" fill="url(#gEar)"/>
+      <circle cx="50" cy="54" r="16" fill="url(#gEarIn)"/><circle cx="170" cy="54" r="16" fill="url(#gEarIn)"/>
+      <ellipse cx="110" cy="96" rx="86" ry="75" fill="url(#gHead)"/>
+      <ellipse cx="78" cy="44" rx="30" ry="11" fill="#fff" opacity=".3" transform="rotate(-16 78 44)"/>
+      <ellipse cx="110" cy="122" rx="37" ry="29" fill="url(#gBelly)"/>
+      <ellipse cx="110" cy="109" rx="13.5" ry="10" fill="url(#gNose)"/><ellipse cx="106" cy="105" rx="4.5" ry="2.6" fill="#fff" opacity=".75"/>
+      <path d="M95 126 Q110 146 125 126" fill="#7A2B33" stroke="#3A241A" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round"/>
+      <ellipse cx="110" cy="136" rx="7" ry="4" fill="#FF8FA3"/>
+      <g class="b-eyes"><ellipse cx="76" cy="92" rx="11.5" ry="13.5" fill="#2B1A12"/><ellipse cx="144" cy="92" rx="11.5" ry="13.5" fill="#2B1A12"/>
+      <circle cx="80" cy="87" r="4.8" fill="#fff"/><circle cx="148" cy="87" r="4.8" fill="#fff"/><circle cx="72" cy="98" r="2.2" fill="#fff" opacity=".8"/><circle cx="140" cy="98" r="2.2" fill="#fff" opacity=".8"/></g>
+      <path d="M62 71 q12 -9 25 -3M133 68 q13 -6 25 3" fill="none" stroke="#A8642C" stroke-width="4.5" stroke-linecap="round"/>
+      <ellipse cx="50" cy="118" rx="14" ry="9.5" fill="#FF7E73" opacity=".5"/><ellipse cx="170" cy="118" rx="14" ry="9.5" fill="#FF7E73" opacity=".5"/>
+      <g class="b-arm"><ellipse cx="174" cy="150" rx="17" ry="29" fill="url(#gBody)" transform="rotate(-40 174 150)"/><ellipse cx="186" cy="134" rx="8" ry="6" fill="#F9D8AE" transform="rotate(-40 186 134)"/></g>
+    </symbol>
+
+    <symbol id="isle" viewBox="0 0 200 124">
+      <path d="M12 42 Q30 100 80 114 Q100 124 120 112 Q172 96 188 42Z" fill="url(#gEarth)"/>
+      <path d="M58 62 l12 42 l15 -36Z" fill="#DDA06A" opacity=".5"/><path d="M118 60 l9 40 l18 -38Z" fill="#4C2A18" opacity=".45"/><path d="M30 56 l10 22 l10 -20Z" fill="#DDA06A" opacity=".35"/>
+      <ellipse cx="100" cy="45" rx="95" ry="25" fill="#279B55"/>
+      <path d="M8 44 q7 15 15 2 q9 20 19 2 q8 14 16 1 q10 18 20 1 q9 15 18 0 q10 19 20 1 q8 13 16 1 q9 17 18 0 q8 12 15 -2" fill="#279B55"/>
+      <ellipse cx="100" cy="38" rx="97" ry="26" fill="url(#gGrass)"/>
+      <ellipse cx="70" cy="30" rx="44" ry="8" fill="#fff" opacity=".18"/>
+    </symbol>
+    <symbol id="isleL" viewBox="0 0 200 124">
+      <path d="M12 42 Q30 100 80 114 Q100 124 120 112 Q172 96 188 42Z" fill="url(#gMistE)"/>
+      <ellipse cx="100" cy="45" rx="95" ry="25" fill="#7E6EC4"/>
+      <ellipse cx="100" cy="38" rx="97" ry="26" fill="url(#gMist)"/>
+    </symbol>
+
+    <symbol id="house" viewBox="0 0 80 84">
+      <rect x="12" y="38" width="56" height="44" rx="7" fill="url(#gWall)"/>
+      <path d="M2 44 40 6l38 38a5 5 0 0 1-4 8H6a5 5 0 0 1-4-8Z" fill="url(#gRoof)"/>
+      <path d="M12 40 40 12l10 10" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".45"/>
+      <rect x="54" y="12" width="10" height="18" rx="3" fill="#C22B5A"/>
+      <path d="M32 82V62a8 8 0 0 1 16 0v20Z" fill="#23B9D2"/><circle cx="44" cy="70" r="2" fill="#FFE27A"/>
+      <rect x="18" y="48" width="11" height="11" rx="3.5" fill="#FFE27A"/><rect x="52" y="48" width="11" height="11" rx="3.5" fill="#FFE27A"/>
+    </symbol>
+    <symbol id="tree" viewBox="0 0 60 80">
+      <rect x="26" y="44" width="9" height="34" rx="4" fill="#8A5230"/>
+      <circle cx="30" cy="28" r="26" fill="url(#gTree)"/><circle cx="12" cy="42" r="14" fill="url(#gTree)"/><circle cx="48" cy="42" r="14" fill="url(#gTree)"/>
+      <g fill="#FF4F6D"><circle cx="18" cy="24" r="5"/><circle cx="38" cy="34" r="5"/><circle cx="36" cy="14" r="5"/><circle cx="10" cy="44" r="4.5"/><circle cx="50" cy="44" r="4"/></g>
+      <g fill="#fff" opacity=".7"><circle cx="16.5" cy="22.5" r="1.5"/><circle cx="36.5" cy="32.5" r="1.5"/><circle cx="34.5" cy="12.5" r="1.5"/></g>
+    </symbol>
+    <symbol id="tower" viewBox="0 0 60 84">
+      <rect x="34" y="26" width="22" height="56" rx="6" fill="#B98C58"/>
+      <rect x="6" y="12" width="40" height="70" rx="8" fill="url(#gTower)"/>
+      <rect x="2" y="6" width="48" height="11" rx="4" fill="#D9B17C"/>
+      <path d="M6 28h40M6 44h40M6 60h40" stroke="#C79C68" stroke-width="2" opacity=".6"/>
+      <rect x="16" y="32" width="6" height="10" rx="3" fill="#7A5A35"/><rect x="28" y="50" width="6" height="10" rx="3" fill="#7A5A35"/>
+    </symbol>
+    <symbol id="chest" viewBox="0 0 48 44">
+      <ellipse cx="24" cy="40" rx="20" ry="3.5" fill="#1B0F45" opacity=".2"/>
+      <path d="M5 20a11 11 0 0 1 11-11h16a11 11 0 0 1 11 11v16a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3Z" fill="#D98A35"/>
+      <path d="M5 20a11 11 0 0 1 11-11h16a11 11 0 0 1 11 11v2H5Z" fill="#F0A851"/>
+      <path d="M5 21h38v6H5z" fill="#8A4A17"/><path d="M12 9.500v29M36 9.500v29" stroke="#8A4A17" stroke-width="3"/>
+      <rect x="19.5" y="18" width="9" height="12" rx="3" fill="url(#gStar)" stroke="#B87400" stroke-width="1.2"/>
+    </symbol>
+    <symbol id="star" viewBox="0 0 24 24"><path d="m12 2.2 3 6.2 6.8.9-5 4.7 1.3 6.700L12 17.500l-6.1 3.2 1.3-6.7-5-4.7 6.8-.9z" fill="url(#gStar)" stroke="#E08A00" stroke-width="1.2" stroke-linejoin="round"/><path d="M9.5 9.5 12 4.8" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".7"/></symbol>
+    <symbol id="spark" viewBox="0 0 24 24"><path d="M12 1c1 6 4 9 11 11-7 2-10 5-11 11-1-6-4-9-11-11 7-2 10-5 11-11z" fill="#fff"/></symbol>
+    <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 2c1 4 6 6 6 12a6 6 0 0 1-12 0c0-3 2-4 2.5-7C10 8 11.5 5 12 2z" fill="#FF7A2F"/><path d="M12 12c.6 2 3 3 3 5.200a3 3 0 0 1-6 0c0-2 2-3 3-5.200z" fill="#FFD23F"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-7l-5 4v-4H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/></symbol>
+    <symbol id="i-map" viewBox="0 0 24 24"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2zM9 4v14M15 6v14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M4 21c1-5 4-7 8-7s7 2 8 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+    <symbol id="i-abc" viewBox="0 0 24 24"><path d="M4 18 8.5 6 13 18M5.6 14h5.800M16 10.500c3.5-1.5 5 .2 5 2.500v5m0-3.500c-3-1-5.5 0-5.5 1.8 0 2.4 4 2.4 5.5 0" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-puzzle" viewBox="0 0 24 24"><path d="M9 4h6v3a2 2 0 1 0 4 0h1v6h-2a2 2 0 1 0 0 4h2v3H4v-6h2a2 2 0 1 0 0-4H4V7h5z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.500v15a1 1 0 0 0 1.5.9l12-7.500a1 1 0 0 0 0-1.800l-12-7.500A1 1 0 0 0 7 4.500z" fill="currentColor"/></symbol>
+    <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9.500v5h4l5 4v-13l-5 4zM16.5 8.500a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.500L19 7.5" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></symbol>
+    <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.900c.6.5 1 1.3 1 2.100h5c0-.8.4-1.6 1-2.100A6 6 0 0 0 12 3z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="3" fill="currentColor"/><path d="M8 10.500V8a4 4 0 0 1 8 0v2.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></symbol>
+    <pattern id="kilim" width="24" height="12" patternUnits="userSpaceOnUse"><path d="M0 12 6 2l6 10Z" fill="#FFE27A"/><path d="M12 12 18 2l6 10Z" fill="#fff" opacity=".85"/></pattern>
+  </defs>
+</svg>
+
+<header>
+  <a href="index.html">Все варианты</a>
+  <h1>Вариант C: волшебный остров</h1>
+  <p>Тот же детский мир, но уровнем выше: объёмный Бобо со светом и тенью, летающие острова в закатном небе, водопад, звёзды, кнопки-леденцы. Путь поднимается по островам к Девичьей башне, а в плашках появляется узор килима.</p>
+</header>
+
+<div class="row">
+
+<!-- C1 HOME -->
+<figure>
+<div class="phone">
+  <svg class="abs" style="inset:0" width="290" height="632" viewBox="0 0 290 632" preserveAspectRatio="xMidYMid slice">
+    <defs><linearGradient id="sky1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3B2FB5"/><stop offset=".3" stop-color="#7A5CF0"/><stop offset=".52" stop-color="#FF8FB0"/><stop offset=".68" stop-color="#FFC58F"/><stop offset="1" stop-color="#FFE9BF"/></linearGradient></defs>
+    <rect width="290" height="632" fill="url(#sky1)"/>
+    <g fill="#fff"><circle class="tw" cx="30" cy="70" r="1.6"/><circle class="tw" style="animation-delay:-1s" cx="92" cy="40" r="1.3"/><circle class="tw" style="animation-delay:-.5s" cx="250" cy="76" r="1.7"/><circle class="tw" style="animation-delay:-1.600s" cx="200" cy="34" r="1.2"/><circle class="tw" style="animation-delay:-2s" cx="140" cy="84" r="1.4"/><circle class="tw" style="animation-delay:-.8s" cx="268" cy="150" r="1.3"/></g>
+    <circle cx="145" cy="300" r="190" fill="url(#gGlow)"/>
+    <g class="cloud"><ellipse cx="246" cy="196" rx="30" ry="10" fill="url(#gCloud)"/><ellipse cx="262" cy="188" rx="19" ry="10" fill="url(#gCloud)"/></g>
+    <g class="cloud" style="animation-duration:14s"><ellipse cx="34" cy="232" rx="26" ry="9" fill="url(#gCloud)" opacity=".9"/><ellipse cx="46" cy="225" rx="16" ry="9" fill="url(#gCloud)" opacity=".9"/></g>
+    <g class="isl2">
+      <use href="#isle" x="204" y="106" width="82" height="51"/>
+      <use href="#tower" x="230" y="66" width="36" height="50"/>
+      <path class="water" d="M216 128 v44" stroke="url(#gWater)" stroke-width="7" stroke-linecap="round" fill="none"/>
+    </g>
+    <g class="isl"><use href="#isle" x="2" y="172" width="60" height="37"/><use href="#tree" x="20" y="146" width="24" height="33"/></g>
+    <use href="#isle" x="-14" y="258" width="318" height="198"/>
+    <use href="#house" x="208" y="200" width="68" height="72"/>
+    <use href="#tree" x="4" y="212" width="50" height="67"/>
+    <g fill="#fff"><circle cx="66" cy="296" r="3.5"/><circle cx="236" cy="300" r="3.5"/><circle cx="44" cy="306" r="3"/></g>
+    <g fill="#FFC83A"><circle cx="66" cy="296" r="1.4"/><circle cx="236" cy="300" r="1.4"/></g>
+  </svg>
+
+  <div class="abs" style="left:12px;right:12px;top:16px;display:flex;justify-content:space-between">
+    <span class="glass"><span class="flag">EN</span>Английский</span>
+    <span style="display:flex;gap:7px"><span class="glass"><svg width="20" height="20"><use href="#i-flame"/></svg>3</span><span class="glass"><svg width="20" height="20"><use href="#star"/></svg>120</span></span>
+  </div>
+
+  <div class="abs bubble tail" style="left:14px;right:92px;top:62px;font-size:15px">Салам, Али! Сегодня учимся знакомиться</div>
+  <svg class="abs live" style="left:62px;top:140px;z-index:4" width="166" height="189"><use href="#bobo"/></svg>
+
+  <div class="abs sheet" style="z-index:3">
+    <span class="daychip">День 1 из 30</span>
+    <div class="r" style="font-weight:900;font-size:23px;letter-spacing:-.3px;margin-top:4px;line-height:1.2">Meeting Bobo</div>
+    <div class="steps">
+      <div class="step now"><span class="gem"><svg width="27" height="27"><use href="#i-abc"/></svg></span>Слова</div>
+      <div class="step"><span class="gem"><svg width="25" height="25"><use href="#i-puzzle"/></svg></span>Грамматика</div>
+      <div class="step"><span class="gem"><svg width="25" height="25"><use href="#i-chat"/></svg></span>Разговор</div>
+      <div style="width:44px;position:relative"><svg width="46" height="42" style="margin-top:4px"><use href="#chest"/></svg><svg class="abs tw" style="right:-4px;top:-6px" width="14" height="14"><use href="#spark"/></svg></div>
+    </div>
+    <div class="candy" style="height:58px"><svg width="22" height="22"><use href="#i-play"/></svg>Начать урок</div>
+    <div class="abs tabbar">
+      <div class="tb on"><i><svg width="22" height="22"><use href="#i-home"/></svg></i>Учиться</div>
+      <div class="tb"><i><svg width="23" height="23"><use href="#i-chat"/></svg></i>Говорить</div>
+      <div class="tb"><i><svg width="23" height="23"><use href="#i-map"/></svg></i>Путь</div>
+      <div class="tb"><i><svg width="23" height="23"><use href="#i-user"/></svg></i>Профиль</div>
+    </div>
+  </div>
+</div>
+<figcaption><b>Главный</b>Остров Бобо парит в закатном небе, вдали остров с Девичьей башней и водопадом. Бобо объёмный: свет сверху, тень под подбородком, блик на носу. Шаги урока стали камнями-самоцветами.</figcaption>
+</figure>
+
+<!-- C2 LESSON -->
+<figure>
+<div class="phone" style="background:linear-gradient(#E9E1FF,#FBF4FF 60%)">
+  <svg class="abs" style="inset:0" width="290" height="632"><circle cx="262" cy="120" r="70" fill="#fff" opacity=".5"/><circle cx="10" cy="330" r="54" fill="#fff" opacity=".5"/><use class="tw" href="#spark" x="238" y="306" width="16" height="16" style="color:#fff"/></svg>
+  <div class="abs" style="left:14px;right:14px;top:18px;display:flex;align-items:center;gap:10px">
+    <span class="xbtn" style="background:#fff;box-shadow:0 4px 0 var(--lav3);color:var(--ink2)"><svg width="18" height="18"><use href="#i-x"/></svg></span>
+    <span class="tube"><span></span></span>
+    <svg width="30" height="30" style="margin-left:-6px"><use href="#star"/></svg>
+  </div>
+
+  <svg class="abs live" style="left:12px;top:60px" width="72" height="82"><use href="#bobo"/></svg>
+  <div class="abs bubble" style="left:90px;right:14px;top:70px;display:flex;align-items:center;justify-content:space-between;padding:10px 10px 10px 16px;border-radius:24px 24px 24px 8px">
+    <span class="r" style="font-weight:900;font-size:22px;white-space:nowrap">Что это?</span>
+    <span class="say"><svg width="25" height="25"><use href="#i-sound"/></svg></span>
+  </div>
+
+  <div class="abs sticker" style="left:40px;right:40px;top:152px">
+    <svg width="150" height="130" viewBox="0 0 168 146">
+      <ellipse cx="84" cy="134" rx="74" ry="9" fill="#6C4DF2" opacity=".18"/>
+      <circle cx="26" cy="120" r="16" fill="url(#gTree)"/><circle cx="142" cy="122" r="14" fill="url(#gTree)"/><circle cx="152" cy="112" r="10" fill="url(#gTree)"/>
+      <use href="#house" x="24" y="4" width="120" height="126"/>
+    </svg>
+  </div>
+
+  <div class="abs" style="left:16px;right:16px;top:330px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div class="ans ok">house<svg class="abs" style="right:8px;top:-9px" width="20" height="20"><use href="#star"/></svg></div><div class="ans">tree</div>
+    <div class="ans">car</div><div class="ans">dog</div>
+  </div>
+
+  <div class="abs good">
+    <svg class="abs" style="left:0;top:0" width="290" height="12"><rect width="290" height="12" fill="url(#kilim)"/></svg>
+    <svg class="abs live" style="right:16px;top:12px" width="66" height="75"><use href="#bobo"/></svg>
+    <div class="r" style="font-weight:900;font-size:24px;text-shadow:0 2px 0 rgba(21,110,48,.4)">Верно!</div>
+    <div style="font-weight:800;font-size:15px;opacity:.95;margin:0 0 14px">house значит дом</div>
+    <div class="candy white" style="height:56px">Дальше</div>
+  </div>
+</div>
+<figcaption><b>Урок</b>Вопрос задаёт сам Бобо. Картинка выглядит как наклейка с толстой белой рамкой, ответы как кнопки-леденцы. У зелёной плашки кромка с узором килима, это свой, местный почерк.</figcaption>
+</figure>
+
+<!-- C3 TALK -->
+<figure>
+<div class="phone night">
+  <svg class="abs" style="inset:0" width="290" height="632" viewBox="0 0 290 632">
+    <g fill="#fff"><circle class="tw" cx="28" cy="96" r="1.6"/><circle class="tw" style="animation-delay:-1s" cx="70" cy="150" r="1.3"/><circle class="tw" style="animation-delay:-.4s" cx="256" cy="176" r="1.6"/><circle class="tw" style="animation-delay:-1.500s" cx="216" cy="118" r="1.2"/><circle class="tw" style="animation-delay:-2s" cx="36" cy="240" r="1.4"/><circle class="tw" style="animation-delay:-.9s" cx="262" cy="270" r="1.3"/><circle class="tw" style="animation-delay:-1.200s" cx="150" cy="78" r="1.2"/></g>
+    <circle cx="252" cy="136" r="36" fill="#FFF6C9" opacity=".18"/><circle cx="252" cy="136" r="19" fill="#FFF3C4"/><circle cx="259" cy="131" r="16" fill="#2A1D7A" opacity=".55"/>
+    <circle cx="145" cy="222" r="150" fill="url(#gAura)"/>
+    <g class="isl"><use href="#isle" x="40" y="268" width="210" height="130"/></g>
+  </svg>
+  <div class="abs" style="left:12px;right:12px;top:16px;display:flex;justify-content:space-between;align-items:center">
+    <span class="xbtn" style="background:rgba(255,255,255,.2);border:1.500px solid rgba(255,255,255,.5);color:#fff"><svg width="17" height="17"><use href="#i-x"/></svg></span>
+    <span class="glass" style="padding:0 14px 0 12px;gap:8px"><span style="width:9px;height:9px;border-radius:5px;background:#7CFF9B;box-shadow:0 0 0 4px rgba(124,255,155,.3)"></span>Живой разговор</span>
+    <span class="glass" style="padding:0 12px">3:40</span>
+  </div>
+  <div class="abs" style="left:0;right:0;top:62px;display:flex;justify-content:center;gap:8px">
+    <span class="glass" style="height:32px;font-size:13px;padding:0 12px">Тема: животные</span>
+    <span class="glass" style="height:32px;font-size:13px;padding:0 12px 0 8px"><svg width="16" height="16"><use href="#star"/></svg><svg width="16" height="16"><use href="#star"/></svg><svg width="16" height="16" style="opacity:.35"><use href="#star"/></svg>2 из 3</span>
+  </div>
+  <svg class="abs live" style="left:64px;top:102px" width="162" height="184"><use href="#bobo"/></svg>
+
+  <div class="abs bubble" style="left:18px;right:52px;top:318px;border-radius:24px 24px 24px 8px"><span class="r" style="font-weight:900;font-size:16.500px">What is your favourite animal?</span><div style="font-size:13.500px;color:var(--ink3);font-weight:700;margin-top:3px">Какое твоё любимое животное?</div></div>
+  <div class="abs mine" style="right:18px;top:412px">I like… cats</div>
+
+  <div class="abs" style="left:0;right:0;top:474px;display:flex;justify-content:center"><div class="ear2"><div class="wave"><s style="height:14px"></s><s style="height:30px"></s><s style="height:46px"></s><s style="height:24px"></s><s style="height:38px"></s><s style="height:16px"></s></div></div></div>
+  <div class="abs" style="left:14px;right:14px;bottom:22px;display:flex;align-items:center;justify-content:space-between">
+    <span class="gmini"><svg width="22" height="22"><use href="#i-bulb"/></svg></span>
+    <span style="width:60px"></span>
+    <span class="gmini"><svg width="22" height="22"><use href="#i-pause"/></svg></span>
+  </div>
+</div>
+<figcaption><b>Разговор без кнопок</b>Ночь, луна, Бобо на островке в мягком сиянии. Вечерний разговор перед сном выглядит как сказка. Кольцо внизу слушает само и расходится волнами, пока ты говоришь.</figcaption>
+</figure>
+
+<!-- C4 DONE -->
+<figure>
+<div class="phone party">
+  <div class="abs burst"></div>
+  <div class="abs conf" style="inset:0;overflow:hidden">
+    <i style="left:8%;background:#FFC83A;animation-delay:-.4s"></i><i style="left:20%;background:#FF6FA5;animation-delay:-2.200s"></i><i style="left:33%;background:#fff;animation-delay:-1.100s"></i><i style="left:47%;background:#8BEA5C;animation-delay:-3.300s"></i><i style="left:60%;background:#38D6E8;animation-delay:-2.800s"></i><i style="left:72%;background:#FFC83A;animation-delay:-.9s"></i><i style="left:84%;background:#fff;animation-delay:-3.900s"></i><i style="left:93%;background:#FF6FA5;animation-delay:-1.700s"></i>
+  </div>
+  <svg class="abs live" style="left:62px;top:50px" width="166" height="189"><use href="#bobo"/></svg>
+  <div class="abs r" style="left:0;right:0;top:246px;text-align:center;color:#fff;font-weight:900;font-size:31px;letter-spacing:-.5px;text-shadow:0 4px 0 rgba(42,30,92,.45)">Урок пройден!</div>
+  <div class="abs" style="left:0;right:0;top:292px;display:flex;justify-content:center;align-items:flex-end;gap:4px">
+    <svg class="bigstar" style="animation-delay:.2s" width="62" height="62"><use href="#star"/></svg>
+    <svg class="bigstar" style="animation-delay:.45s;margin-bottom:14px" width="80" height="80"><use href="#star"/></svg>
+    <svg class="bigstar" style="animation-delay:.7s" width="62" height="62"><use href="#star"/></svg>
+  </div>
+  <div class="abs" style="left:16px;right:16px;top:398px;display:flex;gap:10px">
+    <div class="stat"><b style="color:#D98A00">+15</b><span>звёзд</span></div>
+    <div class="stat"><b style="color:var(--vio)">5</b><span>новых слов</span></div>
+    <div class="stat"><b style="color:#F0561B">4 дня</b><span>серия</span></div>
+  </div>
+  <div class="abs gift" style="left:16px;right:16px;top:474px"><svg width="46" height="42" style="flex:none"><use href="#chest"/></svg><span style="white-space:nowrap">Подарок<br>для домика</span><em>Открыть</em></div>
+  <div class="abs" style="left:16px;right:16px;bottom:26px"><div class="candy" style="height:58px">Дальше</div></div>
+</div>
+<figcaption><b>Урок пройден</b>Лучи, конфетти, золотые звёзды с бликом вылетают по одной. Сундук в золотой плашке ждёт, когда его откроют.</figcaption>
+</figure>
+
+<!-- C5 PATH -->
+<figure>
+<div class="phone">
+  <svg class="abs" style="inset:0" width="290" height="632" viewBox="0 0 290 632" preserveAspectRatio="xMidYMid slice">
+    <defs><linearGradient id="sky5" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2E2496"/><stop offset=".35" stop-color="#7A5CF0"/><stop offset=".65" stop-color="#FF8FB0"/><stop offset=".85" stop-color="#FFC58F"/><stop offset="1" stop-color="#FFE9BF"/></linearGradient></defs>
+    <rect width="290" height="632" fill="url(#sky5)"/>
+    <g fill="#fff"><circle class="tw" cx="26" cy="90" r="1.6"/><circle class="tw" style="animation-delay:-1s" cx="110" cy="64" r="1.3"/><circle class="tw" style="animation-delay:-.5s" cx="60" cy="150" r="1.5"/><circle class="tw" style="animation-delay:-1.700s" cx="270" cy="210" r="1.3"/><circle class="tw" style="animation-delay:-2s" cx="20" cy="250" r="1.3"/></g>
+    <circle cx="145" cy="560" r="200" fill="url(#gGlow)"/>
+    <g class="cloud"><ellipse cx="230" cy="470" rx="34" ry="11" fill="url(#gCloud)"/><ellipse cx="248" cy="461" rx="21" ry="11" fill="url(#gCloud)"/></g>
+    <g class="cloud" style="animation-duration:15s"><ellipse cx="60" cy="338" rx="28" ry="9" fill="url(#gCloud)" opacity=".85"/></g>
+    <path d="M84 500 C150 470 190 470 200 430 C210 392 110 392 92 352 C76 314 180 306 198 270 C214 236 118 228 96 194 C84 172 150 150 196 138" fill="none" stroke="#fff" stroke-width="5" stroke-dasharray="1 13" stroke-linecap="round" opacity=".95"/>
+    <g class="isl2"><use href="#isle" x="146" y="120" width="128" height="80"/><use href="#tower" x="186" y="60" width="52" height="73"/><path class="water" d="M164 152 v54" stroke="url(#gWater)" stroke-width="8" stroke-linecap="round" fill="none"/></g>
+    <use href="#isleL" x="40" y="182" width="104" height="64"/>
+    <use href="#isleL" x="150" y="258" width="104" height="64"/>
+    <g class="isl"><use href="#isle" x="30" y="336" width="124" height="77"/><use href="#tree" x="112" y="308" width="30" height="40"/></g>
+    <use href="#isle" x="150" y="416" width="104" height="64"/>
+    <use href="#isle" x="26" y="486" width="116" height="72"/>
+    <use href="#house" x="92" y="462" width="38" height="40"/>
+  </svg>
+
+  <div class="abs" style="left:12px;right:12px;top:16px;display:flex;justify-content:space-between;align-items:center">
+    <span class="glass" style="padding:0 14px">Неделя 1: Баку</span>
+    <span class="glass"><svg width="20" height="20"><use href="#star"/></svg>120</span>
+  </div>
+  <span class="abs land" style="left:30px;top:112px">День 7: Девичья башня</span>
+
+  <div class="abs badge ok" style="left:42px;top:478px"><svg width="22" height="22"><use href="#i-check"/></svg></div>
+  <div class="abs badge ok" style="left:179px;top:406px"><svg width="22" height="22"><use href="#i-check"/></svg></div>
+  <div class="abs badge cur" style="left:88px;top:330px">3</div>
+  <div class="abs badge lock" style="left:179px;top:250px"><svg width="20" height="20"><use href="#i-lock"/></svg></div>
+  <div class="abs badge lock" style="left:69px;top:174px"><svg width="20" height="20"><use href="#i-lock"/></svg></div>
+
+  <svg class="abs live" style="left:26px;top:298px" width="62" height="71"><use href="#bobo"/></svg>
+  <div class="abs tip" style="left:146px;top:332px">My family<span>День 3, 10 минут</span></div>
+
+  <div class="abs tabbar" style="background:#fff;box-shadow:0 8px 20px -6px rgba(42,30,92,.45)">
+    <div class="tb"><i><svg width="23" height="23"><use href="#i-home"/></svg></i>Учиться</div>
+    <div class="tb"><i><svg width="23" height="23"><use href="#i-chat"/></svg></i>Говорить</div>
+    <div class="tb on"><i><svg width="22" height="22"><use href="#i-map"/></svg></i>Путь</div>
+    <div class="tb"><i><svg width="23" height="23"><use href="#i-user"/></svg></i>Профиль</div>
+  </div>
+</div>
+<figcaption><b>Путь</b>Дорога идёт вверх по летающим островам: от домика Бобо на закате к Девичьей башне среди звёзд. Пройденные острова зелёные, будущие спрятаны в сиреневом тумане.</figcaption>
+</figure>
+
+</div>
+</body>
+</html>

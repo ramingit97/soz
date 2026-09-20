@@ -21,10 +21,10 @@
 import { ScrollViewStyleReset } from 'expo-router/html';
 import type { PropsWithChildren } from 'react';
 
-import { colors } from '@/theme/colors';
+import { PALETTES } from '@/theme/palettes';
 
 const webFixes = `
-html, body { background-color: ${colors.bg}; overscroll-behavior: none; }
+html, body { background-color: ${PALETTES.kid.bg}; overscroll-behavior: none; }
 #root { overflow: hidden; }
 html, body, #root { height: 100dvh; }
 input:focus, textarea:focus { outline: none; }

@@ -31,8 +31,10 @@ import { DEFAULT_STATS, loadPetStats, savePetStats } from '@/services/petCare';
 import { playSfx } from '@/services/sfx';
 import { useSettings } from '@/store/settings';
 import { useAccent } from '@/hooks/useAccent';
-import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing, tints } from '@/theme';
+import { fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
 import { useCompanionName } from '@/utils/companion';
+import { byMode, makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 type RoomTab = 'room' | 'feed' | 'play' | 'care';
 type PetMoodType = 'happy' | 'curious' | 'sleepy' | 'sad';
@@ -60,6 +62,8 @@ function statMood(s: Stat): PetMoodType {
 function StatBar({ icon, label, value, color }: {
   icon: IconName; label: string; value: number; color: string;
 }) {
+  const { mode: uiMode } = useTheme();
+  const bar = barByMode[uiMode];
   const pct = Math.max(0, Math.min(100, value));
   return (
     <View style={bar.row}>
@@ -79,20 +83,20 @@ function StatBar({ icon, label, value, color }: {
   );
 }
 
-const bar = StyleSheet.create({
+const barByMode = makeModeStyles((t) => StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
   icon: { width: 28, alignItems: 'center' },
   labelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  label: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.xs, color: colors.ink },
+  label: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.xs, color: t.c.ink },
   pct: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize['2xs'] },
   track: {
     height: 10,
     borderRadius: 5,
-    backgroundColor: colors.bgDeep,
+    backgroundColor: t.c.bgDeep,
     overflow: 'hidden',
   },
   fill: { height: 10, borderRadius: 5 },
-});
+}));
 
 // ─── Tab bar ─────────────────────────────────────────────────────────────────
 
@@ -106,12 +110,12 @@ const TABS: { key: RoomTab; icon: IconName; labelRu: string; labelAz: string }[]
 // ─── Feed tab items ───────────────────────────────────────────────────────────
 
 interface FoodItem { emoji: string; labelRu: string; labelAz: string; gain: number; color: string }
-const FOODS: FoodItem[] = [
-  { emoji: '🍯', labelRu: 'Мёд', labelAz: 'Bal', gain: 25, color: colors.butter },
+const FOODS_BY_MODE = byMode<FoodItem[]>((t) => ([
+  { emoji: '🍯', labelRu: 'Мёд', labelAz: 'Bal', gain: 25, color: t.c.butter },
   { emoji: '🍎', labelRu: 'Яблоко', labelAz: 'Alma', gain: 15, color: '#FF6B6B' },
   { emoji: '🧁', labelRu: 'Кекс', labelAz: 'Keks', gain: 20, color: '#E8945A' },
   { emoji: '🥕', labelRu: 'Морковь', labelAz: 'Kök', gain: 12, color: '#FF9B3D' },
-];
+]));
 
 // ─── Play tab actions ─────────────────────────────────────────────────────────
 
@@ -153,6 +157,9 @@ function FloatingHeart({ emoji }: { emoji: string }) {
 // ─── Screen ──────────────────────────────────────────────────────────────────
 
 export default function PetRoomScreen() {
+  const { c, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
+  const FOODS = FOODS_BY_MODE[uiMode];
   const router = useRouter();
   const lang = useSettings((s) => s.parentUILanguage) ?? 'ru';
   const childName = useSettings((s) => s.childName) ?? '';
@@ -284,8 +291,8 @@ export default function PetRoomScreen() {
         {/* Mood + name */}
         <Animated.View entering={FadeIn.duration(400).delay(200)} style={styles.nameRow}>
           <Text style={styles.petName}>{bot}</Text>
-          <View style={[styles.moodBadge, { backgroundColor: avg >= 70 ? tints.sage : avg >= 45 ? '#FFF8D6' : tints.berry }]}>
-            <Text style={[styles.moodText, { color: avg >= 70 ? colors.accent : avg >= 45 ? '#9C7E00' : colors.berry }]}>
+          <View style={[styles.moodBadge, { backgroundColor: avg >= 70 ? c.tints.sage : avg >= 45 ? '#FFF8D6' : c.tints.berry }]}>
+            <Text style={[styles.moodText, { color: avg >= 70 ? c.accent : avg >= 45 ? '#9C7E00' : c.berry }]}>
               {moodLabel}
             </Text>
           </View>
@@ -296,11 +303,11 @@ export default function PetRoomScreen() {
 
         {/* Stat bars */}
         <Animated.View entering={FadeInUp.duration(450).delay(150)} style={[styles.statsCard, shadow.sm]}>
-          <StatBar icon="utensils" label={isAz ? 'Toxluq' : 'Сытость'} value={stats.hunger} color={colors.butterDeep} />
+          <StatBar icon="utensils" label={isAz ? 'Toxluq' : 'Сытость'} value={stats.hunger} color={c.butterDeep} />
           <View style={styles.statDivider} />
-          <StatBar icon="heart" label={isAz ? 'Sevgi' : 'Любовь'} value={stats.love} color={colors.berry} />
+          <StatBar icon="heart" label={isAz ? 'Sevgi' : 'Любовь'} value={stats.love} color={c.berry} />
           <View style={styles.statDivider} />
-          <StatBar icon="zap" label={isAz ? 'Enerji' : 'Энергия'} value={stats.energy} color={colors.accentDeep} />
+          <StatBar icon="zap" label={isAz ? 'Enerji' : 'Энергия'} value={stats.energy} color={c.accentDeep} />
         </Animated.View>
 
         {/* Tab bar */}
@@ -313,7 +320,7 @@ export default function PetRoomScreen() {
               accessibilityRole="tab"
               accessibilityState={{ selected: tab === t.key }}
             >
-              <Icon name={t.icon} size={18} color={tab === t.key ? accent.ink : colors.inkSoft} />
+              <Icon name={t.icon} size={18} color={tab === t.key ? accent.ink : c.inkSoft} />
               <Text style={[styles.tabLabel, tab === t.key && { color: accent.ink }]}>
                 {isAz ? t.labelAz : t.labelRu}
               </Text>
@@ -334,7 +341,7 @@ export default function PetRoomScreen() {
               <RoomItem emoji="🏆" label={isAz ? 'Kuboklar' : 'Кубки'} />
             </View>
             <View style={styles.tipRow}>
-              <Icon name="lightbulb" size={16} color={colors.inkSoft} />
+              <Icon name="lightbulb" size={16} color={c.inkSoft} />
               <Text style={styles.tipText}>
                 {isAz ? 'Dostuna toxun — sevinəcək!' : `Потрогай ${bot} — он обрадуется!`}
               </Text>
@@ -377,11 +384,11 @@ export default function PetRoomScreen() {
                   style={({ pressed }) => [styles.actionBtn, pressed && { transform: [{ scale: 0.94 }] }, shadow.sm]}
                   onPress={() => play(action)}
                 >
-                  <View style={[styles.actionIconBox, { backgroundColor: tints.berry }]}>
+                  <View style={[styles.actionIconBox, { backgroundColor: c.tints.berry }]}>
                     <Text style={styles.actionEmoji}>{action.emoji}</Text>
                   </View>
                   <Text style={styles.actionLabel}>{isAz ? action.labelAz : action.labelRu}</Text>
-                  <Text style={[styles.gainText, { color: colors.berry }]}>+{action.gain}</Text>
+                  <Text style={[styles.gainText, { color: c.berry }]}>+{action.gain}</Text>
                 </Pressable>
               ))}
             </View>
@@ -400,11 +407,11 @@ export default function PetRoomScreen() {
                   style={({ pressed }) => [styles.actionBtn, pressed && { transform: [{ scale: 0.94 }] }, shadow.sm]}
                   onPress={() => care(action)}
                 >
-                  <View style={[styles.actionIconBox, { backgroundColor: tints.sage }]}>
+                  <View style={[styles.actionIconBox, { backgroundColor: c.tints.sage }]}>
                     <Text style={styles.actionEmoji}>{action.emoji}</Text>
                   </View>
                   <Text style={styles.actionLabel}>{isAz ? action.labelAz : action.labelRu}</Text>
-                  <Text style={[styles.gainText, { color: colors.accent }]}>+{action.gain}</Text>
+                  <Text style={[styles.gainText, { color: c.accent }]}>+{action.gain}</Text>
                 </Pressable>
               ))}
             </View>
@@ -438,6 +445,8 @@ export default function PetRoomScreen() {
 }
 
 function RoomItem({ emoji, label }: { emoji: string; label: string }) {
+  const { mode: uiMode } = useTheme();
+  const room = roomByMode[uiMode];
   return (
     <View style={room.item}>
       <Text style={room.emoji}>{emoji}</Text>
@@ -446,12 +455,12 @@ function RoomItem({ emoji, label }: { emoji: string; label: string }) {
   );
 }
 
-const room = StyleSheet.create({
+const roomByMode = makeModeStyles((t) => StyleSheet.create({
   item: {
     width: '22%',
     alignItems: 'center',
     gap: spacing[1],
-    backgroundColor: colors.card,
+    backgroundColor: t.c.card,
     borderRadius: radius.xl,
     paddingVertical: spacing[4],
     borderTopWidth: 1,
@@ -460,10 +469,10 @@ const room = StyleSheet.create({
     borderBottomColor: 'rgba(125,90,42,0.08)',
   },
   emoji: { fontSize: 28 },
-  label: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize['3xs'], color: colors.inkSoft, textAlign: 'center' },
-});
+  label: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize['3xs'], color: t.c.inkSoft, textAlign: 'center' },
+}));
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
 
   scroll: {
     paddingHorizontal: spacing[5],
@@ -509,7 +518,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing[3],
   },
-  petName: { fontFamily: fontFamily.display, fontSize: fontSize['2xl'], color: colors.ink },
+  petName: { fontFamily: fontFamily.display, fontSize: fontSize['2xl'], color: t.c.ink },
   moodBadge: {
     borderRadius: radius.full,
     paddingHorizontal: spacing[3],
@@ -519,7 +528,7 @@ const styles = StyleSheet.create({
 
   // Stats
   statsCard: {
-    backgroundColor: colors.card,
+    backgroundColor: t.c.card,
     borderRadius: radius.xl,
     padding: spacing[4],
     gap: spacing[3],
@@ -528,12 +537,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: 'rgba(125,90,42,0.08)',
   },
-  statDivider: { height: 1, backgroundColor: colors.bgDeep },
+  statDivider: { height: 1, backgroundColor: t.c.bgDeep },
 
   // Tab bar
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: colors.bgDeep,
+    backgroundColor: t.c.bgDeep,
     borderRadius: radius.xl,
     padding: 4,
     gap: 2,
@@ -546,14 +555,14 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   tabBtnActive: {
-    backgroundColor: colors.surface,
+    backgroundColor: t.c.surface,
     borderWidth: 1,
-    borderColor: colors.surfaceBorder,
+    borderColor: t.c.surfaceBorder,
   },
   tabLabel: {
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize['3xs'],
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     letterSpacing: 0.2,
   },
 
@@ -562,7 +571,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontFamily: fontFamily.bodyBlack,
     fontSize: fontSize.caption,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     letterSpacing: 0.5,
   },
   roomGrid: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing[2] },
@@ -570,7 +579,7 @@ const styles = StyleSheet.create({
   tipText: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.sm,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     flexShrink: 1,
   },
 
@@ -581,7 +590,7 @@ const styles = StyleSheet.create({
   },
   actionBtn: {
     width: '45%',
-    backgroundColor: colors.card,
+    backgroundColor: t.c.card,
     borderRadius: radius.xl,
     padding: spacing[4],
     alignItems: 'center',
@@ -602,12 +611,12 @@ const styles = StyleSheet.create({
   actionLabel: {
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize.caption,
-    color: colors.ink,
+    color: t.c.ink,
   },
   gainText: {
     fontFamily: fontFamily.bodyBlack,
     fontSize: fontSize.xs,
-    color: colors.primary,
+    color: t.c.primary,
   },
 
   // Nudge
@@ -615,7 +624,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing[3],
-    backgroundColor: colors.primarySoft,
+    backgroundColor: t.c.primarySoft,
     borderRadius: radius.xl,
     padding: spacing[4],
     borderTopWidth: 1,
@@ -626,12 +635,12 @@ const styles = StyleSheet.create({
   nudgeText: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.sm,
-    color: colors.ink,
+    color: t.c.ink,
     flex: 1,
     lineHeight: 19,
   },
   nudgeBtn: {
-    backgroundColor: colors.primary,
+    backgroundColor: t.c.primary,
     borderRadius: radius.full,
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[2],
@@ -639,6 +648,6 @@ const styles = StyleSheet.create({
   nudgeBtnText: {
     fontFamily: fontFamily.bodyBlack,
     fontSize: fontSize.xs,
-    color: colors.white,
+    color: t.c.white,
   },
-});
+}));

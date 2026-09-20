@@ -1,44 +1,50 @@
 /**
- * App accent = the pet's color. The child picks Bobo's color in pet-room,
- * and that same hue becomes the app's accent — so primary buttons (and, over
- * time, other accent surfaces) wear "your color". Base cream/ink/claymorphism
- * never changes; only the accent family shifts.
+ * Акцент приложения — цвет режима, а не цвет питомца.
  *
- * Keyed to the SAME hues HBPet uses, so pet and app always match. Hue 55 (honey)
- * maps to the existing brand peach, so the default look is unchanged — only a
- * child who deliberately recolors the pet sees a themed app.
+ * До 2026-09-20 акцент брался из выбранного ребёнком оттенка питомца: приложение
+ * целиком перекрашивалось под «твой цвет». В макетах C и D у каждого режима свой
+ * фиксированный акцент (фиолетовый у детей, мятный у взрослых), иначе сцена,
+ * кнопки и вкладки расходятся с фоном. Выбранный цвет по-прежнему красит самого
+ * персонажа — это `petPaletteFor` в `HBPet`, он не затронут.
+ *
+ * Форма объекта сохранена: 219 обращений `accent.ink` / `accent.bottom` /
+ * `accent.soft` / `accent.text` в экранах продолжают работать без правок.
  */
-import { colors } from './colors';
-import { nearestPetHue, type PetHue } from './petPalette';
+import { PALETTES } from './palettes';
+import type { UIMode } from './mode';
 
 export interface Accent {
-  /** Gradient top (slightly lighter) for pillowy buttons. */
+  /** Верх градиента — чуть светлее. */
   top: string;
-  /** Gradient bottom / solid accent. */
+  /** Низ градиента, он же сплошной акцент. */
   bottom: string;
-  /** Readable label color on the accent (dark on light-yellow, else white). */
+  /** Читаемая подпись на акценте. */
   text: string;
-  /** Soft tint fill (chips, halos, progress track echoes). */
+  /** Мягкая заливка: чипы, halo, дорожки прогресса. */
   soft: string;
-  /**
-   * Акцент как цвет иконки или короткой подписи на белом и на `soft`. `bottom`
-   * для этого слишком светлый: у «масла» контраст на белом 2.1. Все значения
-   * держат ≥ 5:1 на белом и ≥ 4:1 на своём `soft`.
-   */
+  /** Акцент как цвет иконки или короткой подписи на карточке и на `soft`. */
   ink: string;
 }
 
-const ACCENTS: Record<PetHue, Accent> = {
-  55: { top: '#EC9C64', bottom: colors.primary, text: '#FFFFFF', soft: colors.primarySoft, ink: '#A85A28' }, // honey → brand peach (default)
-  175: { top: '#86D0BE', bottom: colors.accent, text: '#FFFFFF', soft: '#D4F2EA', ink: '#357A69' }, // sage
-  90: { top: '#F7D972', bottom: colors.butter, text: colors.ink, soft: '#FFF6D0', ink: '#7F6628' }, // butter (dark text!)
-  25: { top: '#F4A583', bottom: '#F0936F', text: '#FFFFFF', soft: '#FCD3C0', ink: '#B54E33' }, // coral
-  230: { top: '#96BEEC', bottom: '#84B0E6', text: '#FFFFFF', soft: '#CFE2F7', ink: '#3A6BAA' }, // sky
-  300: { top: '#CFA2D1', bottom: '#C593C8', text: '#FFFFFF', soft: '#E8D2EA', ink: '#8E5594' }, // orchid
-  350: { top: '#F09BB2', bottom: '#ED8AA6', text: '#FFFFFF', soft: '#FAD3DD', ink: '#B04366' }, // rose
+const ACCENTS: Record<UIMode, Accent> = {
+  kid: {
+    top: '#8E73FF',
+    bottom: PALETTES.kid.primary,
+    text: '#FFFFFF',
+    soft: PALETTES.kid.primarySoft,
+    ink: PALETTES.kid.accentInk,
+  },
+  teen: {
+    top: '#5BEDE0',
+    bottom: PALETTES.teen.primary,
+    // На мятном нужен тёмный текст: белый на #3DE0D0 даёт контраст 1.8.
+    text: PALETTES.teen.bg,
+    soft: PALETTES.teen.primarySoft,
+    ink: PALETTES.teen.accentInk,
+  },
 };
 
-/** Pure: nearest accent for any hue — the same nearest-preset rule as the pet. */
-export function accentFor(hue: number): Accent {
-  return ACCENTS[nearestPetHue(hue)];
+/** Чистая функция: акцент возрастного режима. */
+export function accentFor(mode: UIMode): Accent {
+  return ACCENTS[mode];
 }

@@ -4,7 +4,6 @@
  * the journey as "Home World → Nature World → School World → City World".
  */
 
-import { colors } from '@/theme';
 
 export interface World {
   id: 'home' | 'nature' | 'school' | 'city';
@@ -29,8 +28,8 @@ export const WORLDS: World[] = [
     labelEn: 'Home',
     startDay: 1,
     endDay: 7,
-    color: colors.primary,
-    tint: '#FCE3CE',
+    color: '#6C4DF2',
+    tint: '#EDE7FF',
   },
   {
     id: 'nature',
@@ -40,8 +39,8 @@ export const WORLDS: World[] = [
     labelEn: 'Nature',
     startDay: 8,
     endDay: 14,
-    color: colors.accent,
-    tint: '#D4F2EA',
+    color: '#38D6E8',
+    tint: '#D9F7F3',
   },
   {
     id: 'school',

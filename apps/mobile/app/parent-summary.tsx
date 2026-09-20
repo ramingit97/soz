@@ -40,11 +40,14 @@ import { useSettings } from '@/store/settings';
 import { HBIconBox } from '@/components/HBIconBox';
 import { useAccent } from '@/hooks/useAccent';
 import { UIModeProvider } from '@/hooks/useUIMode';
-import { colors, fontFamily, fontSize, radius, shadow, spacing, tints } from '@/theme';
-import { MODE_TOKENS } from '@/theme/modeTokens';
+import { fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { MODE_TOKENS, makeModeStyles } from '@/theme/modeTokens';
 import { useCompanionName } from '@/utils/companion';
+import { useTheme } from '@/hooks/useTheme';
 
 export default function ParentSummaryScreen() {
+  const { c, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const router = useRouter();
   const lang = useSettings((s) => s.parentUILanguage) ?? 'ru';
   const childId = useSettings((s) => s.childId);
@@ -178,7 +181,7 @@ export default function ParentSummaryScreen() {
           <Animated.View entering={FadeInUp.duration(500).delay(40)}>
             <HBCard depth="sm" ringColor={proactiveOn ? accent.bottom : undefined} style={styles.memCard}>
               <View style={styles.cardHeader}>
-                <HBIconBox icon="brain" tint={colors.primarySoft} size={36} rounding={radius.md} />
+                <HBIconBox icon="brain" tint={c.primarySoft} size={36} rounding={radius.md} />
                 <Text style={styles.cardTitle}>{isAz ? 'Bobo yaddaşı' : 'Память Бобо'}</Text>
               </View>
 
@@ -222,7 +225,7 @@ export default function ParentSummaryScreen() {
                         accessibilityLabel={isAz ? 'Unut' : 'Забыть'}
                         style={styles.threadForget}
                       >
-                        <Icon name="x" size={14} color={colors.inkSoft} strokeWidth={2.5} />
+                        <Icon name="x" size={14} color={c.inkSoft} strokeWidth={2.5} />
                       </Pressable>
                     </View>
                   ))}
@@ -241,7 +244,7 @@ export default function ParentSummaryScreen() {
           <Animated.View entering={FadeInUp.duration(500).delay(60)}>
             <HBCard depth="sm" style={styles.analysisCard}>
               <View style={styles.cardHeader}>
-                <HBIconBox icon="circle-check" tint={tints.sage} size={36} rounding={radius.md} />
+                <HBIconBox icon="circle-check" tint={c.tints.sage} size={36} rounding={radius.md} />
                 <Text style={styles.cardTitle}>
                   {isAz ? 'Keçilən dərslər' : 'Пройденные уроки'}
                 </Text>
@@ -262,7 +265,7 @@ export default function ParentSummaryScreen() {
                       <Text style={styles.lessonDate}>{(p.completedAt ?? '').slice(0, 10)}</Text>
                     </View>
                     <View style={styles.starsRow}>
-                      <Icon name="star" size={14} color={colors.butterDeep} fill={colors.butter} strokeWidth={2} />
+                      <Icon name="star" size={14} color={c.butterDeep} fill={c.butter} strokeWidth={2} />
                       <Text style={styles.lessonStars}>{p.starsEarned}</Text>
                     </View>
                   </View>
@@ -356,17 +359,17 @@ export default function ParentSummaryScreen() {
             {/* Strengths */}
             {analysis.analysis.strengths.length > 0 && (
               <Animated.View entering={FadeInUp.duration(500).delay(160)}>
-                <HBCard depth="sm" ringColor={colors.accent} style={styles.analysisCard}>
+                <HBCard depth="sm" ringColor={c.accent} style={styles.analysisCard}>
                   <View style={styles.cardHeader}>
-                    <HBIconBox icon="dumbbell" tint={tints.sage} size={36} rounding={radius.md} />
+                    <HBIconBox icon="dumbbell" tint={c.tints.sage} size={36} rounding={radius.md} />
                     <Text style={styles.cardTitle}>
                       {isAz ? 'Güclü tərəfləri' : 'Сильные стороны'}
                     </Text>
                   </View>
                   {analysis.analysis.strengths.map((s, i) => (
                     <View key={i} style={styles.bulletRow}>
-                      <View style={[styles.bullet, { backgroundColor: colors.accent }]}>
-                        <Icon name="check" size={12} color={colors.white} strokeWidth={3} />
+                      <View style={[styles.bullet, { backgroundColor: c.accent }]}>
+                        <Icon name="check" size={12} color={c.white} strokeWidth={3} />
                       </View>
                       <View style={{ flex: 1 }}>
                         <Text style={styles.bulletTopic}>{s.topic}</Text>
@@ -381,7 +384,7 @@ export default function ParentSummaryScreen() {
             {/* Weaknesses */}
             {analysis.analysis.weaknesses.length > 0 && (
               <Animated.View entering={FadeInUp.duration(500).delay(240)}>
-                <HBCard depth="sm" ringColor={colors.butter} style={styles.analysisCard}>
+                <HBCard depth="sm" ringColor={c.butter} style={styles.analysisCard}>
                   <View style={styles.cardHeader}>
                     <HBIconBox icon="target" tint="#FFF8D6" size={36} rounding={radius.md} />
                     <Text style={styles.cardTitle}>
@@ -390,7 +393,7 @@ export default function ParentSummaryScreen() {
                   </View>
                   {analysis.analysis.weaknesses.map((w, i) => (
                     <View key={i} style={styles.bulletRow}>
-                      <View style={[styles.bullet, { backgroundColor: colors.butter }]}>
+                      <View style={[styles.bullet, { backgroundColor: c.butter }]}>
                         <Text style={styles.bulletCheck}>•</Text>
                       </View>
                       <View style={{ flex: 1 }}>
@@ -417,7 +420,7 @@ export default function ParentSummaryScreen() {
               <Animated.View entering={FadeInUp.duration(500).delay(300)}>
                 <HBCard depth="sm" style={styles.analysisCard}>
                   <View style={styles.cardHeader}>
-                    <HBIconBox icon="heart" tint={tints.berry} size={36} rounding={radius.md} />
+                    <HBIconBox icon="heart" tint={c.tints.berry} size={36} rounding={radius.md} />
                     <Text style={styles.cardTitle}>{isAz ? 'Maraqları' : 'Интересы'}</Text>
                   </View>
                   <View style={styles.chipRow}>
@@ -441,7 +444,7 @@ export default function ParentSummaryScreen() {
               <Animated.View entering={FadeInUp.duration(500).delay(340)}>
                 <HBCard depth="sm" style={styles.analysisCard}>
                   <View style={styles.cardHeader}>
-                    <HBIconBox icon="refresh-cw" tint={colors.primarySoft} size={36} rounding={radius.md} />
+                    <HBIconBox icon="refresh-cw" tint={c.primarySoft} size={36} rounding={radius.md} />
                     <Text style={styles.cardTitle}>
                       {isAz ? 'Təkrarlanacaq sözlər' : 'Повторим слова'}
                     </Text>
@@ -461,7 +464,7 @@ export default function ParentSummaryScreen() {
             <Animated.View entering={FadeInUp.duration(500).delay(400)}>
               <HBCard depth="md" ringColor={accent.bottom} style={styles.planCard}>
                 <View style={styles.cardHeader}>
-                  <HBIconBox icon="calendar" tint={colors.primarySoft} size={36} rounding={radius.md} />
+                  <HBIconBox icon="calendar" tint={c.primarySoft} size={36} rounding={radius.md} />
                   <Text style={[styles.cardTitle, { color: accent.ink }]}>
                     {isAz ? 'AI plan — növbəti həftə' : 'AI-план на следующую неделю'}
                   </Text>
@@ -486,7 +489,7 @@ export default function ParentSummaryScreen() {
 
                 {generating && (
                   <View style={styles.generatingBox}>
-                    <ActivityIndicator color={colors.primary} size="large" />
+                    <ActivityIndicator color={c.primary} size="large" />
                     <Text style={styles.loadingText}>
                       {isAz ? `${bot} plan qurur...` : `${bot} составляет план...`}
                     </Text>
@@ -565,6 +568,8 @@ export default function ParentSummaryScreen() {
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
 function StatCard({ icon, value, label }: { icon: IconName; value: number; label: string }) {
+  const { mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const accent = useAccent();
   return (
     <HBCard style={styles.statCard}>
@@ -580,6 +585,8 @@ function EmptyState({
 }: {
   icon: IconName; title: string; body: string; action: string; onAction: () => void;
 }) {
+  const { mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const accent = useAccent();
   return (
     <HBCard depth="sm" style={styles.emptyCard}>
@@ -591,7 +598,7 @@ function EmptyState({
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   scroll: {
     paddingTop: spacing[1],
     paddingBottom: spacing[12],
@@ -604,7 +611,7 @@ const styles = StyleSheet.create({
   loadingText: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.sm,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     textAlign: 'center',
     marginTop: spacing[2],
   },
@@ -616,7 +623,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontFamily: fontFamily.display,
     fontSize: fontSize['2xl'],
-    color: colors.ink,
+    color: t.c.ink,
   },
 
   analysisCard: { gap: spacing[3] },
@@ -628,10 +635,10 @@ const styles = StyleSheet.create({
     gap: spacing[3],
     paddingVertical: spacing[2],
     borderBottomWidth: 1,
-    borderBottomColor: colors.bgDeep,
+    borderBottomColor: t.c.bgDeep,
   },
   lessonBadge: {
-    backgroundColor: colors.primarySoft,
+    backgroundColor: t.c.primarySoft,
     paddingHorizontal: spacing[2],
     paddingVertical: spacing[1],
     borderRadius: radius.sm,
@@ -640,15 +647,15 @@ const styles = StyleSheet.create({
   lessonBadgeText: {
     fontFamily: fontFamily.bodyBlack,
     fontSize: fontSize['3xs'],
-    color: colors.primary,
+    color: t.c.primary,
     letterSpacing: 0.3,
     textAlign: 'center',
   },
-  lessonTheme: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.sm, color: colors.ink },
+  lessonTheme: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.sm, color: t.c.ink },
   lessonDate: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.xs,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     marginTop: 1,
   },
   lessonStars: {
@@ -661,15 +668,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing[3],
-    backgroundColor: colors.bg,
+    backgroundColor: t.c.bg,
     borderRadius: radius.lg,
     padding: spacing[3],
   },
-  memToggleTitle: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize.sm, color: colors.ink },
+  memToggleTitle: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize.sm, color: t.c.ink },
   memToggleSub: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.xs,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     marginTop: 3,
     lineHeight: 16,
   },
@@ -677,16 +684,16 @@ const styles = StyleSheet.create({
     width: 48,
     height: 28,
     borderRadius: 14,
-    backgroundColor: colors.bgDeep,
+    backgroundColor: t.c.bgDeep,
     padding: 3,
     justifyContent: 'center',
   },
-  memKnob: { width: 22, height: 22, borderRadius: 11, backgroundColor: colors.white, ...shadow.sm },
+  memKnob: { width: 22, height: 22, borderRadius: 11, backgroundColor: t.c.white, ...shadow.sm },
   memKnobOn: { alignSelf: 'flex-end' },
   memListLabel: {
     fontFamily: fontFamily.bodyBlack,
     fontSize: fontSize['3xs'],
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     letterSpacing: 1,
   },
   threadRow: {
@@ -695,15 +702,15 @@ const styles = StyleSheet.create({
     gap: spacing[2],
     paddingVertical: spacing[2],
     borderBottomWidth: 1,
-    borderBottomColor: colors.bgDeep,
+    borderBottomColor: t.c.bgDeep,
   },
-  threadText: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.sm, color: colors.ink },
-  threadMeta: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize.xs, color: colors.inkSoft, marginTop: 2 },
+  threadText: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.sm, color: t.c.ink },
+  threadMeta: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize.xs, color: t.c.inkSoft, marginTop: 2 },
   threadForget: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: colors.bgDeep,
+    backgroundColor: t.c.bgDeep,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -712,13 +719,13 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontFamily: fontFamily.display,
     fontSize: fontSize.lg,
-    color: colors.ink,
+    color: t.c.ink,
     flex: 1,
   },
   cardSub: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.sm,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     lineHeight: 20,
   },
 
@@ -733,19 +740,19 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   bulletCheck: {
-    color: colors.white,
+    color: t.c.white,
     fontFamily: fontFamily.bodyBlack,
     fontSize: fontSize['2xs'],
   },
   bulletTopic: {
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize.base,
-    color: colors.ink,
+    color: t.c.ink,
   },
   bulletEvidence: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.xs,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     marginTop: 2,
     lineHeight: 18,
   },
@@ -763,7 +770,7 @@ const styles = StyleSheet.create({
     color: '#C76A1A',
   },
   interestChip: {
-    backgroundColor: tints.berry,
+    backgroundColor: t.c.tints.berry,
     borderRadius: radius.full,
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[1],
@@ -771,10 +778,10 @@ const styles = StyleSheet.create({
   interestText: {
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize.sm,
-    color: colors.berry,
+    color: t.c.berry,
   },
   vocabChip: {
-    backgroundColor: colors.primarySoft,
+    backgroundColor: t.c.primarySoft,
     borderRadius: radius.sm,
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[1],
@@ -782,11 +789,11 @@ const styles = StyleSheet.create({
   vocabChipText: {
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize.sm,
-    color: colors.primary,
+    color: t.c.primary,
   },
 
   rationaleBox: {
-    backgroundColor: colors.primarySoft,
+    backgroundColor: t.c.primarySoft,
     borderRadius: radius.lg,
     padding: spacing[4],
     gap: spacing[2],
@@ -794,13 +801,13 @@ const styles = StyleSheet.create({
   rationaleLabel: {
     fontFamily: fontFamily.bodyBlack,
     fontSize: fontSize['3xs'],
-    color: colors.primary,
+    color: t.c.primary,
     letterSpacing: 1,
   },
   rationaleText: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.sm,
-    color: colors.ink,
+    color: t.c.ink,
     lineHeight: 20,
   },
 
@@ -809,10 +816,10 @@ const styles = StyleSheet.create({
     gap: spacing[3],
     paddingVertical: spacing[3],
     borderBottomWidth: 1,
-    borderBottomColor: colors.bgDeep,
+    borderBottomColor: t.c.bgDeep,
   },
   dayBadge: {
-    backgroundColor: colors.primarySoft,
+    backgroundColor: t.c.primarySoft,
     paddingHorizontal: spacing[2],
     paddingVertical: spacing[1],
     borderRadius: radius.sm,
@@ -822,7 +829,7 @@ const styles = StyleSheet.create({
   dayBadgeText: {
     fontFamily: fontFamily.bodyBlack,
     fontSize: fontSize['3xs'],
-    color: colors.primary,
+    color: t.c.primary,
     letterSpacing: 0.3,
     textAlign: 'center',
   },
@@ -830,13 +837,13 @@ const styles = StyleSheet.create({
   dayTheme: {
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize.base,
-    color: colors.ink,
+    color: t.c.ink,
     flexShrink: 1,
   },
   dayReasoning: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.xs,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     marginTop: 3,
     lineHeight: 17,
   },
@@ -844,4 +851,4 @@ const styles = StyleSheet.create({
   generatingBox: { alignItems: 'center', gap: spacing[3], paddingVertical: spacing[6] },
 
   actionsRow: { flexDirection: 'row', gap: spacing[2], marginTop: spacing[2], alignItems: 'center' },
-});
+}));

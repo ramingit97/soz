@@ -38,8 +38,10 @@ import { Text } from '@/components/Text';
 import { getChildren, type ChildProfile } from '@/services/api';
 import { todayISO, useSettings } from '@/store/settings';
 import { useAccent } from '@/hooks/useAccent';
-import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing, tints } from '@/theme';
+import { fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
 import { KID_MAX_AGE } from '@/theme/mode';
+import { makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 const PET_HUES = [55, 175, 300, 90] as const;
 
@@ -65,6 +67,8 @@ function RingAvatar({
   todayDone: boolean;
   size?: number;
 }) {
+  const { c, mode: uiMode } = useTheme();
+  const ring = ringByMode[uiMode];
   const r = (size - 10) / 2;
   const cx = size / 2;
   const cy = size / 2;
@@ -77,13 +81,13 @@ function RingAvatar({
         <Circle
           cx={cx} cy={cy} r={r}
           fill="none"
-          stroke={colors.bgDeep}
+          stroke={c.bgDeep}
           strokeWidth={7}
         />
         <Circle
           cx={cx} cy={cy} r={r}
           fill="none"
-          stroke={todayDone ? colors.accent : colors.primary}
+          stroke={todayDone ? c.accent : c.primary}
           strokeWidth={7}
           strokeDasharray={`${filled} ${circumference}`}
           strokeLinecap="round"
@@ -95,14 +99,14 @@ function RingAvatar({
       </View>
       {todayDone && (
         <View style={ring.checkBadge}>
-          <Icon name="check" size={12} color={colors.white} strokeWidth={3} />
+          <Icon name="check" size={12} color={c.white} strokeWidth={3} />
         </View>
       )}
     </View>
   );
 }
 
-const ring = StyleSheet.create({
+const ringByMode = makeModeStyles((t) => StyleSheet.create({
   checkBadge: {
     position: 'absolute',
     bottom: 0,
@@ -110,13 +114,13 @@ const ring = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: colors.accent,
+    backgroundColor: t.c.accent,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: colors.card,
+    borderColor: t.c.card,
   },
-});
+}));
 
 // ─── Child card ──────────────────────────────────────────────────────────────
 
@@ -135,6 +139,8 @@ function ChildCard({
   az: boolean;
   onPress: () => void;
 }) {
+  const { c, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const scale = useSharedValue(0.88);
   const opacity = useSharedValue(0);
 
@@ -168,18 +174,18 @@ function ChildCard({
         <View style={styles.chipsRow}>
           {child.streak > 0 && (
             <View style={styles.chip}>
-              <Icon name="flame" size={13} color={colors.primaryDeep} strokeWidth={2.25} />
+              <Icon name="flame" size={13} color={c.primaryDeep} strokeWidth={2.25} />
               <Text style={styles.chipText}>{child.streak}</Text>
             </View>
           )}
           <View style={styles.chip}>
-            <Icon name="star" size={13} color={colors.butterDeep} fill={colors.butter} strokeWidth={2} />
+            <Icon name="star" size={13} color={c.butterDeep} fill={c.butter} strokeWidth={2} />
             <Text style={styles.chipText}>{child.totalStars}</Text>
           </View>
         </View>
 
         <View style={[styles.dayChip, todayDone && styles.dayChipDone]}>
-          {todayDone ? <Icon name="check" size={13} color={colors.accentDeep} strokeWidth={3} /> : null}
+          {todayDone ? <Icon name="check" size={13} color={c.accentDeep} strokeWidth={3} /> : null}
           <Text style={[styles.dayChipText, todayDone && styles.dayChipTextDone]}>
             {todayDone ? (az ? 'Hazır' : 'Готово') : az ? `Gün ${child.currentDay}` : `День ${child.currentDay}`}
           </Text>
@@ -192,6 +198,8 @@ function ChildCard({
 // ─── Add child card ──────────────────────────────────────────────────────────
 
 function AddChildCard({ onPress, index, az }: { onPress: () => void; index: number; az: boolean }) {
+  const { c, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const scale = useSharedValue(0.88);
   const opacity = useSharedValue(0);
   useEffect(() => {
@@ -211,7 +219,7 @@ function AddChildCard({ onPress, index, az }: { onPress: () => void; index: numb
         onPress={onPress}
       >
         <View style={styles.addCircle}>
-          <Icon name="plus" size={28} color={colors.inkSoft} strokeWidth={2.5} />
+          <Icon name="plus" size={28} color={c.inkSoft} strokeWidth={2.5} />
         </View>
         <Text style={styles.addLabel}>{az ? 'Uşaq\nəlavə et' : 'Добавить\nребёнка'}</Text>
       </Pressable>
@@ -222,6 +230,8 @@ function AddChildCard({ onPress, index, az }: { onPress: () => void; index: numb
 // ─── Screen ──────────────────────────────────────────────────────────────────
 
 export default function ProfileSelectScreen() {
+  const { c, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const router = useRouter();
   const authToken = useSettings((s) => s.authToken);
   const syncChild = useSettings((s) => s.syncChild);
@@ -371,7 +381,7 @@ export default function ProfileSelectScreen() {
             onPress={handleParent}
           >
             <View style={styles.parentIcon}>
-              <Icon name="lock" size={16} color={colors.inkSoft} />
+              <Icon name="lock" size={16} color={c.inkSoft} />
             </View>
             <Text style={styles.parentText}>
               {isAz ? 'Mən valideynəm' : 'Я родитель'}
@@ -381,7 +391,7 @@ export default function ProfileSelectScreen() {
                 <View key={i} style={styles.pinDot} />
               ))}
             </View>
-            <Icon name="chevron-right" size={20} color={colors.inkSoft} />
+            <Icon name="chevron-right" size={20} color={c.inkSoft} />
           </Pressable>
         </Animated.View>
       </ScrollView>
@@ -394,7 +404,7 @@ export default function ProfileSelectScreen() {
 
 const CARD_SIZE = 148;
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   scroll: {
     flexGrow: 1,
     alignItems: 'center',
@@ -411,20 +421,20 @@ const styles = StyleSheet.create({
     width: 108,
     height: 108,
     borderRadius: 54,
-    backgroundColor: colors.primarySoft,
+    backgroundColor: t.c.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing[2],
     ...shadow.sm,
   },
   heading: {
-    color: colors.ink,
+    color: t.c.ink,
     fontFamily: fontFamily.display,
     fontSize: scaleFont(34),
     letterSpacing: -0.5,
   },
   subheading: {
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.base,
   },
@@ -448,7 +458,7 @@ const styles = StyleSheet.create({
     width: CARD_SIZE,
     minHeight: CARD_SIZE + 40,
     borderRadius: radius['2xl'],
-    backgroundColor: colors.card,
+    backgroundColor: t.c.card,
     alignItems: 'center',
     paddingTop: spacing[4],
     paddingBottom: spacing[4],
@@ -461,7 +471,7 @@ const styles = StyleSheet.create({
     ...shadow.md,
   },
   childName: {
-    color: colors.ink,
+    color: t.c.ink,
     fontFamily: fontFamily.display,
     fontSize: fontSize.base,
     textAlign: 'center',
@@ -477,13 +487,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
-    backgroundColor: colors.bgDeep,
+    backgroundColor: t.c.bgDeep,
     borderRadius: radius.full,
     paddingHorizontal: spacing[2],
     paddingVertical: 3,
   },
   chipText: {
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize['2xs'],
   },
@@ -491,22 +501,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
-    backgroundColor: colors.primarySoft,
+    backgroundColor: t.c.primarySoft,
     borderRadius: radius.full,
     paddingHorizontal: spacing[3],
     paddingVertical: 3,
   },
   dayChipDone: {
-    backgroundColor: tints.sage,
+    backgroundColor: t.c.tints.sage,
   },
   dayChipText: {
-    color: colors.primaryDeep,
+    color: t.c.primaryDeep,
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize['3xs'],
     letterSpacing: 0.3,
   },
   dayChipTextDone: {
-    color: colors.accentDeep,
+    color: t.c.accentDeep,
   },
 
   addCard: {
@@ -514,7 +524,7 @@ const styles = StyleSheet.create({
     minHeight: CARD_SIZE + 40,
     borderRadius: radius['2xl'],
     borderWidth: 2,
-    borderColor: colors.primary,
+    borderColor: t.c.primary,
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
@@ -525,12 +535,12 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: colors.primarySoft,
+    backgroundColor: t.c.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   addLabel: {
-    color: colors.primaryDeep,
+    color: t.c.primaryDeep,
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.xs,
     textAlign: 'center',
@@ -551,7 +561,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing[4],
     paddingHorizontal: spacing[5],
     borderRadius: radius['2xl'],
-    backgroundColor: colors.card,
+    backgroundColor: t.c.card,
     minWidth: 260,
     borderTopWidth: 1.5,
     borderTopColor: 'rgba(255,255,255,0.8)',
@@ -563,12 +573,12 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: colors.bgDeep,
+    backgroundColor: t.c.bgDeep,
     alignItems: 'center',
     justifyContent: 'center',
   },
   parentText: {
-    color: colors.ink,
+    color: t.c.ink,
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize.base,
     flex: 1,
@@ -582,7 +592,7 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: colors.inkSoft,
+    backgroundColor: t.c.inkSoft,
     opacity: 0.35,
   },
-});
+}));

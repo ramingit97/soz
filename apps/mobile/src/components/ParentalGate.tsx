@@ -29,7 +29,9 @@ import { Text } from '@/components/Text';
 import { loginUser } from '@/services/api';
 import { clearPin, hasPin, setPin, verifyPin } from '@/services/parentPin';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 export function useParentalGate() {
   const [visible, setVisible] = useState(false);
@@ -67,6 +69,8 @@ interface ParentalGateModalProps {
 }
 
 export function ParentalGateModal({ visible, onSuccess, onCancel }: ParentalGateModalProps) {
+  const { c, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const lang = useSettings((s) => s.parentUILanguage) ?? 'ru';
   const userEmail = useSettings((s) => s.userEmail);
   const isAz = lang === 'az';
@@ -212,7 +216,7 @@ export function ParentalGateModal({ visible, onSuccess, onCancel }: ParentalGate
         <Pressable onPress={() => {}}>
           <Animated.View entering={FadeInDown.duration(280)} style={[styles.card, shadow.lg]}>
             {mode === 'loading' ? (
-              <ActivityIndicator color={colors.primary} style={{ paddingVertical: spacing[8] }} />
+              <ActivityIndicator color={c.primary} style={{ paddingVertical: spacing[8] }} />
             ) : mode === 'forgot' ? (
               <>
                 <Text style={styles.title}>{t.title}</Text>
@@ -225,7 +229,7 @@ export function ParentalGateModal({ visible, onSuccess, onCancel }: ParentalGate
                     setError(null);
                   }}
                   placeholder={isAz ? 'Şifrə' : 'Пароль'}
-                  placeholderTextColor={colors.inkSoft}
+                  placeholderTextColor={c.inkSoft}
                   secureTextEntry
                   autoFocus
                   autoCapitalize="none"
@@ -297,7 +301,7 @@ export function ParentalGateModal({ visible, onSuccess, onCancel }: ParentalGate
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -306,7 +310,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[6],
   },
   card: {
-    backgroundColor: colors.white,
+    backgroundColor: t.c.white,
     borderRadius: radius['2xl'],
     paddingVertical: spacing[6],
     paddingHorizontal: spacing[5],
@@ -318,13 +322,13 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: fontFamily.display,
     fontSize: fontSize.xl,
-    color: colors.ink,
+    color: t.c.ink,
     textAlign: 'center',
   },
   subtitle: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.sm,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     textAlign: 'center',
     maxWidth: 260,
     lineHeight: 20,
@@ -341,18 +345,18 @@ const styles = StyleSheet.create({
     height: 16,
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: colors.border,
+    borderColor: t.c.border,
     backgroundColor: 'transparent',
   },
   dotFilled: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: t.c.primary,
+    borderColor: t.c.primary,
   },
 
   errorText: {
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize.sm,
-    color: colors.error,
+    color: t.c.error,
     textAlign: 'center',
   },
 
@@ -366,7 +370,7 @@ const styles = StyleSheet.create({
   numKey: {
     width: '30%',
     aspectRatio: 1.7,
-    backgroundColor: colors.cream,
+    backgroundColor: t.c.cream,
     borderRadius: radius.lg,
     alignItems: 'center',
     justifyContent: 'center',
@@ -375,21 +379,21 @@ const styles = StyleSheet.create({
   numText: {
     fontFamily: fontFamily.display,
     fontSize: fontSize['2xl'],
-    color: colors.ink,
+    color: t.c.ink,
   },
   backKey: { backgroundColor: 'transparent' },
-  backText: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize['2xl'], color: colors.inkSoft },
+  backText: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize['2xl'], color: t.c.inkSoft },
 
   pwInput: {
     width: '100%',
     borderWidth: 2,
-    borderColor: colors.border,
+    borderColor: t.c.border,
     borderRadius: radius.lg,
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[3],
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize.lg,
-    color: colors.ink,
+    color: t.c.ink,
     marginVertical: spacing[2],
   },
 
@@ -412,28 +416,28 @@ const styles = StyleSheet.create({
     paddingVertical: spacing[3],
     borderRadius: radius.full,
     alignItems: 'center',
-    backgroundColor: colors.cream,
+    backgroundColor: t.c.cream,
   },
   cancelText: {
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize.base,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
   },
   forgotText: {
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize.sm,
-    color: colors.primary,
+    color: t.c.primary,
   },
   submitBtn: {
     flex: 1,
     paddingVertical: spacing[3],
     borderRadius: radius.full,
     alignItems: 'center',
-    backgroundColor: colors.primary,
+    backgroundColor: t.c.primary,
   },
   submitText: {
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize.base,
-    color: colors.white,
+    color: t.c.white,
   },
-});
+}));

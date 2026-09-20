@@ -13,7 +13,9 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { colors, radius } from '@/theme';
+import { radius } from '@/theme';
+import { makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 interface SkeletonProps {
   width?: number | `${number}%`;
@@ -23,6 +25,7 @@ interface SkeletonProps {
 }
 
 export function Skeleton({ width = '100%', height = 16, borderRadius: br = radius.md, style }: SkeletonProps) {
+  const { c } = useTheme();
   const shimmerX = useSharedValue(-1);
 
   useEffect(() => {
@@ -40,7 +43,7 @@ export function Skeleton({ width = '100%', height = 16, borderRadius: br = radiu
   return (
     <View
       style={[
-        { width: width as number | `${number}%`, height, borderRadius: br, backgroundColor: colors.paperShadow, overflow: 'hidden' },
+        { width: width as number | `${number}%`, height, borderRadius: br, backgroundColor: c.paperShadow, overflow: 'hidden' },
         style,
       ]}
     >
@@ -58,6 +61,8 @@ export function Skeleton({ width = '100%', height = 16, borderRadius: br = radiu
 
 /** Pre-composed skeleton for a content card with title + 3 lines of body */
 export function CardSkeleton({ height = 140 }: { height?: number }) {
+  const { mode: uiMode } = useTheme();
+  const skelStyles = skelStylesByMode[uiMode];
   return (
     <View style={[skelStyles.card, { minHeight: height }]}>
       <Skeleton width={140} height={14} />
@@ -70,6 +75,8 @@ export function CardSkeleton({ height = 140 }: { height?: number }) {
 
 /** Skeleton for a list row with leading icon + 2 text lines */
 export function RowSkeleton() {
+  const { mode: uiMode } = useTheme();
+  const skelStyles = skelStylesByMode[uiMode];
   return (
     <View style={skelStyles.row}>
       <Skeleton width={44} height={44} borderRadius={22} />
@@ -81,13 +88,13 @@ export function RowSkeleton() {
   );
 }
 
-const skelStyles = StyleSheet.create({
+const skelStylesByMode = makeModeStyles((t) => StyleSheet.create({
   card: {
-    backgroundColor: colors.white,
+    backgroundColor: t.c.white,
     borderRadius: 24,
     padding: 16,
     borderWidth: 1,
-    borderColor: colors.paperShadow,
+    borderColor: t.c.paperShadow,
   },
   row: {
     flexDirection: 'row',
@@ -95,4 +102,4 @@ const skelStyles = StyleSheet.create({
     gap: 12,
     paddingVertical: 12,
   },
-});
+}));

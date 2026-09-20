@@ -6,7 +6,9 @@ import { StyleSheet, View } from 'react-native';
 
 import { useAccent } from '@/hooks/useAccent';
 import { useUIMode } from '@/hooks/useUIMode';
-import { colors, spacing } from '@/theme';
+import { spacing } from '@/theme';
+import { makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 interface Props {
   /** С единицы. */
@@ -15,6 +17,8 @@ interface Props {
 }
 
 export function StepIndicator({ current, total }: Props) {
+  const { c, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const accent = useAccent();
   const kid = useUIMode() === 'kid';
   return (
@@ -32,7 +36,7 @@ export function StepIndicator({ current, total }: Props) {
             style={[
               kid ? styles.dot : styles.segment,
               kid && isCurrent && styles.dotCurrent,
-              { backgroundColor: reached ? accent.bottom : colors.borderStrong },
+              { backgroundColor: reached ? accent.bottom : c.borderStrong },
             ]}
           />
         );
@@ -41,9 +45,9 @@ export function StepIndicator({ current, total }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing[1.5] },
   dot: { width: 8, height: 8, borderRadius: 4 },
   dotCurrent: { width: 24 },
   segment: { width: 28, height: 4, borderRadius: 2 },
-});
+}));

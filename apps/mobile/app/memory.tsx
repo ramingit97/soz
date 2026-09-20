@@ -21,8 +21,9 @@ import { Text } from '@/components/Text';
 import { useTheme } from '@/hooks/useTheme';
 import { forgetFact, getBoboMemory, type BoboMemory, type ChildFact } from '@/services/api';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, scaleFont, spacing } from '@/theme';
+import { fontFamily, fontSize, radius, scaleFont, spacing } from '@/theme';
 import { useCompanionName } from '@/utils/companion';
+import { makeModeStyles } from '@/theme/modeTokens';
 
 const CATEGORIES: Record<ChildFact['category'], { icon: IconName; ru: string; az: string }> = {
   interests:    { icon: 'palette',   ru: 'Интересы',     az: 'Maraqlar' },
@@ -42,7 +43,8 @@ export default function MemoryScreen() {
   const isAz = lang === 'az';
   const learningLang = learningLanguages[0] ?? 'en';
   const bot = useCompanionName();
-  const { t, accent } = useTheme();
+  const { c, mode: uiMode, t, accent } = useTheme();
+  const styles = stylesByMode[uiMode];
 
   const [memory, setMemory] = useState<BoboMemory | null>(null);
   const [loading, setLoading] = useState(true);
@@ -163,7 +165,7 @@ export default function MemoryScreen() {
                             accessibilityLabel={isAz ? 'Unut' : 'Забыть'}
                             style={styles.factForget}
                           >
-                            <Icon name="x" size={14} color={colors.inkSoft} strokeWidth={2.5} />
+                            <Icon name="x" size={14} color={c.inkSoft} strokeWidth={2.5} />
                           </Pressable>
                         </View>
                       ))}
@@ -198,7 +200,7 @@ export default function MemoryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   scroll: { paddingTop: spacing[2], paddingBottom: spacing[12] },
 
   emptyCard: { alignItems: 'center', gap: spacing[2], paddingVertical: spacing[6] },
@@ -242,23 +244,23 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     marginTop: 8,
   },
-  factText: { color: colors.ink },
+  factText: { color: t.c.ink },
   factDate: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize['3xs'],
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     marginTop: 2,
   },
   factForget: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: colors.bg,
+    backgroundColor: t.c.bg,
     alignItems: 'center',
     justifyContent: 'center',
   },
 
   askCard: { gap: spacing[2] },
   askHead: { flexDirection: 'row', alignItems: 'center', gap: spacing[2] },
-  askText: { color: colors.ink },
-});
+  askText: { color: t.c.ink },
+}));

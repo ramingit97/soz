@@ -27,20 +27,22 @@ import { useAccent } from '@/hooks/useAccent';
 import { getLesson } from '@/data/lessons';
 import { getProgress } from '@/services/api';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing, tints } from '@/theme';
+import { fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
+import { byMode, makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 // ─── Word card color palette (cycles through themes) ─────────────────────────
 
-const PALETTE: { bg: string; text: string }[] = [
-  { bg: tints.primary, text: colors.primary },   // peach
-  { bg: tints.sage, text: colors.accent },    // sage
-  { bg: tints.butter, text: colors.butterDeep },   // butter
-  { bg: colors.englishLight, text: colors.english }, // sky (was lavender)
-  { bg: tints.berry, text: colors.berryDeep },     // berry
-  { bg: tints.english, text: '#2D63D4' },        // sky
+const PALETTE_BY_MODE = byMode<{ bg: string; text: string }[]>((t) => ([
+  { bg: t.c.tints.primary, text: t.c.primary },   // peach
+  { bg: t.c.tints.sage, text: t.c.accent },    // sage
+  { bg: t.c.tints.butter, text: t.c.butterDeep },   // butter
+  { bg: t.c.englishLight, text: t.c.english }, // sky (was lavender)
+  { bg: t.c.tints.berry, text: t.c.berryDeep },     // berry
+  { bg: t.c.tints.english, text: '#2D63D4' },        // sky
   { bg: '#D0F5EC', text: '#1A9B7C' },        // mint
   { bg: '#FFE0CC', text: '#D4601A' },        // coral
-];
+]));
 
 interface WordEntry {
   word: string;
@@ -53,6 +55,8 @@ interface WordEntry {
 // ─── Empty state ──────────────────────────────────────────────────────────────
 
 function EmptyAlbum({ isAz, storedHue }: { isAz: boolean; storedHue: number }) {
+  const { mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   return (
     <Animated.View entering={FadeIn.duration(500)} style={styles.emptyWrap}>
       <HBPet size={100} hue={storedHue} mood="curious" />
@@ -77,6 +81,9 @@ function WordChip({
   entry: WordEntry;
   index: number;
 }) {
+  const { mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
+  const PALETTE = PALETTE_BY_MODE[uiMode];
   const p = PALETTE[entry.paletteIdx % PALETTE.length]!;
   return (
     <Animated.View entering={FadeInUp.duration(350).delay(30 * (index % 20))}>
@@ -116,6 +123,9 @@ function ThemeSection({
   sectionIndex: number;
   az: boolean;
 }) {
+  const { mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
+  const PALETTE = PALETTE_BY_MODE[uiMode];
   const p = PALETTE[paletteIdx % PALETTE.length]!;
   return (
     <Animated.View entering={FadeInDown.duration(400).delay(60 * sectionIndex)}>
@@ -152,6 +162,8 @@ function ThemeSection({
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function AlbumScreen() {
+  const { c, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const router = useRouter();
   const lang = useSettings((s) => s.parentUILanguage) ?? 'ru';
   const storedHue = useSettings((s) => s.petHue);
@@ -273,13 +285,13 @@ export default function AlbumScreen() {
           </Text>
           <View style={styles.heroMeta}>
             <View style={styles.heroChip}>
-              <Icon name="library" size={14} color={colors.inkSoft} />
+              <Icon name="library" size={14} color={c.inkSoft} />
               <Text style={styles.heroChipText}>
                 {themeGroups.length} {isAz ? 'mövzu' : 'тем'}
               </Text>
             </View>
             <View style={styles.heroChip}>
-              <Icon name="calendar" size={14} color={colors.inkSoft} />
+              <Icon name="calendar" size={14} color={c.inkSoft} />
               <Text style={styles.heroChipText}>
                 {isAz ? `Gün ${currentDay}` : `День ${currentDay}`}
               </Text>
@@ -290,11 +302,11 @@ export default function AlbumScreen() {
         {/* Search */}
         <Animated.View entering={FadeIn.duration(400).delay(100)}>
           <View style={[styles.searchBox, shadow.sm]}>
-            <Icon name="search" size={18} color={colors.inkSoft} />
+            <Icon name="search" size={18} color={c.inkSoft} />
             <TextInput
               style={styles.searchInput}
               placeholder={isAz ? 'Söz axtar...' : 'Поиск слов...'}
-              placeholderTextColor={colors.inkSoft}
+              placeholderTextColor={c.inkSoft}
               value={query}
               onChangeText={setQuery}
               autoCorrect={false}
@@ -307,7 +319,7 @@ export default function AlbumScreen() {
                 accessibilityRole="button"
                 accessibilityLabel={isAz ? 'Təmizlə' : 'Очистить'}
               >
-                <Icon name="x" size={14} color={colors.inkSoft} strokeWidth={2.5} />
+                <Icon name="x" size={14} color={c.inkSoft} strokeWidth={2.5} />
               </Pressable>
             )}
           </View>
@@ -397,7 +409,7 @@ export default function AlbumScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
 
   scroll: {
     paddingHorizontal: spacing[5],
@@ -412,7 +424,7 @@ const styles = StyleSheet.create({
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: colors.primarySoft,
+    backgroundColor: t.c.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing[2],
@@ -425,14 +437,14 @@ const styles = StyleSheet.create({
   heroCount: {
     fontFamily: fontFamily.display,
     fontSize: scaleFont(52),
-    color: colors.ink,
+    color: t.c.ink,
     lineHeight: 56,
     letterSpacing: -1,
   },
   heroLabel: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.sm,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
   },
   heroMeta: {
     flexDirection: 'row',
@@ -443,7 +455,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: colors.bgDeep,
+    backgroundColor: t.c.bgDeep,
     borderRadius: radius.full,
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[1],
@@ -451,7 +463,7 @@ const styles = StyleSheet.create({
   heroChipText: {
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize.xs,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
   },
 
   // Search
@@ -459,7 +471,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing[2],
-    backgroundColor: colors.card,
+    backgroundColor: t.c.card,
     borderRadius: radius.xl,
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[3],
@@ -472,13 +484,13 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.base,
-    color: colors.ink,
+    color: t.c.ink,
   },
   clearBtn: {
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: colors.bgDeep,
+    backgroundColor: t.c.bgDeep,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -487,7 +499,7 @@ const styles = StyleSheet.create({
   toggle: {},
   toggleTrack: {
     flexDirection: 'row',
-    backgroundColor: colors.bgDeep,
+    backgroundColor: t.c.bgDeep,
     borderRadius: radius.xl,
     padding: 4,
     gap: 4,
@@ -499,7 +511,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   toggleBtnActive: {
-    backgroundColor: colors.card,
+    backgroundColor: t.c.card,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.8)',
     borderBottomWidth: 2,
@@ -509,9 +521,9 @@ const styles = StyleSheet.create({
   toggleBtnText: {
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize.sm,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
   },
-  toggleBtnTextActive: { color: colors.ink },
+  toggleBtnTextActive: { color: t.c.ink },
 
   // Theme sections
   sections: { gap: spacing[3] },
@@ -521,12 +533,12 @@ const styles = StyleSheet.create({
   sectionTheme: {
     fontFamily: fontFamily.display,
     fontSize: fontSize.base,
-    color: colors.ink,
+    color: t.c.ink,
   },
   sectionDay: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.xs,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     marginTop: 2,
   },
   countBadge: {
@@ -575,7 +587,7 @@ const styles = StyleSheet.create({
   chipMeta: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize['3xs'],
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
   },
 
   // Empty state
@@ -588,13 +600,13 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontFamily: fontFamily.display,
     fontSize: fontSize.xl,
-    color: colors.ink,
+    color: t.c.ink,
     textAlign: 'center',
   },
   emptyBody: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.sm,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     textAlign: 'center',
     lineHeight: 20,
     maxWidth: 260,
@@ -605,7 +617,7 @@ const styles = StyleSheet.create({
   noResultsText: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.base,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
   },
 
   // Tip card
@@ -613,7 +625,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing[3],
-    backgroundColor: colors.card,
+    backgroundColor: t.c.card,
     borderRadius: radius.xl,
     padding: spacing[4],
     borderTopWidth: 1,
@@ -626,8 +638,8 @@ const styles = StyleSheet.create({
   tipText: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.sm,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     flex: 1,
     lineHeight: 20,
   },
-});
+}));

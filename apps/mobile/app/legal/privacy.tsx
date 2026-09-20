@@ -7,10 +7,13 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { Text } from '@/components/Text';
 import { UIModeProvider } from '@/hooks/useUIMode';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, spacing } from '@/theme';
-import { MODE_TOKENS } from '@/theme/modeTokens';
+import { fontFamily, fontSize, spacing } from '@/theme';
+import { MODE_TOKENS, makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 export default function PrivacyPolicyScreen() {
+  const { mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const router = useRouter();
   const lang = useSettings((s) => s.parentUILanguage) ?? 'ru';
   const isAz = lang === 'az';
@@ -67,6 +70,8 @@ export default function PrivacyPolicyScreen() {
 }
 
 function Section({ title, children }: { title: string; children: string }) {
+  const { mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{title}</Text>
@@ -75,7 +80,7 @@ function Section({ title, children }: { title: string; children: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   scroll: {
     paddingTop: spacing[1],
     paddingBottom: spacing[10],
@@ -83,20 +88,20 @@ const styles = StyleSheet.create({
   updated: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.xs,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     marginBottom: spacing[6],
   },
   section: { marginBottom: spacing[5] },
   sectionTitle: {
     fontFamily: fontFamily.bodyBlack,
     fontSize: fontSize.lg,
-    color: colors.primary,
+    color: t.c.primary,
     marginBottom: spacing[2],
   },
   body: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.sm,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     lineHeight: 22,
   },
-});
+}));

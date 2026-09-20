@@ -12,16 +12,18 @@ import Animated, { FadeInDown, FadeOut } from 'react-native-reanimated';
 import { HBButton } from '@/components/HBButton';
 import { Icon, type IconName } from '@/components/Icon';
 import { Text } from '@/components/Text';
-import { colors, radius, semantic, spacing } from '@/theme';
+import { radius, spacing } from '@/theme';
+import { byMode, makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 type Tone = 'info' | 'warning' | 'danger' | 'success';
 
-const TONES: Record<Tone, { bg: string; border: string; ink: string; icon: IconName }> = {
-  info: { bg: colors.surface, border: colors.surfaceBorder, ink: colors.inkSoft, icon: 'circle-alert' },
-  warning: { bg: '#FFF6D6', border: '#F0DC92', ink: '#7F6628', icon: 'moon' },
-  danger: { bg: '#FDECEF', border: '#F5C2CC', ink: semantic.danger, icon: 'circle-alert' },
-  success: { bg: '#E6F6F0', border: '#B9E3D5', ink: colors.accentDeep, icon: 'circle-check' },
-};
+const TONES_BY_MODE = byMode<Record<Tone, { bg: string; border: string; ink: string; icon: IconName }>>((t) => ({
+  info: { bg: t.c.surface, border: t.c.surfaceBorder, ink: t.c.inkSoft, icon: 'circle-alert' },
+  warning: { bg: t.c.warningSoft, border: t.c.warning, ink: t.c.goldDeep, icon: 'moon' },
+  danger: { bg: t.c.errorSoft, border: t.c.error, ink: t.c.error, icon: 'circle-alert' },
+  success: { bg: t.c.successSoft, border: t.c.success, ink: t.c.successDeep, icon: 'circle-check' },
+}));
 
 interface Props {
   tone?: Tone;
@@ -35,7 +37,9 @@ interface Props {
 }
 
 export function InlineBanner({ tone = 'info', icon, title, text, action, onClose, closeLabel, style }: Props) {
-  const t = TONES[tone];
+  const { c, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
+  const t = TONES_BY_MODE[uiMode][tone];
   return (
     <Animated.View
       entering={FadeInDown.duration(250)}
@@ -62,7 +66,7 @@ export function InlineBanner({ tone = 'info', icon, title, text, action, onClose
             accessibilityRole="button"
             accessibilityLabel={closeLabel ?? 'Close'}
           >
-            <Icon name="x" size={18} color={colors.inkSoft} />
+            <Icon name="x" size={18} color={c.inkSoft} />
           </Pressable>
         ) : null}
       </View>
@@ -73,7 +77,7 @@ export function InlineBanner({ tone = 'info', icon, title, text, action, onClose
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   box: {
     borderWidth: 1,
     borderRadius: radius.lg,
@@ -83,7 +87,7 @@ const styles = StyleSheet.create({
   },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing[2] },
   body: { flex: 1, minWidth: 0, gap: 1 },
-  title: { color: colors.ink },
-  text: { color: colors.ink },
+  title: { color: t.c.ink },
+  text: { color: t.c.ink },
   action: { alignSelf: 'flex-start' },
-});
+}));

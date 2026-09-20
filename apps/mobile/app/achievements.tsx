@@ -22,7 +22,9 @@ import { Text } from '@/components/Text';
 import { useAccent } from '@/hooks/useAccent';
 import { playSfx } from '@/services/sfx';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing, tints } from '@/theme';
+import { fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
+import { byMode, makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 type Filter = 'all' | 'earned' | 'locked';
 
@@ -45,46 +47,49 @@ interface Badge {
 
 const pct = (have: number, need: number) => Math.max(0, Math.min(1, have / need));
 
-const ALL_BADGES: Badge[] = [
-  { id: 'first', emoji: '🏆', labelRu: 'Первый урок', labelAz: 'İlk dərs', color: colors.butter,
+const ALL_BADGES_BY_MODE = byMode<Badge[]>((t) => ([
+  { id: 'first', emoji: '🏆', labelRu: 'Первый урок', labelAz: 'İlk dərs', color: t.c.butter,
     reqRu: 'Заверши первый урок', reqAz: 'İlk dərsi bitir',
     check: (s) => s.currentDay > 1, progress: (s) => pct(s.currentDay - 1, 1) },
-  { id: 'flame7', emoji: '🔥', labelRu: 'Огонёк', labelAz: 'Alov', color: colors.berry,
+  { id: 'flame7', emoji: '🔥', labelRu: 'Огонёк', labelAz: 'Alov', color: t.c.berry,
     reqRu: 'Стрик 7 дней', reqAz: '7 günlük seriya',
     check: (s) => s.streak >= 7, progress: (s) => pct(s.streak, 7) },
   { id: 'food', emoji: '🍎', labelRu: 'Гурман', labelAz: 'Qida bilici', color: '#E58A66',
     reqRu: 'Собери 30 звёзд', reqAz: '30 ulduz topla',
     check: (s) => s.totalStars >= 30, progress: (s) => pct(s.totalStars, 30) },
-  { id: 'family', emoji: '👨‍👩‍👧', labelRu: 'Семья', labelAz: 'Ailə', color: colors.accent,
+  { id: 'family', emoji: '👨‍👩‍👧', labelRu: 'Семья', labelAz: 'Ailə', color: t.c.accent,
     reqRu: 'Пройди 5 дней', reqAz: '5 gün keç',
     check: (s) => s.currentDay > 5, progress: (s) => pct(s.currentDay - 1, 5) },
   { id: 'colors', emoji: '🎨', labelRu: 'Художник', labelAz: 'Rəssam', color: '#9C7EE6',
     reqRu: 'Пройди 7 дней', reqAz: '7 gün keç',
     check: (s) => s.currentDay > 7, progress: (s) => pct(s.currentDay - 1, 7) },
-  { id: 'bee', emoji: '🐝', labelRu: 'Пчёлка', labelAz: 'Arıcıq', color: colors.butter,
+  { id: 'bee', emoji: '🐝', labelRu: 'Пчёлка', labelAz: 'Arıcıq', color: t.c.butter,
     reqRu: 'Пройди 10 дней', reqAz: '10 gün keç',
     check: (s) => s.currentDay > 10, progress: (s) => pct(s.currentDay - 1, 10) },
   { id: 'magic', emoji: '🪄', labelRu: 'Магия', labelAz: 'Sehr', color: '#9C7EE6',
     reqRu: 'Стрик 14 дней', reqAz: '14 günlük seriya',
     check: (s) => s.streak >= 14, progress: (s) => pct(s.streak, 14) },
-  { id: 'climb', emoji: '🏔', labelRu: 'Покоритель', labelAz: 'Fəth edən', color: colors.accent,
+  { id: 'climb', emoji: '🏔', labelRu: 'Покоритель', labelAz: 'Fəth edən', color: t.c.accent,
     reqRu: 'Пройди 15 дней', reqAz: '15 gün keç',
     check: (s) => s.currentDay > 15, progress: (s) => pct(s.currentDay - 1, 15) },
-  { id: 'travel', emoji: '🌍', labelRu: 'Путешеств.', labelAz: 'Səyahətçi', color: colors.berry,
+  { id: 'travel', emoji: '🌍', labelRu: 'Путешеств.', labelAz: 'Səyahətçi', color: t.c.berry,
     reqRu: 'Пройди 20 дней', reqAz: '20 gün keç',
     check: (s) => s.currentDay > 20, progress: (s) => pct(s.currentDay - 1, 20) },
   { id: 'animal', emoji: '🦊', labelRu: 'Друг зверей', labelAz: 'Heyvan dostu', color: '#E58A66',
     reqRu: 'Пройди 25 дней', reqAz: '25 gün keç',
     check: (s) => s.currentDay > 25, progress: (s) => pct(s.currentDay - 1, 25) },
-  { id: 'stars50', emoji: '⭐', labelRu: '50 звёзд', labelAz: '50 ulduz', color: colors.butter,
+  { id: 'stars50', emoji: '⭐', labelRu: '50 звёзд', labelAz: '50 ulduz', color: t.c.butter,
     reqRu: 'Собери 50 звёзд', reqAz: '50 ulduz topla',
     check: (s) => s.totalStars >= 50, progress: (s) => pct(s.totalStars, 50) },
-  { id: 'sharp', emoji: '🎯', labelRu: 'Мастер', labelAz: 'Usta', color: colors.berry,
+  { id: 'sharp', emoji: '🎯', labelRu: 'Мастер', labelAz: 'Usta', color: t.c.berry,
     reqRu: 'Собери 100 звёзд', reqAz: '100 ulduz topla',
     check: (s) => s.totalStars >= 100, progress: (s) => pct(s.totalStars, 100) },
-];
+]));
 
 export default function AchievementsScreen() {
+  const { c, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
+  const ALL_BADGES = ALL_BADGES_BY_MODE[uiMode];
   const router = useRouter();
   const lang = useSettings((s) => s.parentUILanguage) ?? 'ru';
   const isAz = lang === 'az';
@@ -138,12 +143,12 @@ export default function AchievementsScreen() {
 
         <Animated.View entering={FadeIn.duration(500).delay(80)}>
           <Pressable onPress={() => setSelected(recent)}>
-            <HBCard style={styles.heroCard} bg={tints.butter}>
-              <DieCutBadge size={64} tilt={-6} edge={3.5} bg={recent.earned ? colors.card : colors.bgDeep}>
+            <HBCard style={styles.heroCard} bg={c.tints.butter}>
+              <DieCutBadge size={64} tilt={-6} edge={3.5} bg={recent.earned ? c.card : c.bgDeep}>
                 {recent.earned ? (
                   <Text style={{ fontSize: scaleFont(32) }}>{recent.emoji}</Text>
                 ) : (
-                  <Icon name="lock" size={28} color={colors.inkSoft} />
+                  <Icon name="lock" size={28} color={c.inkSoft} />
                 )}
               </DieCutBadge>
               <View style={{ flex: 1 }}>
@@ -155,8 +160,8 @@ export default function AchievementsScreen() {
                 <Text style={styles.heroLabel}>{isAz ? recent.labelAz : recent.labelRu}</Text>
                 <Text style={styles.heroHint}>{isAz ? recent.reqAz : recent.reqRu}</Text>
               </View>
-              <View style={[styles.deltaBadge, recent.earned && { backgroundColor: colors.accentDeep }]}>
-                <Icon name={recent.earned ? 'check' : 'lock'} size={16} color={recent.earned ? colors.white : colors.inkSoft} strokeWidth={2.5} />
+              <View style={[styles.deltaBadge, recent.earned && { backgroundColor: c.accentDeep }]}>
+                <Icon name={recent.earned ? 'check' : 'lock'} size={16} color={recent.earned ? c.white : c.inkSoft} strokeWidth={2.5} />
               </View>
             </HBCard>
           </Pressable>
@@ -209,8 +214,8 @@ export default function AchievementsScreen() {
                     <Text style={{ fontSize: 22 }}>{b.emoji}</Text>
                   </DieCutBadge>
                 ) : (
-                  <View style={[styles.tileBadge, { backgroundColor: colors.bgDeep }]}>
-                    <Icon name="lock" size={20} color={colors.textMuted} />
+                  <View style={[styles.tileBadge, { backgroundColor: c.bgDeep }]}>
+                    <Icon name="lock" size={20} color={c.textMuted} />
                   </View>
                 )}
                 <Text style={[styles.tileLabel, !b.earned && { opacity: 0.6 }]}>
@@ -268,6 +273,8 @@ function BadgeModal({ badge, isAz, onClose }: {
   isAz: boolean;
   onClose: () => void;
 }) {
+  const { c, mode: uiMode } = useTheme();
+  const modal = modalByMode[uiMode];
   return (
     <Modal visible={!!badge} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={modal.backdrop} onPress={onClose}>
@@ -281,16 +288,16 @@ function BadgeModal({ badge, isAz, onClose }: {
                 ))}
               </View>
             ) : null}
-            <DieCutBadge size={96} tilt={-4} edge={4} bg={badge.earned ? badge.color : colors.bgDeep}>
+            <DieCutBadge size={96} tilt={-4} edge={4} bg={badge.earned ? badge.color : c.bgDeep}>
               {badge.earned ? (
                 <Text style={{ fontSize: scaleFont(52) }}>{badge.emoji}</Text>
               ) : (
-                <Icon name="lock" size={40} color={colors.inkSoft} />
+                <Icon name="lock" size={40} color={c.inkSoft} />
               )}
             </DieCutBadge>
             <Text style={modal.title}>{isAz ? badge.labelAz : badge.labelRu}</Text>
-            <View style={[modal.statusPill, { backgroundColor: badge.earned ? tints.sage : colors.bgDeep }]}>
-              <Text style={[modal.statusText, { color: badge.earned ? colors.accent : colors.inkSoft }]}>
+            <View style={[modal.statusPill, { backgroundColor: badge.earned ? c.tints.sage : c.bgDeep }]}>
+              <Text style={[modal.statusText, { color: badge.earned ? c.accent : c.inkSoft }]}>
                 {badge.earned
                   ? (isAz ? 'Açıldı' : 'Открыто')
                   : (isAz ? 'Hələ qapalı' : 'Ещё закрыто')}
@@ -307,7 +314,7 @@ function BadgeModal({ badge, isAz, onClose }: {
   );
 }
 
-const modal = StyleSheet.create({
+const modalByMode = makeModeStyles((t) => StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(60, 49, 33, 0.45)',
@@ -316,7 +323,7 @@ const modal = StyleSheet.create({
     padding: spacing[6],
   },
   card: {
-    backgroundColor: colors.card,
+    backgroundColor: t.c.card,
     borderRadius: radius['2xl'],
     paddingVertical: spacing[6],
     paddingHorizontal: spacing[5],
@@ -330,7 +337,7 @@ const modal = StyleSheet.create({
   title: {
     fontFamily: fontFamily.display,
     fontSize: fontSize['2xl'],
-    color: colors.ink,
+    color: t.c.ink,
     textAlign: 'center',
   },
   statusPill: {
@@ -345,35 +352,35 @@ const modal = StyleSheet.create({
   req: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.sm,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     textAlign: 'center',
   },
   closeBtn: {
     marginTop: spacing[2],
-    backgroundColor: colors.primary,
+    backgroundColor: t.c.primary,
     borderRadius: radius.full,
     paddingHorizontal: spacing[6],
     paddingVertical: spacing[3],
     borderBottomWidth: 3,
-    borderBottomColor: colors.primaryDeep,
+    borderBottomColor: t.c.primaryDeep,
   },
   closeText: {
     fontFamily: fontFamily.bodyBlack,
     fontSize: fontSize.sm,
-    color: colors.white,
+    color: t.c.white,
   },
-});
+}));
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   scroll: {
     paddingHorizontal: spacing[5],
     paddingTop: spacing[2],
     gap: spacing[3],
   },
   countChip: {
-    backgroundColor: colors.surface,
+    backgroundColor: t.c.surface,
     borderWidth: 1,
-    borderColor: colors.surfaceBorder,
+    borderColor: t.c.surfaceBorder,
     paddingHorizontal: spacing[3],
     paddingVertical: 6,
     borderRadius: radius.full,
@@ -381,7 +388,7 @@ const styles = StyleSheet.create({
   countText: {
     fontFamily: fontFamily.bodyBlack,
     fontSize: fontSize['2xs'],
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
   },
 
   heroCard: {
@@ -393,22 +400,22 @@ const styles = StyleSheet.create({
   heroKicker: {
     fontFamily: fontFamily.bodyBlack,
     fontSize: fontSize['3xs'],
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     letterSpacing: 0.8,
   },
   heroLabel: {
     fontFamily: fontFamily.display,
     fontSize: fontSize.lg,
-    color: colors.ink,
+    color: t.c.ink,
     marginTop: 2,
   },
   heroHint: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize['2xs'],
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
   },
   deltaBadge: {
-    backgroundColor: colors.ink,
+    backgroundColor: t.c.ink,
     paddingHorizontal: spacing[2],
     paddingVertical: 4,
     borderRadius: radius.md,
@@ -419,9 +426,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: colors.surface,
+    backgroundColor: t.c.surface,
     borderWidth: 1,
-    borderColor: colors.surfaceBorder,
+    borderColor: t.c.surfaceBorder,
     paddingHorizontal: spacing[3],
     paddingVertical: 7,
     borderRadius: radius.full,
@@ -429,12 +436,12 @@ const styles = StyleSheet.create({
   filterText: {
     fontFamily: fontFamily.bodyBlack,
     fontSize: fontSize.xs,
-    color: colors.ink,
+    color: t.c.ink,
   },
   filterCount: {
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize['3xs'],
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
   },
 
   grid: {
@@ -451,7 +458,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
   },
   tileEarned: {
-    backgroundColor: colors.card,
+    backgroundColor: t.c.card,
   },
   tileLocked: {
     borderWidth: 2,
@@ -471,7 +478,7 @@ const styles = StyleSheet.create({
   tileLabel: {
     fontFamily: fontFamily.display,
     fontSize: fontSize.xs,
-    color: colors.ink,
+    color: t.c.ink,
     textAlign: 'center',
   },
 
@@ -485,25 +492,25 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: tints.butter,
+    backgroundColor: t.c.tints.butter,
     alignItems: 'center',
     justifyContent: 'center',
   },
   progressLabel: {
     fontFamily: fontFamily.display,
     fontSize: fontSize.sm,
-    color: colors.ink,
+    color: t.c.ink,
   },
   progressTrack: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: colors.bgDeep,
+    backgroundColor: t.c.bgDeep,
     overflow: 'hidden',
     marginTop: 6,
   },
   progressFill: {
     height: '100%',
-    backgroundColor: colors.primary,
+    backgroundColor: t.c.primary,
     borderRadius: 3,
   },
-});
+}));

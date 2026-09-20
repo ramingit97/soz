@@ -50,9 +50,10 @@ import {
 } from '@/services/subscriptions';
 import { getBillingStatus } from '@/services/api';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, spacing, tints } from '@/theme';
-import { MODE_TOKENS } from '@/theme/modeTokens';
+import { fontFamily, fontSize, radius, spacing } from '@/theme';
+import { MODE_TOKENS, makeModeStyles } from '@/theme/modeTokens';
 import { useCompanionName, withCompanionName } from '@/utils/companion';
+import { useTheme } from '@/hooks/useTheme';
 
 const PREMIUM_DAYS = 30 - FREE_DAYS;
 
@@ -98,18 +99,19 @@ const FEATURES = [
 // в заблуждение и запрещены правилами Google Play. Вернуть, когда будут настоящие.
 
 function Crown() {
+  const { c: palette } = useTheme();
   return (
     <Svg width="64" height="34" viewBox="0 0 62 32">
       <Path
         d="M 6 26 L 8 8 L 18 18 L 31 4 L 44 18 L 54 8 L 56 26 Z"
-        fill={colors.butter}
-        stroke={colors.ink}
+        fill={palette.butter}
+        stroke={palette.ink}
         strokeWidth={1.2}
         strokeLinejoin="round"
       />
-      <Circle cx="18" cy="18" r="2.5" fill={colors.berry} />
-      <Circle cx="31" cy="14" r="3" fill={colors.berry} />
-      <Circle cx="44" cy="18" r="2.5" fill={colors.berry} />
+      <Circle cx="18" cy="18" r="2.5" fill={palette.berry} />
+      <Circle cx="31" cy="14" r="3" fill={palette.berry} />
+      <Circle cx="44" cy="18" r="2.5" fill={palette.berry} />
     </Svg>
   );
 }
@@ -142,6 +144,8 @@ function TwinkleStar({ x, y, color, size, delay }: {
 }
 
 export default function PaywallScreen() {
+  const { c: palette, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const router = useRouter();
   const lang = useSettings((s) => s.parentUILanguage) ?? 'ru';
   const bot = useCompanionName();
@@ -279,10 +283,10 @@ export default function PaywallScreen() {
           {/* Персонаж в короне */}
           <Animated.View entering={FadeInDown.duration(600)} style={styles.hero}>
             {[
-              { x: -8, y: -4, c: colors.butter, s: 16 },
-              { x: 130, y: 18, c: colors.berry, s: 14 },
-              { x: -12, y: 90, c: colors.accent, s: 12 },
-              { x: 140, y: 110, c: colors.primary, s: 10 },
+              { x: -8, y: -4, c: palette.butter, s: 16 },
+              { x: 130, y: 18, c: palette.berry, s: 14 },
+              { x: -12, y: 90, c: palette.accent, s: 12 },
+              { x: 140, y: 110, c: palette.primary, s: 10 },
             ].map((sp, i) => (
               <TwinkleStar key={i} x={sp.x} y={sp.y} color={sp.c} size={sp.s} delay={i * 220} />
             ))}
@@ -292,8 +296,8 @@ export default function PaywallScreen() {
                 <Crown />
               </View>
             </View>
-            <View style={[styles.premiumChip, { backgroundColor: tints.butter }]}>
-              <Icon name="crown" size={14} color="#7F6628" fill={colors.butter} strokeWidth={2} />
+            <View style={[styles.premiumChip, { backgroundColor: palette.tints.butter }]}>
+              <Icon name="crown" size={14} color="#7F6628" fill={palette.butter} strokeWidth={2} />
               <Text style={styles.premiumChipText}>PREMIUM</Text>
             </View>
             <Text variant="title" align="center">Söz Premium</Text>
@@ -431,6 +435,8 @@ function PlanCard({
   badge?: string | null;
   onPress: () => void;
 }) {
+  const { mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const accent = useAccent();
   return (
     <Pressable
@@ -462,7 +468,7 @@ function PlanCard({
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   scroll: { paddingTop: spacing[1], paddingBottom: spacing[10], gap: spacing[4] },
   flex: { flex: 1, minWidth: 0 },
   pressed: { opacity: 0.85 },
@@ -488,7 +494,7 @@ const styles = StyleSheet.create({
 
   features: { gap: 0, paddingVertical: spacing[1] },
   featureRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[3], paddingVertical: spacing[2] },
-  featureRule: { borderTopWidth: 1, borderTopColor: colors.surfaceBorder },
+  featureRule: { borderTopWidth: 1, borderTopColor: t.c.surfaceBorder },
 
   compare: { paddingVertical: spacing[1] },
   compareRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[2], paddingVertical: spacing[2] },
@@ -512,11 +518,11 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: colors.borderStrong,
+    borderColor: t.c.borderStrong,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  price: { fontFamily: fontFamily.display, fontSize: fontSize.lg, color: colors.ink },
+  price: { fontFamily: fontFamily.display, fontSize: fontSize.lg, color: t.c.ink },
 
   cta: { gap: spacing[2] },
-});
+}));

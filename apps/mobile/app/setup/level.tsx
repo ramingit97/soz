@@ -24,11 +24,15 @@ import { useAccent } from '@/hooks/useAccent';
 import { useSaveLevel } from '@/hooks/useSaveLevel';
 import { UIModeProvider } from '@/hooks/useUIMode';
 import { useSettings, type ChildLevel } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, spacing } from '@/theme';
+import { fontFamily, fontSize, radius, spacing } from '@/theme';
 import { KID_MAX_AGE } from '@/theme/mode';
 import { LEVEL_INFO, LEVEL_ORDER } from '@/utils/levels';
+import { makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 export default function SetupLevelScreen() {
+  const { c, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const router = useRouter();
   const accent = useAccent();
   const isAz = useSettings((s) => s.parentUILanguage) === 'az';
@@ -78,11 +82,11 @@ export default function SetupLevelScreen() {
                   accessibilityState={{ selected: sel }}
                   style={[
                     styles.card,
-                    { borderColor: sel ? accent.bottom : colors.border, backgroundColor: sel ? accent.soft : colors.white },
+                    { borderColor: sel ? accent.bottom : c.border, backgroundColor: sel ? accent.soft : c.white },
                   ]}
                 >
-                  <View style={[styles.code, { backgroundColor: sel ? accent.bottom : colors.bgDeep }]}>
-                    <Text style={[styles.codeText, { color: sel ? accent.text : colors.inkSoft }]}>{info.code}</Text>
+                  <View style={[styles.code, { backgroundColor: sel ? accent.bottom : c.bgDeep }]}>
+                    <Text style={[styles.codeText, { color: sel ? accent.text : c.inkSoft }]}>{info.code}</Text>
                   </View>
                   <View style={styles.flex}>
                     <Text style={[styles.cardTitle, sel && { color: accent.ink }]}>
@@ -116,7 +120,7 @@ export default function SetupLevelScreen() {
                   {isAz ? '6 sual, təxminən 1 dəqiqə' : '6 вопросов, около минуты'}
                 </Text>
               </View>
-              <Icon name="chevron-right" size={20} color={colors.inkSoft} />
+              <Icon name="chevron-right" size={20} color={c.inkSoft} />
             </HBCard>
           </Pressable>
         ) : null}
@@ -159,7 +163,7 @@ export default function SetupLevelScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   header: { paddingHorizontal: 0, marginBottom: spacing[3] },
   flex: { flex: 1, gap: 2 },
   cards: { gap: spacing[3], marginBottom: spacing[4] },
@@ -179,18 +183,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   codeText: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize.base, letterSpacing: 0.5 },
-  cardTitle: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize.base, color: colors.ink },
-  nowTag: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.xs, color: colors.inkSoft },
+  cardTitle: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize.base, color: t.c.ink },
+  nowTag: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.xs, color: t.c.inkSoft },
   radio: {
     width: 24,
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: colors.borderStrong,
+    borderColor: t.c.borderStrong,
     alignItems: 'center',
     justifyContent: 'center',
   },
   testRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
   banner: { marginTop: spacing[4] },
   cta: { marginTop: spacing[5], paddingBottom: spacing[6] },
-});
+}));

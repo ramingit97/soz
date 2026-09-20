@@ -11,7 +11,9 @@ import Animated, {
 import { Icon } from '@/components/Icon';
 import { Text } from '@/components/Text';
 import { useAccent } from '@/hooks/useAccent';
-import { colors, fontFamily, fontSize, radius, spacing } from '@/theme';
+import { fontFamily, fontSize, radius, spacing } from '@/theme';
+import { makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 interface ObjectiveChipsProps {
   labels: string[];
@@ -19,6 +21,8 @@ interface ObjectiveChipsProps {
 }
 
 function Chip({ label, isDone, onPress }: { label: string; isDone: boolean; onPress: () => void }) {
+  const { c, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const accent = useAccent();
   const scale = useSharedValue(1);
   const wasDone = useRef(isDone);
@@ -45,7 +49,7 @@ function Chip({ label, isDone, onPress }: { label: string; isDone: boolean; onPr
         <Icon
           name={isDone ? 'circle-check' : 'circle'}
           size={14}
-          color={isDone ? accent.ink : colors.textMuted}
+          color={isDone ? accent.ink : c.textMuted}
           strokeWidth={2.5}
         />
         <Text style={[styles.label, isDone && styles.labelDone]} numberOfLines={1}>
@@ -59,6 +63,8 @@ function Chip({ label, isDone, onPress }: { label: string; isDone: boolean; onPr
 /** Compact row of conversation micro-goals (topic checklist). Tap a chip to
  * peek its full text. Fixed-height container so the chat layout stays put. */
 export function ObjectiveChips({ labels, done }: ObjectiveChipsProps) {
+  const { mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const [peek, setPeek] = useState<number | null>(null);
 
   return (
@@ -82,7 +88,7 @@ export function ObjectiveChips({ labels, done }: ObjectiveChipsProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   row: {
     flexDirection: 'row',
     gap: spacing[2],
@@ -93,24 +99,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: colors.surface,
+    backgroundColor: t.c.surface,
     borderRadius: radius.full,
     paddingHorizontal: spacing[2],
     paddingVertical: 6,
     borderWidth: 1,
-    borderColor: colors.surfaceBorder,
+    borderColor: t.c.surfaceBorder,
   },
   label: {
     flex: 1,
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize['2xs'],
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
   },
-  labelDone: { color: colors.ink },
+  labelDone: { color: t.c.ink },
   peek: {
-    backgroundColor: colors.surface,
+    backgroundColor: t.c.surface,
     borderWidth: 1,
-    borderColor: colors.surfaceBorder,
+    borderColor: t.c.surfaceBorder,
     borderRadius: radius.md,
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[2],
@@ -119,6 +125,6 @@ const styles = StyleSheet.create({
   peekText: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.xs,
-    color: colors.ink,
+    color: t.c.ink,
   },
-});
+}));

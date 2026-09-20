@@ -25,10 +25,11 @@ import { useTheme } from '@/hooks/useTheme';
 import { postTalk } from '@/services/api';
 import { playReplyAudio, stopReplyAudio } from '@/services/replyAudio';
 import { useSettings } from '@/store/settings';
-import { colors, scaleFont, spacing } from '@/theme';
+import { scaleFont, spacing } from '@/theme';
 import { useCompanionName } from '@/utils/companion';
 import { kidModeLabel } from '@/utils/lessonModes';
 import { talkFailureMessage, type TalkFailureMessage } from '@/utils/talkAlert';
+import { makeModeStyles } from '@/theme/modeTokens';
 
 type Mood = 'idle' | 'recording' | 'thinking' | 'playing';
 
@@ -40,7 +41,8 @@ export default function PretendScreen() {
   const lesson = getLesson(lang, Number(day));
   const az = useSettings((s) => s.parentUILanguage) === 'az';
   const bot = useCompanionName();
-  const { t, accent } = useTheme();
+  const { c, mode: uiMode, t, accent } = useTheme();
+  const styles = stylesByMode[uiMode];
 
   const childId = useSettings((s) => s.childId);
   const childName = useSettings((s) => s.childName);
@@ -149,10 +151,10 @@ export default function PretendScreen() {
         <Animated.View entering={FadeInDown.duration(450)}>
           <HBCard bg={accent.soft} style={styles.scenarioCard}>
             <Text style={styles.themeEmoji}>{lesson?.themeEmoji ?? ''}</Text>
-            <Text variant="headline" align="center" style={{ color: colors.ink }}>
+            <Text variant="headline" align="center" style={{ color: c.ink }}>
               {az ? 'Gəl oynayaq!' : 'Давай играть!'}
             </Text>
-            <Text variant="body" align="center" style={{ color: colors.ink }}>
+            <Text variant="body" align="center" style={{ color: c.ink }}>
               {az
                 ? `Sən və ${bot} «${theme}» mövzusunda macəraya çıxırsınız!`
                 : `Ты и ${bot} отправляетесь в приключение: «${theme}»!`}
@@ -226,7 +228,7 @@ export default function PretendScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   middle: { flex: 1 },
   middleContent: { flexGrow: 1, justifyContent: 'center', paddingVertical: spacing[2] },
   scenarioCard: { alignItems: 'center', gap: spacing[1] },
@@ -235,4 +237,4 @@ const styles = StyleSheet.create({
   speechBubble: { minHeight: 64, justifyContent: 'center' },
   statusArea: { minHeight: 52, justifyContent: 'center', paddingVertical: spacing[1] },
   micArea: { alignItems: 'center', paddingBottom: spacing[4] },
-});
+}));

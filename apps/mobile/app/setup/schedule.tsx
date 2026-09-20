@@ -10,13 +10,15 @@ import { HBButton } from '@/components/HBButton';
 import { scheduleLessonReminders } from '@/services/notifications';
 import { useSettings, type ScheduleDay, type ScheduleMinutes } from '@/store/settings';
 import { useCompanionName } from '@/utils/companion';
-import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
+import { fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
 import { Icon } from '@/components/Icon';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { StepIndicator } from '@/components/StepIndicator';
 import { useAccent } from '@/hooks/useAccent';
 import { UIModeProvider } from '@/hooks/useUIMode';
 import { updateChild } from '@/services/api';
+import { makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 const DAYS: { key: ScheduleDay; labelRu: string; labelAz: string }[] = [
   { key: 'mon', labelRu: 'Пн', labelAz: 'B.e' },
@@ -33,6 +35,8 @@ const DURATIONS: ScheduleMinutes[] = [10, 15, 20, 30, 45, 60];
 const HOURS = Array.from({ length: 16 }, (_, i) => i + 7); // 7–22
 
 export default function SetupScheduleScreen() {
+  const { mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const router = useRouter();
   // `?from=parent` — экран открыт как настройка из родительского раздела, а не
   // шаг онбординга: показываем текущее расписание, сохраняем и возвращаемся.
@@ -254,13 +258,13 @@ function daysRu(n: number): string {
   return 'дней';
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   header: { marginTop: spacing[2], marginBottom: spacing[6], paddingHorizontal: spacing[2] },
   settingsHeader: { paddingHorizontal: 0, marginBottom: spacing[3] },
   sectionLabel: {
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize.caption,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginBottom: spacing[3],
@@ -271,12 +275,12 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: spacing[3],
     borderRadius: radius.lg,
-    backgroundColor: colors.white,
+    backgroundColor: t.c.white,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: colors.border,
+    borderColor: t.c.border,
   },
-  dayText: { fontFamily: fontFamily.bodyBold, fontSize: fontSize['2xs'], color: colors.inkSoft },
+  dayText: { fontFamily: fontFamily.bodyBold, fontSize: fontSize['2xs'], color: t.c.inkSoft },
 
   durationRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] },
   durationBtn: {
@@ -284,13 +288,13 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingVertical: spacing[3],
     borderRadius: radius.lg,
-    backgroundColor: colors.white,
+    backgroundColor: t.c.white,
     alignItems: 'center',
     gap: spacing[1],
     borderWidth: 2,
-    borderColor: colors.border,
+    borderColor: t.c.border,
   },
-  durationText: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.xs, color: colors.ink },
+  durationText: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.xs, color: t.c.ink },
 
   hoursGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] },
   hourBtn: {
@@ -299,27 +303,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing[3],
     borderRadius: radius.lg,
-    backgroundColor: colors.white,
+    backgroundColor: t.c.white,
     borderWidth: 2,
-    borderColor: colors.border,
+    borderColor: t.c.border,
   },
-  hourText: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.sm, color: colors.ink },
+  hourText: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.sm, color: t.c.ink },
 
   toggleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing[3],
-    backgroundColor: colors.white,
+    backgroundColor: t.c.white,
     borderRadius: radius.xl,
     padding: spacing[4],
     borderWidth: 2,
-    borderColor: colors.border,
+    borderColor: t.c.border,
   },
-  toggleTitle: { fontFamily: fontFamily.bodyBlack, fontSize: scaleFont(15), color: colors.ink },
+  toggleTitle: { fontFamily: fontFamily.bodyBlack, fontSize: scaleFont(15), color: t.c.ink },
   toggleSub: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.xs,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     marginTop: 4,
     lineHeight: 17,
   },
@@ -327,7 +331,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 28,
     borderRadius: 14,
-    backgroundColor: colors.border,
+    backgroundColor: t.c.border,
     padding: 3,
     justifyContent: 'center',
   },
@@ -335,7 +339,7 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: colors.white,
+    backgroundColor: t.c.white,
     ...shadow.sm,
   },
   knobOn: { alignSelf: 'flex-end' },
@@ -350,5 +354,5 @@ const styles = StyleSheet.create({
     marginTop: spacing[6],
     marginBottom: spacing[4],
   },
-  summaryText: { fontFamily: fontFamily.bodyBold, fontSize: scaleFont(15), color: colors.ink },
-});
+  summaryText: { fontFamily: fontFamily.bodyBold, fontSize: scaleFont(15), color: t.c.ink },
+}));

@@ -58,13 +58,14 @@ import { notifyParentSensitive } from '@/services/notifications';
 import { playSfx } from '@/services/sfx';
 import { loadTalkHistory, saveTalkHistory, type StoredTurn } from '@/services/talkHistory';
 import { useSettings, todayISO } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, scaleFont, spacing } from '@/theme';
+import { fontFamily, fontSize, radius, scaleFont, spacing } from '@/theme';
 import { useCompanionName } from '@/utils/companion';
 import { talkFailureMessage, type TalkFailureMessage } from '@/utils/talkAlert';
 import { canFinishTalkLesson, MIN_LESSON_TALK_TURNS, spokenTurns } from '@/utils/lessonTalk';
 import { HBButton } from '@/components/HBButton';
 import { Icon } from '@/components/Icon';
 import type { LanguageCode } from '@soz/shared-types';
+import { makeModeStyles } from '@/theme/modeTokens';
 
 declare const __DEV__: boolean;
 
@@ -89,6 +90,8 @@ interface Turn {
 
 // ─── Transcript with per-word pronunciation highlight ───────────────────────
 function ChildTranscript({ text, unclearWords }: { text: string; unclearWords: string[] }) {
+  const { mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   if (!text || unclearWords.length === 0) {
     return <Text style={styles.bubbleText}>{text}</Text>;
   }
@@ -196,7 +199,8 @@ export default function TalkScreen() {
   const [hint, setHint] = useState<string | null>(null);
   const [hintLoading, setHintLoading] = useState(false);
   const [banner, setBanner] = useState<Banner | null>(null);
-  const { t, accent } = useTheme();
+  const { c, mode: uiMode, t, accent } = useTheme();
+  const styles = stylesByMode[uiMode];
 
   // Topic checklist (from /topics): 3 micro-goals shown as chips, detected server-side
   const goals = useMemo<{ ru: string; az: string; en: string }[] | null>(() => {
@@ -649,7 +653,7 @@ export default function TalkScreen() {
     playing: language === 'en' ? `${bot} is talking` : `${bot} говорит`,
   }[mood];
 
-  const statusDotColor = mood === 'recording' ? colors.berry : mood === 'thinking' ? colors.butterDeep : accent.bottom;
+  const statusDotColor = mood === 'recording' ? c.berry : mood === 'thinking' ? c.butterDeep : accent.bottom;
 
   const bannerView = (() => {
     if (!banner) return null;
@@ -754,7 +758,7 @@ export default function TalkScreen() {
               accessibilityLabel={az ? 'Dil' : 'Язык'}
               style={styles.langPill}
             >
-              <Icon name="globe" size={14} color={colors.inkSoft} strokeWidth={2.25} />
+              <Icon name="globe" size={14} color={c.inkSoft} strokeWidth={2.25} />
               <Text style={styles.langLabel}>{language.toUpperCase()}</Text>
             </Pressable>
           }
@@ -903,7 +907,7 @@ export default function TalkScreen() {
                       accessibilityLabel={az ? 'Cavabı bildir' : 'Пожаловаться на ответ'}
                       style={styles.reportBtn}
                     >
-                      <Icon name="flag" size={14} color={colors.textMuted} strokeWidth={2} />
+                      <Icon name="flag" size={14} color={c.textMuted} strokeWidth={2} />
                     </Pressable>
                   </>
                 ) : (
@@ -911,7 +915,7 @@ export default function TalkScreen() {
                     <ChildTranscript text={turn.text} unclearWords={turn.unclearWords ?? []} />
                     {typeof turn.confidence === 'number' && turn.confidence < 0.7 && turn.unclearWords && turn.unclearWords.length > 0 && (
                       <View style={styles.pronChip}>
-                        <Icon name="target" size={12} color={colors.berryDeep} strokeWidth={2.5} />
+                        <Icon name="target" size={12} color={c.berryDeep} strokeWidth={2.5} />
                         <Text style={styles.pronChipText}>
                           {language === 'en' ? 'Try again clearly' : 'Скажи чётче'}
                         </Text>
@@ -933,7 +937,7 @@ export default function TalkScreen() {
                   style={[styles.bubble, styles.bubbleBobo, styles.thinkingBubble]}
                   accessibilityLabel={language === 'en' ? 'thinking' : 'думаю'}
                 >
-                  <TypingDots color={colors.inkSoft} size={8} />
+                  <TypingDots color={c.inkSoft} size={8} />
                 </View>
               </Animated.View>
             )}
@@ -954,7 +958,7 @@ export default function TalkScreen() {
                     accessibilityRole="button"
                     accessibilityLabel={az ? 'Bağla' : 'Закрыть'}
                   >
-                    <Icon name="x" size={16} color={colors.inkSoft} />
+                    <Icon name="x" size={16} color={c.inkSoft} />
                   </Pressable>
                 </Animated.View>
               ) : (
@@ -1026,6 +1030,8 @@ export default function TalkScreen() {
 }
 
 function Divider({ label }: { label: string }) {
+  const { mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   return (
     <View style={styles.pastDivider}>
       <View style={styles.pastLine} />
@@ -1049,7 +1055,8 @@ function Celebration({
   onStay: () => void;
   onDone: () => void;
 }) {
-  const { accent } = useTheme();
+  const { mode: uiMode, accent } = useTheme();
+  const styles = stylesByMode[uiMode];
   return (
     <Animated.View entering={FadeInDown.duration(400).springify()}>
       <HBCard style={styles.celebration}>
@@ -1068,7 +1075,7 @@ function Celebration({
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -1099,9 +1106,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: colors.surface,
+    backgroundColor: t.c.surface,
     borderWidth: 1,
-    borderColor: colors.surfaceBorder,
+    borderColor: t.c.surfaceBorder,
     paddingHorizontal: spacing[2],
     paddingVertical: 6,
     borderRadius: radius.full,
@@ -1109,7 +1116,7 @@ const styles = StyleSheet.create({
   langLabel: {
     fontFamily: fontFamily.bodyBlack,
     fontSize: fontSize.xs,
-    color: colors.ink,
+    color: t.c.ink,
     letterSpacing: 0.5,
   },
 
@@ -1147,9 +1154,9 @@ const styles = StyleSheet.create({
     maxWidth: '80%',
   },
   bubbleBobo: {
-    backgroundColor: colors.surface,
+    backgroundColor: t.c.surface,
     borderWidth: 1,
-    borderColor: colors.surfaceBorder,
+    borderColor: t.c.surfaceBorder,
     borderBottomLeftRadius: 6,
     flexShrink: 1,
   },
@@ -1157,7 +1164,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 6,
   },
   bubbleText: {
-    color: colors.ink,
+    color: t.c.ink,
     fontFamily: fontFamily.bodyBold,
     fontSize: scaleFont(15),
     lineHeight: 21,
@@ -1165,10 +1172,10 @@ const styles = StyleSheet.create({
   unclearWord: {
     // Подчёркнутое слово на розовом — «скажи это чётче», по-детски понятно
     backgroundColor: 'rgba(229,92,115,0.18)',
-    color: colors.berryDeep,
+    color: t.c.berryDeep,
     textDecorationLine: 'underline',
     textDecorationStyle: 'dotted',
-    textDecorationColor: colors.berryDeep,
+    textDecorationColor: t.c.berryDeep,
     borderRadius: 3,
   },
   pronChip: {
@@ -1177,7 +1184,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: colors.surface,
+    backgroundColor: t.c.surface,
     borderRadius: radius.full,
     paddingHorizontal: spacing[2],
     paddingVertical: 3,
@@ -1185,7 +1192,7 @@ const styles = StyleSheet.create({
   pronChipText: {
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize['2xs'],
-    color: colors.berryDeep,
+    color: t.c.berryDeep,
   },
   thinkingBubble: {
     paddingVertical: spacing[3],
@@ -1207,16 +1214,16 @@ const styles = StyleSheet.create({
   pastLine: {
     flex: 1,
     height: 1,
-    backgroundColor: colors.border,
+    backgroundColor: t.c.border,
   },
   pastLabel: {
     fontFamily: fontFamily.bodyBlack,
     fontSize: fontSize['3xs'],
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     letterSpacing: 0.6,
   },
   bubblePastText: {
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     fontFamily: fontFamily.bodyMedium,
   },
 
@@ -1237,7 +1244,7 @@ const styles = StyleSheet.create({
 
   celebration: { marginTop: spacing[2], gap: spacing[3] },
   celebrationHead: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
-  celebrationTitle: { flex: 1, color: colors.ink },
+  celebrationTitle: { flex: 1, color: t.c.ink },
   celebrationRow: { flexDirection: 'row', gap: spacing[2] },
   celebrationBtn: { flex: 1 },
 
@@ -1256,7 +1263,7 @@ const styles = StyleSheet.create({
     maxWidth: 180,
     height: 6,
     borderRadius: 3,
-    backgroundColor: colors.border,
+    backgroundColor: t.c.border,
     overflow: 'hidden',
   },
   convoBarFill: {
@@ -1275,15 +1282,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing[1],
-    backgroundColor: colors.surface,
+    backgroundColor: t.c.surface,
     borderWidth: 1,
-    borderColor: colors.surfaceBorder,
+    borderColor: t.c.surfaceBorder,
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[2],
     borderRadius: radius.full,
   },
   hintBtnText: {
-    color: colors.ink,
+    color: t.c.ink,
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize.caption,
   },
@@ -1301,8 +1308,8 @@ const styles = StyleSheet.create({
   },
   hintText: {
     flex: 1,
-    color: colors.ink,
+    color: t.c.ink,
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize.caption,
   },
-});
+}));

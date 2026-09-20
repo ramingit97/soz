@@ -1,6 +1,9 @@
 /**
  * Шапка главного: питомец (нажатие — его комната), приветствие, серия и звёзды.
- * Переключатель языка курса — только когда учат два языка.
+ *
+ * Переключателя языка курса здесь больше нет: с 2026-09-20 курс один (английский
+ * по умолчанию). У старых профилей, где выбрали оба языка, курс переключается
+ * строкой «Курс» в профиле — на главном эта пара кнопок только сбивала ребёнка.
  */
 import * as Haptics from 'expo-haptics';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -9,8 +12,9 @@ import { HBChip } from '../HBChip';
 import { HBPet } from '../HBPet';
 import { Icon } from '../Icon';
 import { Text } from '../Text';
-import { useAccent } from '@/hooks/useAccent';
-import { colors, radius, spacing } from '@/theme';
+import { spacing } from '@/theme';
+import { makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 interface Props {
   isAz: boolean;
@@ -22,13 +26,11 @@ interface Props {
   /** Сегодня серию спасла заморозка — снежинка вместо огня. */
   freezeUsed: boolean;
   onPetPress: () => void;
-  languages: string[];
-  activeLanguage: string;
-  onLanguageChange: (lang: string) => void;
 }
 
 export function HomeHeader(p: Props) {
-  const accent = useAccent();
+  const { c, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   return (
     <View style={styles.wrap}>
       <View style={styles.row}>
@@ -54,65 +56,32 @@ export function HomeHeader(p: Props) {
               <Icon
                 name={p.freezeUsed ? 'snowflake' : 'flame'}
                 size={16}
-                color={p.freezeUsed ? colors.english : colors.primaryDeep}
+                color={p.freezeUsed ? c.english : c.primaryDeep}
               />
             }
           />
         ) : null}
         <HBChip
           label={String(p.totalStars)}
-          leadingIcon={<Icon name="star" size={16} color={colors.butterDeep} fill={colors.butter} />}
+          leadingIcon={<Icon name="star" size={16} color={c.butterDeep} fill={c.butter} />}
         />
       </View>
-
-      {p.languages.length > 1 ? (
-        <View style={styles.langRow} accessibilityRole="radiogroup">
-          {p.languages.map((l) => {
-            const active = l === p.activeLanguage;
-            return (
-              <Pressable
-                key={l}
-                onPress={() => {
-                  Haptics.selectionAsync().catch(() => {});
-                  p.onLanguageChange(l);
-                }}
-                accessibilityRole="radio"
-                accessibilityState={{ selected: active }}
-                style={[styles.langPill, active && { backgroundColor: accent.soft, borderColor: accent.bottom }]}
-              >
-                <Text variant="label" style={{ color: active ? accent.ink : colors.inkSoft }}>
-                  {l === 'en' ? 'English' : 'Русский'}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      ) : null}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   wrap: { gap: spacing[3] },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing[2] },
   avatar: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.surface,
+    backgroundColor: t.c.surface,
     borderWidth: 1,
-    borderColor: colors.surfaceBorder,
+    borderColor: t.c.surfaceBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
   greeting: { flex: 1, minWidth: 0 },
-  langRow: { flexDirection: 'row', gap: spacing[2] },
-  langPill: {
-    paddingHorizontal: spacing[3],
-    paddingVertical: spacing[1],
-    borderRadius: radius.full,
-    borderWidth: 1,
-    borderColor: colors.surfaceBorder,
-    backgroundColor: colors.surface,
-  },
-});
+}));

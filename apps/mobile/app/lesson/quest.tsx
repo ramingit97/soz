@@ -44,9 +44,10 @@ import { useTheme } from '@/hooks/useTheme';
 import { postWordCheck } from '@/services/api';
 import { playSfx } from '@/services/sfx';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, radius, scaleFont, spacing } from '@/theme';
+import { fontFamily, radius, scaleFont, spacing } from '@/theme';
 import { useCompanionName } from '@/utils/companion';
 import { kidModeLabel } from '@/utils/lessonModes';
+import { makeModeStyles } from '@/theme/modeTokens';
 
 type Status = 'idle' | 'recording' | 'thinking' | 'success' | 'fail' | 'skipped';
 
@@ -64,7 +65,8 @@ export default function QuestScreen() {
   const authToken = useSettings((s) => s.authToken);
   const az = useSettings((s) => s.parentUILanguage) === 'az';
   const bot = useCompanionName();
-  const { t, accent } = useTheme();
+  const { c, mode: uiMode, t, accent } = useTheme();
+  const styles = stylesByMode[uiMode];
 
   const [sceneIndex, setSceneIndex] = useState(0);
   const [status, setStatus] = useState<Status>('idle');
@@ -265,12 +267,12 @@ export default function QuestScreen() {
             }
           />
         ) : status === 'success' ? (
-          <Feedback icon="circle-check" color={colors.accentDeep} text={az ? `Əla! ${bot} sevinir!` : `Отлично! Ты помог ${bot}!`} />
+          <Feedback icon="circle-check" color={c.accentDeep} text={az ? `Əla! ${bot} sevinir!` : `Отлично! Ты помог ${bot}!`} />
         ) : status === 'skipped' ? (
-          <Feedback icon="arrow-right" color={colors.inkSoft} text={az ? 'Heç nə, davam edirik!' : 'Ничего страшного, идём дальше!'} />
+          <Feedback icon="arrow-right" color={c.inkSoft} text={az ? 'Heç nə, davam edirik!' : 'Ничего страшного, идём дальше!'} />
         ) : status === 'fail' && heard ? (
           <Animated.View entering={FadeIn.duration(250)} exiting={FadeOut.duration(150)} style={styles.feedbackCol}>
-            <Text variant="bodyBold" align="center" style={{ color: colors.berryDeep }}>
+            <Text variant="bodyBold" align="center" style={{ color: c.berryDeep }}>
               {az ? `${bot} eşitdi: «${heard}»` : `${bot} услышал: «${heard}»`}
             </Text>
             <Text variant="caption" tone="secondary" align="center">
@@ -303,6 +305,8 @@ export default function QuestScreen() {
 }
 
 function Feedback({ icon, color, text }: { icon: 'circle-check' | 'arrow-right'; color: string; text: string }) {
+  const { mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   return (
     <Animated.View entering={FadeIn.duration(250)} style={styles.feedbackRow}>
       <Icon name={icon} size={18} color={color} strokeWidth={2.5} />
@@ -313,7 +317,7 @@ function Feedback({ icon, color, text }: { icon: 'circle-check' | 'arrow-right';
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   middle: { flex: 1 },
   middleContent: { flexGrow: 1, justifyContent: 'center', paddingVertical: spacing[2] },
 
@@ -321,7 +325,7 @@ const styles = StyleSheet.create({
 
   storyCard: { gap: spacing[2] },
   sceneEmoji: { fontSize: scaleFont(32), lineHeight: scaleFont(40) },
-  storyText: { color: colors.ink },
+  storyText: { color: t.c.ink },
 
   keywordCard: { alignItems: 'center', gap: spacing[1], borderRadius: radius.xl },
   keywordWord: {
@@ -340,4 +344,4 @@ const styles = StyleSheet.create({
   feedbackCol: { alignItems: 'center', gap: 2 },
 
   micArea: { alignItems: 'center', paddingBottom: spacing[4] },
-});
+}));

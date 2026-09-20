@@ -2,8 +2,8 @@ import { Text as RNText, type TextProps as RNTextProps, type TextStyle } from 'r
 
 import { useAccent } from '@/hooks/useAccent';
 import { useUIMode } from '@/hooks/useUIMode';
-import { colors, fontFamily, fontSize, lineHeight, semantic } from '@/theme';
-import { makeModeStyles } from '@/theme/modeTokens';
+import { fontFamily, fontSize, lineHeight } from '@/theme';
+import { byMode, makeModeStyles } from '@/theme/modeTokens';
 
 type Variant = 'hero' | 'title' | 'headline' | 'subtitle' | 'body' | 'bodyBold' | 'caption' | 'label';
 type Tone =
@@ -84,17 +84,17 @@ const textStyles: Record<Exclude<Variant, DisplayVariant>, TextStyle> = {
   },
 };
 
-const toneColors: Record<Exclude<Tone, 'onAccent'>, string> = {
-  primary: colors.ink,
-  secondary: colors.inkSoft,
-  muted: colors.inkSoft,
-  onDark: colors.textOnDark,
-  brand: colors.primaryDeep,
-  danger: semantic.danger,
-  success: colors.accentDeep,
-  bobo: colors.primary,
-  accent: colors.accentPink,
-};
+const toneColorsByMode = byMode<Record<Exclude<Tone, 'onAccent'>, string>>((t) => ({
+  primary: t.c.ink,
+  secondary: t.c.inkSoft,
+  muted: t.c.textMuted,
+  onDark: t.c.textOnDark,
+  brand: t.c.primaryDeep,
+  danger: t.c.error,
+  success: t.c.successDeep,
+  bobo: t.c.primary,
+  accent: t.c.accentPink,
+}));
 
 function isDisplay(v: Variant): v is DisplayVariant {
   return v === 'hero' || v === 'title' || v === 'headline';
@@ -109,6 +109,7 @@ export function Text({
   ...rest
 }: TextProps) {
   const mode = useUIMode();
+  const toneColors = toneColorsByMode[mode];
   const accent = useAccent();
   const variantStyle = isDisplay(variant) ? displayStyles[mode][variant] : textStyles[variant];
 

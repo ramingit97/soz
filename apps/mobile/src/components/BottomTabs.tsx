@@ -20,7 +20,9 @@ import { Text } from '@/components/Text';
 import { useAccent } from '@/hooks/useAccent';
 import { useUIMode } from '@/hooks/useUIMode';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 type TabKey = 'home' | 'talk' | 'progress' | 'profile';
 
@@ -50,6 +52,8 @@ function TabButton({
   onPress: () => void;
   isAz: boolean;
 }) {
+  const { c, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const accent = useAccent();
   const mode = useUIMode();
   const scale = useSharedValue(1);
@@ -81,7 +85,7 @@ function TabButton({
         <View style={[styles.iconWrap, active && mode === 'kid' && { backgroundColor: accent.soft }]}>
           <Icon
             name={tab.icon}
-            color={active ? accent.ink : colors.inkSoft}
+            color={active ? accent.ink : c.inkSoft}
             size={active ? 24 : 22}
           />
         </View>
@@ -94,6 +98,8 @@ function TabButton({
 }
 
 export function BottomTabs() {
+  const { mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const router = useRouter();
   const pathname = usePathname();
   const lang = useSettings((s) => s.parentUILanguage) ?? 'ru';
@@ -141,7 +147,7 @@ export function BottomTabs() {
 const TAB_HEIGHT = 68;
 const BOTTOM_INSET = Platform.OS === 'ios' ? 24 : 12;
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   container: {
     position: 'absolute',
     left: 0,
@@ -153,9 +159,9 @@ const styles = StyleSheet.create({
   },
   bar: {
     flexDirection: 'row',
-    backgroundColor: colors.surface,
+    backgroundColor: t.c.surface,
     borderWidth: 1,
-    borderColor: colors.surfaceBorder,
+    borderColor: t.c.surfaceBorder,
     borderRadius: radius['2xl'],
     paddingVertical: spacing[2],
     paddingHorizontal: spacing[1],
@@ -183,13 +189,13 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize['3xs'],
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     letterSpacing: 0.2,
   },
   labelActive: {
     fontFamily: fontFamily.bodyBold,
   },
-});
+}));
 
 /** Spacer to add below scroll content so it doesn't get hidden behind the tab bar. */
 export function BottomTabsSpacer() {

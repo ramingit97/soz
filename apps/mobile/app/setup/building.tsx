@@ -31,7 +31,9 @@ import { scheduleLessonReminders } from '@/services/notifications';
 import { playSfx } from '@/services/sfx';
 import { focusToLessonPrefs, useSettings } from '@/store/settings';
 import { useCompanionName } from '@/utils/companion';
-import { colors, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 const TOTAL_DAYS = 30;
 // Day 1 is generated fast server-side (single small LLM call); the rest of
@@ -41,6 +43,8 @@ const READY_COUNT = 1;
 type Phase = 'building' | 'ready' | 'error';
 
 export default function SetupBuildingScreen() {
+  const { c, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const router = useRouter();
   const params = useLocalSearchParams<{ create?: string }>();
   const lang = useSettings((s) => s.parentUILanguage) ?? 'ru';
@@ -272,10 +276,10 @@ export default function SetupBuildingScreen() {
                 if (stage < i) return null;
                 return (
                   <Animated.View key={i} entering={FadeIn.duration(350)} style={styles.stageRow}>
-                    <Text style={[styles.stageMark, done && { color: colors.accent }]}>
+                    <Text style={[styles.stageMark, done && { color: c.accent }]}>
                       {done ? '✓' : '▸'}
                     </Text>
-                    <Text style={[styles.stageText, active && { color: colors.ink }]}>{label}</Text>
+                    <Text style={[styles.stageText, active && { color: c.ink }]}>{label}</Text>
                   </Animated.View>
                 );
               })}
@@ -327,7 +331,7 @@ export default function SetupBuildingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   root: {
     flex: 1,
     paddingHorizontal: spacing[6],
@@ -347,14 +351,14 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: fontFamily.display,
     fontSize: fontSize['3xl'],
-    color: colors.ink,
+    color: t.c.ink,
     textAlign: 'center',
     letterSpacing: -0.5,
   },
   sub: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.base,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     textAlign: 'center',
     lineHeight: 22,
     paddingHorizontal: spacing[2],
@@ -369,37 +373,37 @@ const styles = StyleSheet.create({
     width: 20,
     fontFamily: fontFamily.bodyBlack,
     fontSize: fontSize.base,
-    color: colors.primary,
+    color: t.c.primary,
   },
   stageText: {
     flex: 1,
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize.sm,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
   },
   barTrack: {
     height: 14,
     borderRadius: radius.full,
-    backgroundColor: colors.bgDeep,
+    backgroundColor: t.c.bgDeep,
     overflow: 'hidden',
     marginTop: spacing[2],
   },
   barFill: {
     height: '100%',
     borderRadius: radius.full,
-    backgroundColor: colors.primary,
+    backgroundColor: t.c.primary,
   },
   barCaption: {
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize.xs,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     textAlign: 'center',
   },
   bgNote: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.xs,
-    color: colors.textMuted,
+    color: t.c.textMuted,
     textAlign: 'center',
   },
   footer: { flex: 1, justifyContent: 'flex-end' },
-});
+}));

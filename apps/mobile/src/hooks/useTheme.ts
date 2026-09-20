@@ -32,5 +32,6 @@ export function useTheme() {
     };
   }, [mode, compact.short]);
 
-  return { mode, t, accent, compact };
+  // `c` — та же палитра, что `t.c`: экраны читают цвет как `c.ink`, без `t.`.
+  return { mode, t, c: t.c, accent, compact };
 }

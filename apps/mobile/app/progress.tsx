@@ -19,21 +19,26 @@ import { getLesson, STATIC_MAX_DAY } from '@/data/lessons';
 import { useSettings } from '@/store/settings';
 import { useAccent } from '@/hooks/useAccent';
 import { useCompanionName } from '@/utils/companion';
-import { colors, fontFamily, fontSize, radius, shadow, spacing, tints } from '@/theme';
+import { fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { byMode, makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 // Recent word preview — last N unique words
 const PREVIEW_COUNT = 12;
 
-const WORD_PALETTE: { bg: string; text: string }[] = [
-  { bg: tints.primary, text: colors.primary },
-  { bg: tints.sage, text: colors.accent },
-  { bg: tints.butter, text: colors.butterDeep },
-  { bg: colors.englishLight, text: colors.english },
-  { bg: tints.berry, text: colors.berryDeep },
-  { bg: tints.english, text: colors.english },
-];
+const WORD_PALETTE_BY_MODE = byMode<{ bg: string; text: string }[]>((t) => ([
+  { bg: t.c.tints.primary, text: t.c.primary },
+  { bg: t.c.tints.sage, text: t.c.accent },
+  { bg: t.c.tints.butter, text: t.c.butterDeep },
+  { bg: t.c.englishLight, text: t.c.english },
+  { bg: t.c.tints.berry, text: t.c.berryDeep },
+  { bg: t.c.tints.english, text: t.c.english },
+]));
 
 export default function ProgressScreen() {
+  const { c, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
+  const WORD_PALETTE = WORD_PALETTE_BY_MODE[uiMode];
   const accent = useAccent();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -94,7 +99,7 @@ export default function ProgressScreen() {
             ringColor={streak >= 3 ? accent.bottom : undefined}
             style={[styles.statCard, styles.statCardWide]}
           >
-            <Icon name="flame" size={26} color={colors.primaryDeep} fill={colors.butter} strokeWidth={2} />
+            <Icon name="flame" size={26} color={c.primaryDeep} fill={c.butter} strokeWidth={2} />
             <Text style={styles.statValue}>{streak}</Text>
             <Text style={styles.statLabel}>
               {isAz ? 'gün ardıcıl' : 'дней подряд'}
@@ -103,7 +108,7 @@ export default function ProgressScreen() {
 
           {/* Stars */}
           <HBCard depth="sm" style={styles.statCard}>
-            <Icon name="star" size={26} color={colors.butterDeep} fill={colors.butter} strokeWidth={2} />
+            <Icon name="star" size={26} color={c.butterDeep} fill={c.butter} strokeWidth={2} />
             <Text style={styles.statValue}>{totalStars}</Text>
             <Text style={styles.statLabel}>
               {isAz ? 'ulduz' : 'звёзд'}
@@ -112,7 +117,7 @@ export default function ProgressScreen() {
 
           {/* Words */}
           <HBCard depth="sm" style={styles.statCard}>
-            <Icon name="book-open" size={26} color={colors.accentDeep} strokeWidth={2} />
+            <Icon name="book-open" size={26} color={c.accentDeep} strokeWidth={2} />
             <Text style={styles.statValue}>{uniqueWords.length}</Text>
             <Text style={styles.statLabel}>
               {isAz ? 'söz' : 'слов'}
@@ -142,7 +147,7 @@ export default function ProgressScreen() {
                 {isAz ? 'Təqvim' : 'Календарь'}
               </Text>
               <View style={styles.quickArrow}>
-                <Icon name="chevron-right" size={18} color={colors.inkSoft} />
+                <Icon name="chevron-right" size={18} color={c.inkSoft} />
               </View>
             </HBCard>
           </Pressable>
@@ -158,7 +163,7 @@ export default function ProgressScreen() {
                 {isAz ? 'Albom' : 'Альбом'}
               </Text>
               <View style={styles.quickArrow}>
-                <Icon name="chevron-right" size={18} color={colors.inkSoft} />
+                <Icon name="chevron-right" size={18} color={c.inkSoft} />
               </View>
             </HBCard>
           </Pressable>
@@ -194,7 +199,7 @@ export default function ProgressScreen() {
                   {isAz ? 'Söhbətlərdən yadda qalanlar' : 'Что запомнилось из разговоров'}
                 </Text>
               </View>
-              <Icon name="chevron-right" size={20} color={colors.inkSoft} />
+              <Icon name="chevron-right" size={20} color={c.inkSoft} />
             </HBCard>
           </Pressable>
         </Animated.View>
@@ -212,7 +217,7 @@ export default function ProgressScreen() {
                   {isAz ? 'Sənin medalların və mükafatların' : 'Твои медали и награды'}
                 </Text>
               </View>
-              <Icon name="chevron-right" size={20} color={colors.inkSoft} />
+              <Icon name="chevron-right" size={20} color={c.inkSoft} />
             </HBCard>
           </Pressable>
         </Animated.View>
@@ -231,7 +236,7 @@ export default function ProgressScreen() {
                     {isAz ? 'Çətin sözləri yenidən yoxla' : 'Закрепи слова, которые путал'}
                   </Text>
                 </View>
-                <Icon name="chevron-right" size={20} color={colors.inkSoft} />
+                <Icon name="chevron-right" size={20} color={c.inkSoft} />
               </HBCard>
             </Pressable>
           </Animated.View>
@@ -261,8 +266,8 @@ export default function ProgressScreen() {
                   );
                 })}
                 {extraCount > 0 && (
-                  <View style={[styles.wordPill, { backgroundColor: colors.bgDeep }]}>
-                    <Text style={[styles.wordPillText, { color: colors.inkSoft }]}>
+                  <View style={[styles.wordPill, { backgroundColor: c.bgDeep }]}>
+                    <Text style={[styles.wordPillText, { color: c.inkSoft }]}>
                       +{extraCount}
                     </Text>
                   </View>
@@ -300,7 +305,7 @@ export default function ProgressScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   scroll: {
     paddingHorizontal: spacing[5],
     paddingBottom: spacing[6],
@@ -313,7 +318,7 @@ const styles = StyleSheet.create({
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: colors.primarySoft,
+    backgroundColor: t.c.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
     borderTopWidth: 1.5,
@@ -326,13 +331,13 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: fontFamily.display,
     fontSize: fontSize['2xl'],
-    color: colors.ink,
+    color: t.c.ink,
     letterSpacing: -0.3,
   },
   headerSub: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.sm,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     textAlign: 'center',
   },
 
@@ -353,14 +358,14 @@ const styles = StyleSheet.create({
   statValue: {
     fontFamily: fontFamily.display,
     fontSize: fontSize['4xl'],
-    color: colors.ink,
+    color: t.c.ink,
     letterSpacing: -1,
     lineHeight: 40,
   },
   statLabel: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.xs,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     textAlign: 'center',
   },
 
@@ -375,20 +380,20 @@ const styles = StyleSheet.create({
   quickTitle: {
     fontFamily: fontFamily.display,
     fontSize: fontSize.base,
-    color: colors.ink,
+    color: t.c.ink,
   },
   quickSub: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.xs,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
   },
   quickArrow: { alignSelf: 'flex-end' },
 
   // Course progress
   courseCard: { gap: spacing[2] },
   courseHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
-  courseTrack: { height: 8, borderRadius: radius.full, backgroundColor: colors.bgDeep, overflow: 'hidden' },
-  courseFill: { height: '100%', borderRadius: radius.full, backgroundColor: colors.primary },
+  courseTrack: { height: 8, borderRadius: radius.full, backgroundColor: t.c.bgDeep, overflow: 'hidden' },
+  courseFill: { height: '100%', borderRadius: radius.full, backgroundColor: t.c.primary },
 
   // Review CTA
   reviewCard: {
@@ -399,12 +404,12 @@ const styles = StyleSheet.create({
   reviewTitle: {
     fontFamily: fontFamily.display,
     fontSize: fontSize.base,
-    color: colors.ink,
+    color: t.c.ink,
   },
   reviewSub: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.xs,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     marginTop: 2,
   },
 
@@ -418,12 +423,12 @@ const styles = StyleSheet.create({
   wordsSectionTitle: {
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize.sm,
-    color: colors.ink,
+    color: t.c.ink,
   },
   wordsShowAll: {
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize.sm,
-    color: colors.primary,
+    color: t.c.primary,
   },
   wordPills: {
     flexDirection: 'row',
@@ -451,7 +456,7 @@ const styles = StyleSheet.create({
   bubbleText: {
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize.sm,
-    color: colors.ink,
+    color: t.c.ink,
     lineHeight: 20,
   },
-});
+}));

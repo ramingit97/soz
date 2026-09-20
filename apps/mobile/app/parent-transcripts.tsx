@@ -16,11 +16,14 @@ import { useAccent } from '@/hooks/useAccent';
 import { UIModeProvider } from '@/hooks/useUIMode';
 import { getTranscripts, type ConversationRecord } from '@/services/api';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, spacing } from '@/theme';
-import { MODE_TOKENS } from '@/theme/modeTokens';
+import { fontFamily, fontSize, radius, spacing } from '@/theme';
+import { MODE_TOKENS, makeModeStyles } from '@/theme/modeTokens';
 import { useCompanionName } from '@/utils/companion';
+import { useTheme } from '@/hooks/useTheme';
 
 export default function ParentTranscriptsScreen() {
+  const { c, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const lang = useSettings((s) => s.parentUILanguage) ?? 'ru';
   const childId = useSettings((s) => s.childId);
   const childName = useSettings((s) => s.childName) ?? '';
@@ -107,7 +110,7 @@ export default function ParentTranscriptsScreen() {
                         {turnsLabel(childTurns)} · {conv.language === 'en' ? 'English' : 'Русский'}
                       </Text>
                     </View>
-                    <Icon name={expanded ? 'chevron-down' : 'chevron-right'} size={20} color={colors.inkSoft} />
+                    <Icon name={expanded ? 'chevron-down' : 'chevron-right'} size={20} color={c.inkSoft} />
                   </Pressable>
 
                   {expanded ? (
@@ -124,7 +127,7 @@ export default function ParentTranscriptsScreen() {
                             styles.turn,
                             t.role === 'child'
                               ? { backgroundColor: accent.soft }
-                              : { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.surfaceBorder },
+                              : { backgroundColor: c.bg, borderWidth: 1, borderColor: c.surfaceBorder },
                           ]}
                         >
                           <Text variant="caption" tone="secondary">
@@ -145,7 +148,7 @@ export default function ParentTranscriptsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   scroll: { paddingTop: spacing[2], paddingBottom: spacing[10], gap: spacing[2] },
   center: { paddingVertical: spacing[10], alignItems: 'center' },
   empty: { alignItems: 'center', gap: spacing[3], paddingVertical: spacing[6] },
@@ -156,4 +159,4 @@ const styles = StyleSheet.create({
   dayChipText: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize['2xs'] },
   turns: { gap: spacing[2] },
   turn: { borderRadius: radius.lg, paddingHorizontal: spacing[3], paddingVertical: spacing[2], gap: 2 },
-});
+}));

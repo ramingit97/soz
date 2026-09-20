@@ -25,7 +25,9 @@ import { analyzeInterests, updatePreferences, type LessonPrefs } from '@/service
 import { fetchFullCurriculum } from '@/services/curriculum';
 import { useSettings } from '@/store/settings';
 import { useCompanionName } from '@/utils/companion';
-import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing, tints } from '@/theme';
+import { fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
+import { byMode, makeModeStyles, type ModeTokens } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 // ── Known-interest display metadata ───────────────────────────────────────────
 
@@ -38,27 +40,29 @@ interface Known {
   tint: string;
 }
 
-const KNOWN: Known[] = [
-  { key: 'animals', emoji: '🦁', labelRu: 'Животные', labelAz: 'Heyvanlar', color: '#E8945A', tint: tints.primary },
-  { key: 'dinos', emoji: '🦕', labelRu: 'Динозавры', labelAz: 'Dinozavrlar', color: '#7AC9B5', tint: tints.sage },
-  { key: 'space', emoji: '🚀', labelRu: 'Космос', labelAz: 'Kosmos', color: colors.english, tint: tints.english },
-  { key: 'sports', emoji: '⚽', labelRu: 'Спорт', labelAz: 'İdman', color: '#4A8AFF', tint: tints.english },
-  { key: 'music', emoji: '🎵', labelRu: 'Музыка', labelAz: 'Musiqi', color: '#E55C73', tint: tints.berry },
+const KNOWN_BY_MODE = byMode<Known[]>((t) => ([
+  { key: 'animals', emoji: '🦁', labelRu: 'Животные', labelAz: 'Heyvanlar', color: '#E8945A', tint: t.c.tints.primary },
+  { key: 'dinos', emoji: '🦕', labelRu: 'Динозавры', labelAz: 'Dinozavrlar', color: '#7AC9B5', tint: t.c.tints.sage },
+  { key: 'space', emoji: '🚀', labelRu: 'Космос', labelAz: 'Kosmos', color: t.c.english, tint: t.c.tints.english },
+  { key: 'sports', emoji: '⚽', labelRu: 'Спорт', labelAz: 'İdman', color: '#4A8AFF', tint: t.c.tints.english },
+  { key: 'music', emoji: '🎵', labelRu: 'Музыка', labelAz: 'Musiqi', color: '#E55C73', tint: t.c.tints.berry },
   { key: 'art', emoji: '🎨', labelRu: 'Рисование', labelAz: 'Rəsm', color: '#FF8C42', tint: '#FFE0CC' },
   { key: 'science', emoji: '🔬', labelRu: 'Наука', labelAz: 'Elm', color: '#34C4A0', tint: '#D0F5EC' },
   { key: 'food', emoji: '🍕', labelRu: 'Еда', labelAz: 'Yemək', color: '#F5D466', tint: '#FFF8D6' },
-  { key: 'games', emoji: '🎮', labelRu: 'Игры', labelAz: 'Oyunlar', color: colors.berry, tint: tints.berry },
-];
-const KNOWN_MAP = new Map(KNOWN.map((k) => [k.key, k]));
-function knownFor(tag: string): Known {
+  { key: 'games', emoji: '🎮', labelRu: 'Игры', labelAz: 'Oyunlar', color: t.c.berry, tint: t.c.tints.berry },
+]));
+const KNOWN_MAP_BY_MODE = byMode((t) => new Map(KNOWN_BY_MODE[t.mode].map((k) => [k.key, k])));
+
+/** Интерес по метке; цвет запасного варианта зависит от возрастного режима. */
+function knownFor(tag: string, t: ModeTokens): Known {
   return (
-    KNOWN_MAP.get(tag) ?? {
+    KNOWN_MAP_BY_MODE[t.mode].get(tag) ?? {
       key: tag,
       emoji: '✨',
       labelRu: tag,
       labelAz: tag,
-      color: colors.primary,
-      tint: colors.primarySoft,
+      color: t.c.primary,
+      tint: t.c.primarySoft,
     }
   );
 }
@@ -73,6 +77,9 @@ const MOODS = [
 type Mood = (typeof MOODS)[number]['key'];
 
 export default function CheckpointScreen() {
+  const { c, mode: uiMode, t } = useTheme();
+  const styles = stylesByMode[uiMode];
+  const KNOWN = KNOWN_BY_MODE[uiMode];
   const router = useRouter();
   const lang = useSettings((s) => s.parentUILanguage) ?? 'ru';
   const bot = useCompanionName();
@@ -300,7 +307,7 @@ export default function CheckpointScreen() {
             {/* Current interest chips */}
             <View style={styles.chipsWrap}>
               {interests.map((tag) => {
-                const k = knownFor(tag);
+                const k = knownFor(tag, t);
                 return (
                   <Pressable
                     key={tag}
@@ -330,7 +337,7 @@ export default function CheckpointScreen() {
                 placeholder={
                   isAz ? 'Yaz: "robotları sevir..."' : 'Напиши: "полюбил роботов..."'
                 }
-                placeholderTextColor={colors.inkSoft}
+                placeholderTextColor={c.inkSoft}
                 style={styles.input}
                 returnKeyType="done"
                 onSubmitEditing={handleAnalyze}
@@ -411,6 +418,8 @@ function ToggleRow({
   value: boolean;
   onToggle: () => void;
 }) {
+  const { mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const accent = useAccent();
   return (
     <Pressable
@@ -431,7 +440,7 @@ function ToggleRow({
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   scroll: {
     flexGrow: 1,
     paddingHorizontal: spacing[5],
@@ -445,7 +454,7 @@ const styles = StyleSheet.create({
     width: 92,
     height: 92,
     borderRadius: 46,
-    backgroundColor: colors.primarySoft,
+    backgroundColor: t.c.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
     borderTopWidth: 1.5,
@@ -457,7 +466,7 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: fontFamily.display,
     fontSize: fontSize['2xl'],
-    color: colors.ink,
+    color: t.c.ink,
     textAlign: 'center',
     letterSpacing: -0.3,
     marginTop: spacing[1],
@@ -465,12 +474,12 @@ const styles = StyleSheet.create({
   subtitle: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.sm,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     textAlign: 'center',
   },
 
   card: {
-    backgroundColor: colors.card,
+    backgroundColor: t.c.card,
     borderRadius: radius.xl,
     padding: spacing[4],
     gap: spacing[3],
@@ -483,13 +492,13 @@ const styles = StyleSheet.create({
   cardLabel: {
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize.xs,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     letterSpacing: 0.5,
   },
   cardQuestion: {
     fontFamily: fontFamily.display,
     fontSize: fontSize.lg,
-    color: colors.ink,
+    color: t.c.ink,
   },
 
   // Mood
@@ -498,28 +507,28 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: radius.lg,
-    backgroundColor: colors.bg,
+    backgroundColor: t.c.bg,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: colors.border,
+    borderColor: t.c.border,
   },
   moodBtnActive: {
-    backgroundColor: colors.primarySoft,
-    borderColor: colors.primary,
+    backgroundColor: t.c.primarySoft,
+    borderColor: t.c.primary,
   },
   moodEmoji: { fontSize: 34 },
 
   // Toggle rows
   toggleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
   toggleTextWrap: { flex: 1, gap: 2 },
-  toggleLabel: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.base, color: colors.ink },
-  toggleHint: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize.xs, color: colors.inkSoft },
+  toggleLabel: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.base, color: t.c.ink },
+  toggleHint: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize.xs, color: t.c.inkSoft },
   switch: {
     width: 50,
     height: 30,
     borderRadius: 15,
-    backgroundColor: colors.bgDeep,
+    backgroundColor: t.c.bgDeep,
     padding: 3,
     justifyContent: 'center',
   },
@@ -527,18 +536,18 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: colors.white,
+    backgroundColor: t.c.white,
     ...shadow.sm,
   },
   knobOn: { alignSelf: 'flex-end' },
-  rowDivider: { height: 1, backgroundColor: colors.bgDeep },
+  rowDivider: { height: 1, backgroundColor: t.c.bgDeep },
 
   // Difficulty segmented
   diffBlock: { gap: spacing[2] },
-  diffLabel: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.base, color: colors.ink },
+  diffLabel: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.base, color: t.c.ink },
   segment: {
     flexDirection: 'row',
-    backgroundColor: colors.bg,
+    backgroundColor: t.c.bg,
     borderRadius: radius.lg,
     padding: 3,
     gap: 3,
@@ -550,14 +559,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  segBtnActive: { backgroundColor: colors.primary, ...shadow.sm },
+  segBtnActive: { backgroundColor: t.c.primary, ...shadow.sm },
   segText: {
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize.xs,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     textAlign: 'center',
   },
-  segTextActive: { color: colors.white },
+  segTextActive: { color: t.c.white },
 
   // Interest chips
   chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2], minHeight: 40 },
@@ -576,7 +585,7 @@ const styles = StyleSheet.create({
   emptyHint: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.sm,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     paddingVertical: spacing[2],
   },
 
@@ -584,25 +593,25 @@ const styles = StyleSheet.create({
   inputRow: { flexDirection: 'row', gap: spacing[2], alignItems: 'center' },
   input: {
     flex: 1,
-    backgroundColor: colors.bg,
+    backgroundColor: t.c.bg,
     borderRadius: radius.lg,
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[3],
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.sm,
-    color: colors.ink,
+    color: t.c.ink,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: t.c.border,
   },
   addBtn: {
     width: 46,
     height: 46,
     borderRadius: radius.lg,
-    backgroundColor: colors.primarySoft,
+    backgroundColor: t.c.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
-    borderColor: colors.primary,
+    borderColor: t.c.primary,
   },
   addBtnOff: { opacity: 0.4 },
   addBtnText: { fontSize: fontSize.xl },
@@ -615,17 +624,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[2],
     borderRadius: radius.full,
-    backgroundColor: colors.bg,
+    backgroundColor: t.c.bg,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: t.c.border,
   },
   suggEmoji: { fontSize: 14 },
-  suggLabel: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize.sm, color: colors.inkSoft },
+  suggLabel: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize.sm, color: t.c.inkSoft },
 
   // Save
   saveWrap: { gap: spacing[2], marginTop: spacing[2] },
   skipRow: { alignItems: 'center', paddingVertical: spacing[2] },
-  skipText: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize.sm, color: colors.inkSoft },
+  skipText: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize.sm, color: t.c.inkSoft },
 
   // Success
   successWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing[6] },
@@ -633,16 +642,16 @@ const styles = StyleSheet.create({
   successTitle: {
     fontFamily: fontFamily.display,
     fontSize: fontSize['3xl'],
-    color: colors.ink,
+    color: t.c.ink,
     marginTop: spacing[2],
   },
   successBody: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.base,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     textAlign: 'center',
     lineHeight: 24,
     maxWidth: 300,
   },
   successBtn: { alignSelf: 'stretch', marginTop: spacing[4] },
-});
+}));

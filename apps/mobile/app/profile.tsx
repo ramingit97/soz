@@ -23,8 +23,9 @@ import { useTheme } from '@/hooks/useTheme';
 import { deleteAccount } from '@/services/api';
 import { cancelAllReminders } from '@/services/notifications';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, semantic, spacing, tints } from '@/theme';
+import { fontFamily, fontSize, radius, spacing } from '@/theme';
 import { useCompanionName } from '@/utils/companion';
+import { makeModeStyles } from '@/theme/modeTokens';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -38,6 +39,9 @@ export default function ProfileScreen() {
   const bedtimeMode = useSettings((s) => s.bedtimeMode);
   const setBedtimeMode = useSettings((s) => s.setBedtimeMode);
   const setParentUILanguage = useSettings((s) => s.setParentUILanguage);
+  const learningLanguages = useSettings((s) => s.learningLanguages);
+  const activeLearningLanguage = useSettings((s) => s.activeLearningLanguage);
+  const setActiveLearningLanguage = useSettings((s) => s.setActiveLearningLanguage);
   const isAz = lang === 'az';
   const parentalGate = useParentalGate();
   const bot = useCompanionName();
@@ -54,7 +58,8 @@ export default function ProfileScreen() {
     }
   };
 
-  const { t, accent } = useTheme();
+  const { c, mode: uiMode, t, accent } = useTheme();
+  const styles = stylesByMode[uiMode];
   const insets = useSafeAreaInsets();
   const handleAction = (action: () => void) => {
     Haptics.selectionAsync().catch(() => {});
@@ -91,6 +96,8 @@ export default function ProfileScreen() {
       ],
     );
   };
+
+  const courseLang = activeLearningLanguage ?? learningLanguages[0] ?? 'en';
 
   const items: { icon: IconName; label: string; sub: string; onPress: () => void }[] = [
     {
@@ -132,6 +139,19 @@ export default function ProfileScreen() {
         setBedtimeMode(next);
       }),
     },
+    // Курс один (английский по умолчанию с 2026-09-20). Строка появляется только
+    // у профилей, созданных до этого, где выбрали оба языка: переключатель ушёл
+    // с главного, и без неё они остались бы заперты в одном курсе.
+    ...(learningLanguages.length > 1
+      ? [{
+          icon: 'graduation-cap' as IconName,
+          label: isAz ? 'Kurs' : 'Курс',
+          sub: courseLang === 'en'
+            ? (isAz ? 'İngilis dili · rus dilinə keç' : 'Английский · перейти на русский')
+            : (isAz ? 'Rus dili · ingilis dilinə keç' : 'Русский · перейти на английский'),
+          onPress: () => handleAction(() => setActiveLearningLanguage(courseLang === 'en' ? 'ru' : 'en')),
+        }]
+      : []),
     {
       icon: 'languages',
       label: isAz ? 'Tətbiqin dili' : 'Язык приложения',
@@ -170,8 +190,8 @@ export default function ProfileScreen() {
               ) : null}
             </View>
             {isPremium ? (
-              <View style={[styles.premium, { backgroundColor: tints.butter }]}>
-                <Icon name="crown" size={14} color="#7F6628" fill={colors.butter} strokeWidth={2} />
+              <View style={[styles.premium, { backgroundColor: c.tints.butter }]}>
+                <Icon name="crown" size={14} color="#7F6628" fill={c.butter} strokeWidth={2} />
                 <Text style={styles.premiumText}>Premium</Text>
               </View>
             ) : null}
@@ -189,7 +209,7 @@ export default function ProfileScreen() {
                     <Text variant="bodyBold" numberOfLines={1}>{item.label}</Text>
                     <Text variant="caption" tone="secondary" numberOfLines={1}>{item.sub}</Text>
                   </View>
-                  <Icon name="chevron-right" size={20} color={colors.inkSoft} />
+                  <Icon name="chevron-right" size={20} color={c.inkSoft} />
                 </HBCard>
               )}
             </Pressable>
@@ -203,8 +223,8 @@ export default function ProfileScreen() {
               <Text variant="label" tone="secondary">{isAz ? 'Hesab' : 'Аккаунт'}</Text>
               {userEmail ? <Text variant="body">{userEmail}</Text> : null}
               <Pressable onPress={handleLogout} accessibilityRole="button" style={styles.logout} hitSlop={6}>
-                <Icon name="log-out" size={16} color={semantic.danger} />
-                <Text variant="bodyBold" style={{ color: semantic.danger }}>{isAz ? 'Çıxış' : 'Выйти'}</Text>
+                <Icon name="log-out" size={16} color={c.semantic.danger} />
+                <Text variant="bodyBold" style={{ color: c.semantic.danger }}>{isAz ? 'Çıxış' : 'Выйти'}</Text>
               </Pressable>
             </HBCard>
           </Animated.View>
@@ -221,7 +241,7 @@ export default function ProfileScreen() {
           </Pressable>
           <Text variant="caption" tone="secondary">·</Text>
           <Pressable onPress={() => parentalGate.run(handleDeleteAccount)} style={styles.legalLink}>
-            <Text variant="caption" style={{ color: semantic.danger }}>{isAz ? 'Hesabı sil' : 'Удалить аккаунт'}</Text>
+            <Text variant="caption" style={{ color: c.semantic.danger }}>{isAz ? 'Hesabı sil' : 'Удалить аккаунт'}</Text>
           </Pressable>
         </Animated.View>
 
@@ -242,7 +262,7 @@ export default function ProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   scroll: { paddingBottom: spacing[4] },
   flex: { flex: 1, minWidth: 0 },
   identity: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
@@ -263,5 +283,5 @@ const styles = StyleSheet.create({
   legalRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: spacing[1] },
   legalLink: { paddingVertical: spacing[1], paddingHorizontal: spacing[1] },
   versionTap: { alignSelf: 'center', paddingVertical: spacing[2] },
-  versionText: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize['2xs'], color: colors.textMuted },
-});
+  versionText: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize['2xs'], color: t.c.textMuted },
+}));

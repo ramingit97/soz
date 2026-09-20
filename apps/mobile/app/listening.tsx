@@ -39,7 +39,8 @@ import { savePhrases } from '@/services/srs';
 import { useSettings } from '@/store/settings';
 import { localDateISO, localOffsetMinutes } from '@soz/shared-types';
 import { useCompanionName } from '@/utils/companion';
-import { colors, fontFamily, fontSize, radius, spacing } from '@/theme';
+import { fontFamily, fontSize, radius, spacing } from '@/theme';
+import { makeModeStyles } from '@/theme/modeTokens';
 
 interface LocalStory {
   id: string;
@@ -74,7 +75,8 @@ export default function ListeningScreen() {
   const authToken = useSettings((s) => s.authToken);
   const childLevel = useSettings((s) => s.childLevel);
   const isAz = lang === 'az';
-  const { t, accent } = useTheme();
+  const { c, mode: uiMode, t, accent } = useTheme();
+  const styles = stylesByMode[uiMode];
   const learnLang: 'en' | 'ru' =
     params.lang === 'en' || params.lang === 'ru' ? params.lang : learningLanguages[0] ?? 'en';
 
@@ -317,7 +319,7 @@ export default function ListeningScreen() {
                       accessibilityRole="button"
                       style={styles.textToggle}
                     >
-                      <Icon name="book-open" size={18} color={colors.inkSoft} />
+                      <Icon name="book-open" size={18} color={c.inkSoft} />
                       <Text style={styles.textToggleLabel}>
                         {showText ? (isAz ? 'Gizlət' : 'Скрыть текст') : (isAz ? 'Mətn' : 'Текст')}
                       </Text>
@@ -354,9 +356,9 @@ export default function ListeningScreen() {
                               >
                                 <Text variant="body" style={styles.optText}>{opt}</Text>
                                 {state === 'right' ? (
-                                  <Icon name="circle-check" size={18} color={colors.accentDeep} strokeWidth={2.5} />
+                                  <Icon name="circle-check" size={18} color={c.accentDeep} strokeWidth={2.5} />
                                 ) : state === 'wrong' ? (
-                                  <Icon name="x" size={18} color={colors.berryDeep} strokeWidth={2.5} />
+                                  <Icon name="x" size={18} color={c.berryDeep} strokeWidth={2.5} />
                                 ) : null}
                               </Pressable>
                             );
@@ -452,7 +454,7 @@ export default function ListeningScreen() {
                     <HBCard style={styles.libItem}>
                       <HBIconBox icon="headphones" tint={accent.soft} iconColor={accent.ink} size={36} />
                       <Text variant="bodyBold" style={styles.libItemTitle} numberOfLines={1}>{st.title}</Text>
-                      <Icon name="chevron-right" size={20} color={colors.inkSoft} />
+                      <Icon name="chevron-right" size={20} color={c.inkSoft} />
                     </HBCard>
                   </Pressable>
                 ))}
@@ -465,7 +467,7 @@ export default function ListeningScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   scroll: { paddingTop: spacing[2], paddingBottom: spacing[10] },
 
   intro: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
@@ -477,9 +479,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[3],
     paddingVertical: 6,
     borderRadius: radius.full,
-    backgroundColor: colors.surface,
+    backgroundColor: t.c.surface,
     borderWidth: 1,
-    borderColor: colors.surfaceBorder,
+    borderColor: t.c.surfaceBorder,
   },
   reviewLinkText: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.xs },
 
@@ -501,13 +503,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing[2],
-    backgroundColor: colors.surface,
+    backgroundColor: t.c.surface,
     borderWidth: 1,
-    borderColor: colors.surfaceBorder,
+    borderColor: t.c.surfaceBorder,
     borderRadius: radius.lg,
     paddingVertical: spacing[3],
   },
-  textToggleLabel: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.sm, color: colors.inkSoft },
+  textToggleLabel: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.sm, color: t.c.inkSoft },
   storyText: { lineHeight: 26 },
 
   qBlock: { gap: spacing[2] },
@@ -520,8 +522,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing[3],
     paddingHorizontal: spacing[3],
     borderWidth: 1,
-    borderColor: colors.surfaceBorder,
-    backgroundColor: colors.surface,
+    borderColor: t.c.surfaceBorder,
+    backgroundColor: t.c.surface,
   },
   optRight: { backgroundColor: '#E3F7EF', borderColor: '#B9E3D5' },
   optWrong: { backgroundColor: '#FDE3E8', borderColor: '#F5C2CC' },
@@ -535,4 +537,4 @@ const styles = StyleSheet.create({
 
   libItem: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
   libItemTitle: { flex: 1 },
-});
+}));

@@ -17,8 +17,10 @@ import { Icon, type IconName } from '../Icon';
 import { Text } from '../Text';
 import { useAccent } from '@/hooks/useAccent';
 import { useUIMode } from '@/hooks/useUIMode';
-import { colors, spacing, tints } from '@/theme';
+import { spacing } from '@/theme';
 import type { HomeState, PlanStep } from '@/utils/homeState';
+import { makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 interface Props {
   state: HomeState;
@@ -74,6 +76,8 @@ function stepText(step: PlanStep, p: Props): { title: string; subtitle: string }
 }
 
 export function HomeHero(p: Props) {
+  const { c, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const accent = useAccent();
   const kid = useUIMode() === 'kid';
   const az = p.isAz;
@@ -108,8 +112,8 @@ export function HomeHero(p: Props) {
                 <View key={step} style={styles.stepRow}>
                   <HBIconBox
                     icon={stepDone ? 'check' : STEP_ICON[step]}
-                    tint={stepDone ? tints.sage : accent.soft}
-                    iconColor={stepDone ? colors.accentDeep : accent.ink}
+                    tint={stepDone ? c.tints.sage : accent.soft}
+                    iconColor={stepDone ? c.accentDeep : accent.ink}
                     size={40}
                   />
                   <View style={styles.stepText}>
@@ -207,7 +211,7 @@ export function HomeHero(p: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   card: { gap: spacing[4] },
   headRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
   headText: { flex: 1, minWidth: 0, gap: spacing[1] },
@@ -216,4 +220,4 @@ const styles = StyleSheet.create({
   stepRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
   stepText: { flex: 1, minWidth: 0 },
   actions: { gap: spacing[1] },
-});
+}));

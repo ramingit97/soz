@@ -1,6 +1,3 @@
-export { colors } from './colors';
-export type { ColorKey } from './colors';
 export { fontFamily, fontSize, lineHeight, scaleFont } from './typography';
 export { spacing, radius, shadow, shadowTint } from './spacing';
-export { gradients, tints, clay, sceneTints, sceneRings, semantic } from './decor';
-export type { TintKey } from './decor';
+export { PALETTES, type Palette, type TintKey } from './palettes';

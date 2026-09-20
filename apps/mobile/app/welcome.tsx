@@ -13,9 +13,13 @@ import { getStrings } from '@/i18n/strings';
 import { useSettings } from '@/store/settings';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 declare const __DEV__: boolean;
-import { colors, radius, shadow, spacing } from '@/theme';
+import { radius, shadow, spacing } from '@/theme';
+import { makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 export default function WelcomeScreen() {
+  const { c, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const router = useRouter();
   // Отдельного экрана выбора языка нет: при первом запуске язык берётся с
   // телефона, переключатель AZ | RU — в углу. Выбор фиксируется первым нажатием.
@@ -103,7 +107,7 @@ export default function WelcomeScreen() {
             }}
             style={styles.devReset}
           >
-            <Text style={{ fontSize: 11, color: colors.inkSoft }}>⚙ reset onboarding</Text>
+            <Text style={{ fontSize: 11, color: c.inkSoft }}>⚙ reset onboarding</Text>
           </Pressable>
         )}
       </Animated.View>
@@ -111,23 +115,23 @@ export default function WelcomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   langToggle: {
     flexDirection: 'row',
     alignSelf: 'flex-end',
     marginTop: spacing[2],
     padding: 3,
     borderRadius: radius.full,
-    backgroundColor: colors.surface,
+    backgroundColor: t.c.surface,
     borderWidth: 1,
-    borderColor: colors.surfaceBorder,
+    borderColor: t.c.surfaceBorder,
   },
   langOption: {
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[1],
     borderRadius: radius.full,
   },
-  langOptionOn: { backgroundColor: colors.bgDeep },
+  langOptionOn: { backgroundColor: t.c.bgDeep },
   heroSection: {
     // Не flex:1 — внутри ScrollView это распирало бы блок и возвращало ту же
     // поломку. flexGrow отдаёт герою лишнее место, когда оно есть, и не мешает
@@ -142,7 +146,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing[2],
-    backgroundColor: colors.white,
+    backgroundColor: t.c.white,
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[2],
     borderRadius: radius.full,
@@ -153,7 +157,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: colors.success,
+    backgroundColor: t.c.success,
   },
   headlineWrap: {
     paddingHorizontal: spacing[2],
@@ -173,7 +177,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing[2],
-    backgroundColor: colors.white,
+    backgroundColor: t.c.white,
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[2],
     borderRadius: radius.full,
@@ -183,7 +187,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: colors.primarySoft,
+    backgroundColor: t.c.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -192,4 +196,4 @@ const styles = StyleSheet.create({
     paddingVertical: spacing[2],
     alignItems: 'center',
   },
-});
+}));

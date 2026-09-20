@@ -31,10 +31,12 @@ import { getLesson } from '@/data/lessons';
 import { useHomeData } from '@/hooks/useHomeData';
 import { track } from '@/services/analytics';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
+import { fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
 import { useCompanionName, withCompanionName } from '@/utils/companion';
 import { deriveHomeState, resumeStep, todayPlanSteps } from '@/utils/homeState';
 import { lessonStepRoute } from '@/utils/lessonFlow';
+import { makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 declare const __DEV__: boolean;
 
@@ -64,6 +66,8 @@ const ROLEPLAY_BY_GOAL: Record<string, string> = {
 };
 
 function AdultHome() {
+  const { c, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const router = useRouter();
   const lang = useSettings((s) => s.parentUILanguage) ?? 'ru';
   const childName = useSettings((s) => s.childName) ?? '';
@@ -95,9 +99,9 @@ function AdultHome() {
     'Friendly debate — pick a fun topic, take a side, and help me argue my points in the language I am learning.';
 
   const MODES = [
-    { key: 'free', emoji: '💬', ru: 'Свободный разговор', az: 'Sərbəst söhbət', subRu: 'Болтай с Бобо о чём угодно', subAz: 'Hər mövzuda danış', tint: colors.primary, scenario: undefined as string | undefined, premium: false },
-    { key: 'roleplay', emoji: '🎭', ru: 'Ролевая игра', az: 'Rollu oyun', subRu: goal ? 'Сценка по твоей цели' : 'Разыграйте сценку', subAz: 'Səhnə oyna', tint: colors.accent, scenario: roleplay, premium: true },
-    { key: 'debate', emoji: '⚖️', ru: 'Дебаты', az: 'Debatlar', subRu: 'Отстаивай свою точку зрения', subAz: 'Fikrini müdafiə et', tint: colors.berry, scenario: debate, premium: true },
+    { key: 'free', emoji: '💬', ru: 'Свободный разговор', az: 'Sərbəst söhbət', subRu: 'Болтай с Бобо о чём угодно', subAz: 'Hər mövzuda danış', tint: c.primary, scenario: undefined as string | undefined, premium: false },
+    { key: 'roleplay', emoji: '🎭', ru: 'Ролевая игра', az: 'Rollu oyun', subRu: goal ? 'Сценка по твоей цели' : 'Разыграйте сценку', subAz: 'Səhnə oyna', tint: c.accent, scenario: roleplay, premium: true },
+    { key: 'debate', emoji: '⚖️', ru: 'Дебаты', az: 'Debatlar', subRu: 'Отстаивай свою точку зрения', subAz: 'Fikrini müdafiə et', tint: c.berry, scenario: debate, premium: true },
   ];
 
   return (
@@ -139,7 +143,7 @@ function AdultHome() {
                 depth={i === 0 ? 'deep' : 'sm'}
                 ringColor={i === 0 ? m.tint : undefined}
               >
-                <View style={[styles.modeEmoji, { backgroundColor: colors.bg }]}>
+                <View style={[styles.modeEmoji, { backgroundColor: c.bg }]}>
                   <Text style={{ fontSize: 26 }}>{m.emoji}</Text>
                 </View>
                 <View style={{ flex: 1, minWidth: 0 }}>
@@ -164,11 +168,11 @@ function AdultHome() {
 }
 
 export default function HomeScreen() {
+  const { c, mode: uiMode } = useTheme();
+  const homeStyles = homeStylesByMode[uiMode];
   const router = useRouter();
   const isAz = useSettings((s) => s.parentUILanguage) === 'az';
   const childName = useSettings((s) => s.childName) ?? '';
-  const learningLanguages = useSettings((s) => s.learningLanguages);
-  const setActiveLearningLanguage = useSettings((s) => s.setActiveLearningLanguage);
   const totalStars = useSettings((s) => s.totalStars);
   const streak = useSettings((s) => s.streak);
   const petHue = useSettings((s) => s.petHue);
@@ -242,9 +246,6 @@ export default function HomeScreen() {
             totalStars={totalStars}
             freezeUsed={data.freezeUsedThisSession}
             onPetPress={() => router.push('/pet-room' as never)}
-            languages={learningLanguages}
-            activeLanguage={firstLang}
-            onLanguageChange={(l) => setActiveLearningLanguage(l as 'en' | 'ru')}
           />
         </Animated.View>
 
@@ -265,7 +266,7 @@ export default function HomeScreen() {
                     {withCompanionName(thread.text, bot)}
                   </Text>
                 </View>
-                <Icon name="chevron-right" size={20} color={colors.inkSoft} />
+                <Icon name="chevron-right" size={20} color={c.inkSoft} />
               </HBCard>
             </Pressable>
           </Animated.View>
@@ -309,7 +310,7 @@ export default function HomeScreen() {
   );
 }
 
-const homeStyles = StyleSheet.create({
+const homeStylesByMode = makeModeStyles((t) => StyleSheet.create({
   scroll: {
     paddingHorizontal: spacing[4],
     paddingTop: spacing[4],
@@ -319,10 +320,10 @@ const homeStyles = StyleSheet.create({
   askCard: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
   askText: { flex: 1, minWidth: 0 },
   devReset: { alignItems: 'center', paddingVertical: spacing[2] },
-});
+}));
 
 // Экран взрослого пока прежний — его упрощение отдельной задачей.
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   scroll: {
     paddingHorizontal: spacing[4],
     paddingTop: spacing[12],
@@ -339,20 +340,20 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.card,
+    backgroundColor: t.c.card,
     alignItems: 'center',
     justifyContent: 'center',
   },
   tbGreeting: {
     fontFamily: fontFamily.display,
     fontSize: fontSize.base,
-    color: colors.ink,
+    color: t.c.ink,
     letterSpacing: -0.2,
   },
   tbSubtitle: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize['2xs'],
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     marginTop: 1,
   },
   goalCard: {
@@ -362,12 +363,12 @@ const styles = StyleSheet.create({
   goalLabel: {
     fontFamily: fontFamily.display,
     fontSize: fontSize.sm,
-    color: colors.ink,
+    color: t.c.ink,
   },
   adultGoalText: {
     fontFamily: fontFamily.display,
     fontSize: fontSize.xl,
-    color: colors.ink,
+    color: t.c.ink,
     marginTop: 2,
     letterSpacing: -0.3,
   },
@@ -389,17 +390,17 @@ const styles = StyleSheet.create({
   modeTitle: {
     fontFamily: fontFamily.display,
     fontSize: fontSize.lg,
-    color: colors.ink,
+    color: t.c.ink,
   },
   modeSub: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.xs,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     marginTop: 2,
   },
   ctaArrow: {
     fontSize: scaleFont(22),
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     fontFamily: fontFamily.bodyBold,
   },
-});
+}));

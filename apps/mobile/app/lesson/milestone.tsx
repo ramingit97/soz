@@ -32,11 +32,12 @@ import { PaperBackground } from '@/components/PaperBackground';
 import { Text } from '@/components/Text';
 import { useTheme } from '@/hooks/useTheme';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, scaleFont, spacing } from '@/theme';
+import { fontFamily, scaleFont, spacing } from '@/theme';
 import { withCompanionName } from '@/utils/companion';
+import { byMode, makeModeStyles } from '@/theme/modeTokens';
 
 const { width: SW, height: SH } = Dimensions.get('window');
-const CONFETTI_COLORS = [colors.primary, colors.accent, colors.butter, colors.berry, colors.english];
+const CONFETTI_COLORS_BY_MODE = byMode((t) => ([t.c.primary, t.c.accent, t.c.butter, t.c.berry, t.c.english]));
 
 interface MilestoneInfo {
   icon: IconName;
@@ -114,7 +115,9 @@ export default function MilestoneScreen() {
   const childName = useSettings((s) => s.childName) ?? '';
   const petName = useSettings((s) => s.petName);
   const isAz = parentLang === 'az';
-  const { t, accent } = useTheme();
+  const { mode: uiMode, t, accent } = useTheme();
+  const styles = stylesByMode[uiMode];
+  const CONFETTI_COLORS = CONFETTI_COLORS_BY_MODE[uiMode];
   const insets = useSafeAreaInsets();
 
   const milestoneNum = Number(streak);
@@ -209,7 +212,7 @@ export default function MilestoneScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   content: { paddingBottom: spacing[8], alignItems: 'stretch' },
   center: { alignItems: 'center', gap: spacing[2] },
   numberWrap: { alignSelf: 'center', width: 180, height: 180, alignItems: 'center', justifyContent: 'center' },
@@ -222,4 +225,4 @@ const styles = StyleSheet.create({
   },
   subtitle: { maxWidth: 320 },
   buttons: { gap: spacing[2], marginTop: spacing[2] },
-});
+}));

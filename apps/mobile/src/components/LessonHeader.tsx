@@ -19,7 +19,8 @@ import { Icon, type IconName } from '@/components/Icon';
 import { Text } from '@/components/Text';
 import { useTheme } from '@/hooks/useTheme';
 import { useSettings } from '@/store/settings';
-import { colors, radius, shadow, spacing } from '@/theme';
+import { radius, shadow, spacing } from '@/theme';
+import { makeModeStyles } from '@/theme/modeTokens';
 
 interface Props {
   title: string;
@@ -36,7 +37,8 @@ interface Props {
 export function LessonHeader({ title, icon, step, total, right, onClose }: Props) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { t, accent } = useTheme();
+  const { c, mode: uiMode, t, accent } = useTheme();
+  const styles = stylesByMode[uiMode];
   const az = useSettings((s) => s.parentUILanguage) === 'az';
   const safeTotal = Math.max(1, total);
   const current = Math.min(Math.max(1, step), safeTotal);
@@ -57,7 +59,7 @@ export function LessonHeader({ title, icon, step, total, right, onClose }: Props
           accessibilityLabel={az ? 'Dərsdən çıx' : 'Выйти из урока'}
           style={({ pressed }) => [styles.close, shadow.sm, pressed && styles.pressed]}
         >
-          <Icon name="x" size={20} color={colors.ink} strokeWidth={2.5} />
+          <Icon name="x" size={20} color={c.ink} strokeWidth={2.5} />
         </Pressable>
 
         <View style={styles.center}>
@@ -83,7 +85,7 @@ export function LessonHeader({ title, icon, step, total, right, onClose }: Props
                   key={i}
                   style={[
                     styles.segment,
-                    { backgroundColor: i < current ? accent.bottom : colors.bgDeep },
+                    { backgroundColor: i < current ? accent.bottom : c.bgDeep },
                   ]}
                 />
               ))
@@ -103,27 +105,27 @@ export function LessonHeader({ title, icon, step, total, right, onClose }: Props
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   root: { paddingBottom: spacing[2] },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
   close: {
     width: 40,
     height: 40,
     borderRadius: radius.full,
-    backgroundColor: colors.surface,
+    backgroundColor: t.c.surface,
     borderWidth: 1,
-    borderColor: colors.surfaceBorder,
+    borderColor: t.c.surfaceBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
   pressed: { transform: [{ scale: 0.92 }] },
   center: { flex: 1, minWidth: 0, gap: 6 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[1] },
-  title: { flexShrink: 1, color: colors.ink },
+  title: { flexShrink: 1, color: t.c.ink },
   count: { marginLeft: 'auto', flexShrink: 0, paddingLeft: spacing[1] },
   track: { flexDirection: 'row', gap: 4, height: 6 },
   segment: { flex: 1, borderRadius: 3 },
-  bar: { flex: 1, borderRadius: 3, backgroundColor: colors.bgDeep, overflow: 'hidden' },
+  bar: { flex: 1, borderRadius: 3, backgroundColor: t.c.bgDeep, overflow: 'hidden' },
   barFill: { height: '100%', borderRadius: 3 },
   right: { alignItems: 'flex-end', justifyContent: 'center' },
-});
+}));

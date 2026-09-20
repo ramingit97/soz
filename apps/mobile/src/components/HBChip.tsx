@@ -8,7 +8,9 @@
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { Text } from './Text';
-import { colors, fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 interface HBChipProps {
   label: string;
@@ -24,23 +26,29 @@ export function HBChip({
   label,
   leadingIcon,
   trailingIcon,
-  bg = colors.card,
-  color = colors.ink,
+  bg,
+  color,
   big,
   style,
 }: HBChipProps) {
+  const { c, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
+  // Значения по умолчанию берутся здесь, а не в параметрах: они зависят от
+  // возрастного режима, а параметры вычисляются один раз при загрузке модуля.
+  const chipBg = bg ?? c.card;
+  const chipInk = color ?? c.ink;
   return (
     <View
       style={[
         styles.chip,
-        { backgroundColor: bg },
+        { backgroundColor: chipBg },
         big && styles.big,
         shadow.sm,
         style as ViewStyle,
       ]}
     >
       {leadingIcon ? <View style={styles.icon}>{leadingIcon}</View> : null}
-      <Text style={[styles.text, { color, fontSize: big ? fontSize.base : fontSize.sm }]}>
+      <Text style={[styles.text, { color: chipInk, fontSize: big ? fontSize.base : fontSize.sm }]}>
         {label}
       </Text>
       {trailingIcon ? <View style={styles.icon}>{trailingIcon}</View> : null}
@@ -48,7 +56,7 @@ export function HBChip({
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -57,7 +65,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: radius.full,
     borderWidth: 1,
-    borderColor: colors.surfaceBorder,
+    borderColor: t.c.surfaceBorder,
   },
   big: {
     paddingHorizontal: spacing[4],
@@ -70,4 +78,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-});
+}));

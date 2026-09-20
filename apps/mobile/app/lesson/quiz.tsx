@@ -35,7 +35,8 @@ import { getLesson } from '@/data/lessons';
 import { playSfx } from '@/services/sfx';
 import { useSettings } from '@/store/settings';
 import { useTheme } from '@/hooks/useTheme';
-import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing, tints } from '@/theme';
+import { fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
+import { byMode, makeModeStyles } from '@/theme/modeTokens';
 
 interface Choice {
   word: string;
@@ -49,7 +50,7 @@ interface QuizRound {
   fromDay: number;
 }
 
-const OPTION_TINTS = [tints.primary, tints.butter, tints.sage, tints.berry];
+const OPTION_TINTS_BY_MODE = byMode((t) => ([t.c.tints.primary, t.c.tints.butter, t.c.tints.sage, t.c.tints.berry]));
 
 function buildQuiz(lang: string, currentDay: number): QuizRound[] {
   const startDay = Math.max(1, currentDay - 7);
@@ -84,7 +85,9 @@ export default function QuizScreen() {
   const router = useRouter();
   const { lang = 'en', endDay = '7' } = useLocalSearchParams<{ lang: string; endDay: string }>();
   const az = useSettings((s) => s.parentUILanguage) === 'az';
-  const { t, accent } = useTheme();
+  const { c, mode: uiMode, t, accent } = useTheme();
+  const styles = stylesByMode[uiMode];
+  const OPTION_TINTS = OPTION_TINTS_BY_MODE[uiMode];
   const addStars = useSettings((s) => s.addStars);
 
   const rounds = useMemo(() => buildQuiz(lang, Number(endDay) + 1), [lang, endDay]);
@@ -180,7 +183,7 @@ export default function QuizScreen() {
             <Text style={[styles.scoreText, { color: accent.ink }]}>
               {score} / {total}
             </Text>
-            <Icon name="star" size={32} color={colors.butterDeep} fill={colors.butter} strokeWidth={2} />
+            <Icon name="star" size={32} color={c.butterDeep} fill={c.butter} strokeWidth={2} />
           </Animated.View>
           <Animated.View entering={FadeInUp.duration(500).delay(400)} style={styles.doneText}>
             <Text variant="title" align="center">{az ? 'Yoxlama bitdi!' : 'Контрольная пройдена!'}</Text>
@@ -210,7 +213,7 @@ export default function QuizScreen() {
         onClose={() => router.back()}
         right={
           <View style={styles.hearts} accessibilityLabel={az ? `Ürəklər: ${hearts}` : `Сердечки: ${hearts}`}>
-            <Icon name="heart" size={16} color={colors.berry} fill={colors.berry} strokeWidth={2} />
+            <Icon name="heart" size={16} color={c.berry} fill={c.berry} strokeWidth={2} />
             <Text style={styles.heartsText}>{hearts}</Text>
           </View>
         }
@@ -235,7 +238,7 @@ export default function QuizScreen() {
             const isSelected = selected === choice.word;
             const isCorrect = isSelected && answerState === 'correct';
             const isWrong = isSelected && answerState === 'wrong';
-            const ring = isCorrect ? colors.accentDeep : isWrong ? colors.berry : undefined;
+            const ring = isCorrect ? c.accentDeep : isWrong ? c.berry : undefined;
             return (
               <Pressable
                 key={`${roundIndex}-${choice.word}`}
@@ -254,8 +257,8 @@ export default function QuizScreen() {
                   <Text style={styles.tileEmoji}>{choice.emoji}</Text>
                 </Animated.View>
                 {isCorrect || isWrong ? (
-                  <View style={[styles.badge, { backgroundColor: isCorrect ? colors.accentDeep : colors.berry }]}>
-                    <Icon name={isCorrect ? 'check' : 'x'} size={14} color={colors.white} strokeWidth={3} />
+                  <View style={[styles.badge, { backgroundColor: isCorrect ? c.accentDeep : c.berry }]}>
+                    <Icon name={isCorrect ? 'check' : 'x'} size={14} color={c.white} strokeWidth={3} />
                   </View>
                 ) : null}
               </Pressable>
@@ -281,7 +284,7 @@ export default function QuizScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing[4] },
   scoreRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[2] },
   scoreText: { fontFamily: fontFamily.display, fontSize: scaleFont(48), lineHeight: scaleFont(56) },
@@ -293,15 +296,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[2],
     paddingVertical: 4,
     borderRadius: radius.full,
-    backgroundColor: colors.surface,
+    backgroundColor: t.c.surface,
     borderWidth: 1,
-    borderColor: colors.surfaceBorder,
+    borderColor: t.c.surfaceBorder,
   },
-  heartsText: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize.sm, color: colors.ink },
+  heartsText: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize.sm, color: t.c.ink },
   body: { flex: 1, paddingTop: spacing[4], paddingBottom: spacing[6], gap: spacing[5] },
   petCorner: { position: 'absolute', right: spacing[4], top: 0, zIndex: 5 },
   prompt: { alignItems: 'center', gap: spacing[1] },
-  word: { fontFamily: fontFamily.display, fontSize: fontSize['4xl'], color: colors.ink },
+  word: { fontFamily: fontFamily.display, fontSize: fontSize['4xl'], color: t.c.ink },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: spacing[3] },
   tile: {
     width: '48.5%',
@@ -325,4 +328,4 @@ const styles = StyleSheet.create({
   },
   footer: { flexDirection: 'row', alignItems: 'center', gap: spacing[3], marginTop: 'auto' },
   flex: { flex: 1, minWidth: 0 },
-});
+}));

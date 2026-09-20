@@ -3,8 +3,10 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import * as Sentry from '@sentry/react-native';
 
 import { Text } from '@/components/Text';
+import { useTheme } from '@/hooks/useTheme';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, spacing } from '@/theme';
+import { fontFamily, fontSize, radius, spacing } from '@/theme';
+import { makeModeStyles } from '@/theme/modeTokens';
 
 interface Props {
   children: ReactNode;
@@ -36,30 +38,39 @@ export class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
-      // Без маскота и анимаций: если упал сам рисунок персонажа, экран ошибки
-      // не должен падать вместе с ним. Язык — из стора напрямую (класс без хуков).
-      const az = useSettings.getState().parentUILanguage === 'az';
-      return (
-        <View style={styles.root}>
-          <Text style={styles.title}>{az ? 'Nəsə alınmadı' : 'Что-то пошло не так'}</Text>
-          <Text style={styles.subtitle}>
-            {az ? 'Ekranı yeniləməyə çalışın.' : 'Попробуйте обновить экран.'}
-          </Text>
-          {__DEV__ && this.state.error && <Text style={styles.devError}>{this.state.error.message}</Text>}
-          <Pressable onPress={this.handleReset} style={styles.btn} accessibilityRole="button">
-            <Text style={styles.btnText}>{az ? 'Yenidən cəhd et' : 'Попробовать снова'}</Text>
-          </Pressable>
-        </View>
-      );
+      return <CrashScreen error={this.state.error} onReset={this.handleReset} />;
     }
     return this.props.children;
   }
 }
 
-const styles = StyleSheet.create({
+/**
+ * Сам экран ошибки — обычный компонент, а не метод класса: стили зависят от
+ * возрастного режима, а класс не может звать хуки. Без маскота и анимаций: если
+ * упал сам рисунок персонажа, экран ошибки не должен падать вместе с ним.
+ */
+function CrashScreen({ error, onReset }: { error: Error | null; onReset: () => void }) {
+  const { mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
+  const az = useSettings.getState().parentUILanguage === 'az';
+  return (
+    <View style={styles.root}>
+      <Text style={styles.title}>{az ? 'Nəsə alınmadı' : 'Что-то пошло не так'}</Text>
+      <Text style={styles.subtitle}>
+        {az ? 'Ekranı yeniləməyə çalışın.' : 'Попробуйте обновить экран.'}
+      </Text>
+      {__DEV__ && error && <Text style={styles.devError}>{error.message}</Text>}
+      <Pressable onPress={onReset} style={styles.btn} accessibilityRole="button">
+        <Text style={styles.btnText}>{az ? 'Yenidən cəhd et' : 'Попробовать снова'}</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.bg,
+    backgroundColor: t.c.bg,
     alignItems: 'center',
     justifyContent: 'center',
     padding: spacing[6],
@@ -68,13 +79,13 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: fontFamily.display,
     fontSize: fontSize['2xl'],
-    color: colors.ink,
+    color: t.c.ink,
     textAlign: 'center',
   },
   subtitle: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.base,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     textAlign: 'center',
     maxWidth: 280,
     lineHeight: 22,
@@ -82,7 +93,7 @@ const styles = StyleSheet.create({
   devError: {
     fontFamily: fontFamily.body,
     fontSize: fontSize.xs,
-    color: colors.error,
+    color: t.c.error,
     textAlign: 'center',
     backgroundColor: '#FFF0F0',
     padding: spacing[3],
@@ -91,14 +102,14 @@ const styles = StyleSheet.create({
   },
   btn: {
     marginTop: spacing[4],
-    backgroundColor: colors.primary,
+    backgroundColor: t.c.primary,
     paddingHorizontal: spacing[6],
     paddingVertical: spacing[3],
     borderRadius: radius.full,
   },
   btnText: {
-    color: colors.white,
+    color: t.c.white,
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize.base,
   },
-});
+}));

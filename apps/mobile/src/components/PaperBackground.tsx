@@ -1,7 +1,7 @@
 /**
  * Honeybear background — warm cream surface used as the global canvas.
  *
- * Default: solid `colors.bg` with optional soft top/bottom warmth vignettes.
+ * По умолчанию — фон страницы режима с мягкой виньеткой сверху у малышей.
  * Variants offer the gentle gradients used on hero screens (paywall, onboarding).
  *
  * Kept as `PaperBackground` for callsite compatibility; renamed semantically
@@ -25,9 +25,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
-import { useUIMode } from '@/hooks/useUIMode';
-import { colors } from '@/theme';
-import { MODE_TOKENS } from '@/theme/modeTokens';
+import { MODE_TOKENS, byMode, makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 type Variant = 'cream' | 'parchment' | 'honey' | 'sage' | 'night';
 
@@ -41,19 +40,26 @@ interface Props {
   edges?: readonly Edge[];
 }
 
-const GRADIENTS: Record<Variant, [string, string, string?]> = {
-  // Honeybear Pro: subtle vertical cream wash instead of a flat fill
-  cream: ['#FBF4E6', '#F6F0E2', '#F0E7D2'],
-  parchment: [colors.bg, colors.bgDeep],
-  honey: ['#FCE9CC', colors.bg],
-  sage: ['#DDF1EA', colors.bg],
-  night: ['#E0D6E8', colors.bg],
-};
+/**
+ * Фоны сцен из палитры режима (макеты C и D):
+ *  - `cream` — обычная страница: лавандовый лист у детей, ровный тёмный у взрослых;
+ *  - `honey` — герой-экраны (приветствие, пейволл): закатное небо;
+ *  - `night` — разговор;
+ *  - `sage`, `parchment` — спокойные варианты для второстепенных экранов.
+ */
+const GRADIENTS_BY_MODE = byMode<Record<Variant, readonly [string, string, ...string[]]>>((t) => ({
+  cream: [t.c.cream, t.c.bg, t.c.bgDeep],
+  parchment: [t.c.bg, t.c.bgDeep],
+  honey: t.c.skyGradient,
+  sage: [t.c.accentSoft, t.c.bg],
+  night: t.c.nightGradient,
+}));
 
 export function PaperBackground({ variant = 'cream', children, edges = ['bottom'] }: Props) {
-  const { vignette } = MODE_TOKENS[useUIMode()];
-  const g = GRADIENTS[variant];
-  const grad: [string, string, ...string[]] = g[2] ? [g[0], g[1], g[2]] : [g[0], g[1]];
+  const { mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
+  const { vignette } = MODE_TOKENS[uiMode];
+  const grad = GRADIENTS_BY_MODE[uiMode][variant];
   return (
     <LinearGradient
       colors={grad}
@@ -78,7 +84,7 @@ export function PaperBackground({ variant = 'cream', children, edges = ['bottom'
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   root: { flex: 1, position: 'relative' },
   safe: { flex: 1 },
   vignetteTop: {
@@ -88,4 +94,4 @@ const styles = StyleSheet.create({
     right: 0,
     height: 280,
   },
-});
+}));

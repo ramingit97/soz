@@ -28,9 +28,10 @@ import { useAccent } from '@/hooks/useAccent';
 import { useSaveLevel } from '@/hooks/useSaveLevel';
 import { UIModeProvider } from '@/hooks/useUIMode';
 import { useSettings, type ChildLevel } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, spacing, tints } from '@/theme';
-import { MODE_TOKENS } from '@/theme/modeTokens';
+import { fontFamily, fontSize, radius, spacing } from '@/theme';
+import { MODE_TOKENS, makeModeStyles } from '@/theme/modeTokens';
 import { LEVEL_INFO } from '@/utils/levels';
+import { useTheme } from '@/hooks/useTheme';
 
 interface Q { prompt: string; options: string[]; correct: number }
 
@@ -106,6 +107,8 @@ function pickQuestion(pool: Q[][], tier: number, used: Set<Q>): Q {
 }
 
 export default function PlacementScreen() {
+  const { c, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const router = useRouter();
   const accent = useAccent();
   const insets = useSafeAreaInsets();
@@ -239,13 +242,13 @@ export default function PlacementScreen() {
                     accessibilityRole="button"
                     style={[
                       styles.option,
-                      isCorrect && { backgroundColor: tints.sage, borderColor: colors.accentDeep },
-                      isWrong && { backgroundColor: tints.berry, borderColor: colors.berry },
+                      isCorrect && { backgroundColor: c.tints.sage, borderColor: c.accentDeep },
+                      isWrong && { backgroundColor: c.tints.berry, borderColor: c.berry },
                     ]}
                   >
                     <Text style={styles.optionText}>{opt}</Text>
-                    {isCorrect ? <Icon name="check" size={20} color={colors.accentDeep} strokeWidth={3} /> : null}
-                    {isWrong ? <Icon name="x" size={20} color={colors.berry} strokeWidth={3} /> : null}
+                    {isCorrect ? <Icon name="check" size={20} color={c.accentDeep} strokeWidth={3} /> : null}
+                    {isWrong ? <Icon name="x" size={20} color={c.berry} strokeWidth={3} /> : null}
                   </Pressable>
                 );
               })}
@@ -257,10 +260,10 @@ export default function PlacementScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   quiz: { paddingTop: spacing[4], gap: spacing[4] },
   qCard: { paddingVertical: spacing[8], paddingHorizontal: spacing[5], alignItems: 'center' },
-  qPrompt: { fontFamily: fontFamily.display, fontSize: fontSize['2xl'], color: colors.ink, textAlign: 'center', lineHeight: 34 },
+  qPrompt: { fontFamily: fontFamily.display, fontSize: fontSize['2xl'], color: t.c.ink, textAlign: 'center', lineHeight: 34 },
   options: { gap: spacing[3] },
   option: {
     flexDirection: 'row',
@@ -271,10 +274,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[5],
     borderRadius: radius.xl,
     borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.white,
+    borderColor: t.c.border,
+    backgroundColor: t.c.white,
   },
-  optionText: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize.lg, color: colors.ink },
+  optionText: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize.lg, color: t.c.ink },
 
   result: { flexGrow: 1, paddingTop: spacing[6], gap: spacing[4] },
   resultInner: { alignItems: 'center', gap: spacing[2] },
@@ -282,4 +285,4 @@ const styles = StyleSheet.create({
   resultCodeText: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize['2xl'] },
   banner: { marginTop: spacing[2] },
   resultCta: { gap: spacing[2], marginTop: spacing[4] },
-});
+}));

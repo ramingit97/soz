@@ -1,4 +1,4 @@
-# Store metadata — App Store + Google Play (черновик, 2026-07-03)
+# Store metadata — App Store + Google Play (черновик, 2026-07-03; имя персонажа и один язык на курс — 2026-09-20)
 
 > Готовые тексты для листингов. Три языка: RU (первичный для рынка), AZ, EN.
 > Позиционирование строго по нашему дифференциатору из рыночного анализа:
@@ -9,24 +9,24 @@
 
 | Поле | RU | AZ | EN |
 |---|---|---|---|
-| App name (≤30) | Söz — язык с Хани | Söz — Hani ilə dil | Söz — Learn Languages, Kids |
+| App name (≤30) | Söz — язык с Бобо | Söz — Bobo ilə dil | Söz — Learn Languages, Kids |
 | Subtitle/Short (≤30 App Store / ≤80 Play) | AI-друг учит языку детей | AI dost uşağa dil öyrədir | An AI buddy who teaches & remembers |
 
 ## Промо-текст (App Store, ≤170)
-- **RU:** Хани — тёплый AI-друг, который помнит вашего ребёнка и каждый день учит язык через игру, разговор и истории. Честный триал 7 дней — без карты.
-- **AZ:** Hani — uşağınızı xatırlayan mehriban AI dost: hər gün oyun, söhbət və hekayələrlə dil öyrədir. 7 günlük dürüst sınaq — kart tələb olunmur.
-- **EN:** Meet Хани, a warm AI buddy who remembers your child and teaches a language every day through play, talk and stories. 7-day honest trial — no card.
+- **RU:** Бобо — тёплый AI-друг, который помнит вашего ребёнка и каждый день учит язык через игру, разговор и истории. Честный триал 7 дней — без карты.
+- **AZ:** Bobo — uşağınızı xatırlayan mehriban AI dost: hər gün oyun, söhbət və hekayələrlə dil öyrədir. 7 günlük dürüst sınaq — kart tələb olunmur.
+- **EN:** Meet Bobo, a warm AI buddy who remembers your child and teaches a language every day through play, talk and stories. 7-day honest trial — no card.
 
 ## Полное описание (RU)
 **Söz — это добрый AI-репетитор языка для детей, а не ещё одна игра с рекламой.**
 
-🐻 **Друг, который помнит.** Хани запоминает, что любит ваш ребёнок, и возвращается
+🐻 **Друг, который помнит.** Бобо запоминает, что любит ваш ребёнок, и возвращается
 к прошлым разговорам — как настоящий друг. Обучение становится личным, а не шаблонным.
 
 🎯 **Персональный план на ИИ.** Уже с первого дня уроки строятся под возраст, уровень
 (A1–B2) и интересы ребёнка. Никакого «одного плана для всех».
 
-🗣️ **Живой разговор с мягкой коррекцией.** Ребёнок говорит вслух, Хани отвечает голосом
+🗣️ **Живой разговор с мягкой коррекцией.** Ребёнок говорит вслух, Бобо отвечает голосом
 и деликатно поправляет — без строгих оценок и давления.
 
 🎧 **Каждый день — своё.** Истории для слушания, разговорные дни, слова и грамматика,
@@ -38,26 +38,26 @@
 - Реальный экран безопасности: если в разговоре всплывает тревожная тема, родитель
   получает деликатное уведомление.
 
-👨‍👩‍👧 **Для семьи.** Два языка одновременно (например, английский + русский), возрастные
+👨‍👩‍👧 **Для семьи.** Один язык на курс — английский по умолчанию или русский, возрастные
 режимы 5–7 / 8–10 / 11–13 / 14–16, мягкие стрики без чувства вины.
 
-Начните сегодня — Хани уже ждёт познакомиться. 🍯
+Начните сегодня — Бобо уже ждёт познакомиться. 🍯
 
 ## Полное описание (AZ) — сокр.
 **Söz — reklamsız, mehriban AI dil müəllimi uşaqlar üçün.**
-🐻 Səni xatırlayan dost (Hani keçən söhbətləri xatırlayır) · 🎯 İlk gündən yaşa,
+🐻 Səni xatırlayan dost (Bobo keçən söhbətləri xatırlayır) · 🎯 İlk gündən yaşa,
 səviyyəyə (A1–B2) və maraqlara görə fərdi AI plan · 🗣️ Canlı danışıq və mülayim
 düzəliş · 🎧 Dinləmə, danışıq, sözlər, təkrar — vahid yol · 🔒 Kartsız 7 günlük dürüst
-sınaq, PIN arxasında valideyn zonası, real təhlükəsizlik ekranı · 👨‍👩‍👧 Eyni anda iki dil,
-yaş rejimləri, təzyiqsiz seriyalar. Bu gün başla — Hani səni gözləyir. 🍯
+sınaq, PIN arxasında valideyn zonası, real təhlükəsizlik ekranı · 👨‍👩‍👧 Bir kursda bir dil (ingilis və ya rus),
+yaş rejimləri, təzyiqsiz seriyalar. Bu gün başla — Bobo səni gözləyir. 🍯
 
 ## Полное описание (EN) — сокр.
 **Söz is a kind, ad-free AI language tutor for kids.**
-🐻 A friend who remembers (Хани recalls past chats) · 🎯 A personal AI plan from day one,
+🐻 A friend who remembers (Bobo recalls past chats) · 🎯 A personal AI plan from day one,
 tuned to age, level (A1–B2) and interests · 🗣️ Real voice conversation with gentle,
 no-score correction · 🎧 Listening stories, talk days, words, review — one path ·
 🔒 7-day honest trial, **no card required**, PIN-gated parent area, a real safety screen ·
-👨‍👩‍👧 Two languages at once, age modes, guilt-free streaks. Start today — Хани is waiting. 🍯
+👨‍👩‍👧 One language per course — English or Russian, age modes, guilt-free streaks. Start today — Bobo is waiting. 🍯
 
 ## Ключевые слова (App Store, ≤100 симв., через запятую)
 - **RU:** язык,дети,английский,русский,репетитор,AI,говорить,учить,разговор,произношение,ребёнок,школа
@@ -77,8 +77,8 @@ no-score correction · 🎧 Listening stories, talk days, words, review — one 
 
 ## TODO перед сабмитом
 - [ ] Публичный хостинг Privacy Policy + Terms (нужен URL, не только in-app).
-- [ ] Скриншоты (6.7" + 5.5" iOS, phone+tablet Play) — показать: путь, разговор с Хани,
-      «Что помнит Хани», родительский отчёт, честный триал/paywall.
+- [ ] Скриншоты (6.7" + 5.5" iOS, phone+tablet Play) — показать: путь, разговор с Бобо,
+      «Что помнит Бобо», родительский отчёт, честный триал/paywall.
 - [ ] Иконка 1024×1024.
 - [ ] Заполнить App Privacy «nutrition label» (какие данные собираем: аккаунт, аудио для STT).
 - [ ] Play Data Safety форма.

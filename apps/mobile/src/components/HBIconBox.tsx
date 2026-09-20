@@ -10,16 +10,18 @@ import { StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { Icon, type IconName } from '@/components/Icon';
 import { Text } from '@/components/Text';
-import { colors, radius, tints, type TintKey } from '@/theme';
+import { radius, type TintKey } from '@/theme';
+import { byMode, makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 /** Цвет иконки на каждой подложке — тот же оттенок, но тёмный. */
-const TINT_INK: Record<TintKey, string> = {
-  primary: colors.primaryDeep,
-  sage: colors.accentDeep,
-  butter: '#7F6628',
-  berry: colors.berryDeep,
-  english: '#3A6BAA',
-};
+const TINT_INK_BY_MODE = byMode<Record<TintKey, string>>((t) => ({
+  primary: t.c.primaryDeep,
+  sage: t.c.accentDeep,
+  butter: t.c.goldDeep,
+  berry: t.c.berryDeep,
+  english: t.c.english,
+}));
 
 interface Props {
   icon?: IconName;
@@ -48,8 +50,10 @@ export function HBIconBox({
   style,
   children,
 }: Props) {
-  const bg = (tints as Record<string, string>)[tint] ?? tint;
-  const ink = iconColor ?? (TINT_INK as Record<string, string>)[tint] ?? colors.ink;
+  const { c, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
+  const bg = (c.tints as Record<string, string>)[tint] ?? tint;
+  const ink = iconColor ?? (TINT_INK_BY_MODE[uiMode] as Record<string, string>)[tint] ?? c.ink;
   const inner = Math.round(size * 0.5);
   return (
     <View
@@ -69,6 +73,6 @@ export function HBIconBox({
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   box: { alignItems: 'center', justifyContent: 'center' },
-});
+}));

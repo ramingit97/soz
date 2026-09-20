@@ -15,14 +15,16 @@ import { Text } from '@/components/Text';
 import { useTheme } from '@/hooks/useTheme';
 import { HOUSE_ITEMS, getNextItem, getUnlockedItems } from '@/services/boboHouse';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, scaleFont, spacing } from '@/theme';
+import { fontFamily, fontSize, radius, scaleFont, spacing } from '@/theme';
 import { useCompanionName } from '@/utils/companion';
+import { makeModeStyles } from '@/theme/modeTokens';
 
 export default function BoboHouseScreen() {
   const currentDay = useSettings((s) => s.currentDay);
   const isAz = useSettings((s) => s.parentUILanguage) === 'az';
   const bot = useCompanionName();
-  const { t, accent } = useTheme();
+  const { c, mode: uiMode, t, accent } = useTheme();
+  const styles = stylesByMode[uiMode];
 
   const unlocked = getUnlockedItems(currentDay);
   const nextItem = getNextItem(currentDay);
@@ -54,7 +56,7 @@ export default function BoboHouseScreen() {
         {nextItem ? (
           <Animated.View entering={FadeInUp.duration(450).delay(120)}>
             <HBCard bg={accent.soft} style={styles.row}>
-              <HBIconBox icon="gift" tint={colors.surface} iconColor={accent.ink} size={48} />
+              <HBIconBox icon="gift" tint={c.surface} iconColor={accent.ink} size={48} />
               <View style={styles.flex}>
                 <Text variant="label" style={{ color: accent.ink }}>
                   {isAz ? 'Növbəti hədiyyə' : 'Следующий подарок'}
@@ -62,7 +64,7 @@ export default function BoboHouseScreen() {
                 <Text variant="bodyBold">
                   {isAz ? nextItem.nameAz : nextItem.nameRu} {nextItem.emoji}
                 </Text>
-                <Text variant="caption" style={{ color: colors.ink }}>
+                <Text variant="caption" style={{ color: c.ink }}>
                   {isAz ? `${nextItem.unlockDay}-ci günü bitir` : `Пройди день ${nextItem.unlockDay}`}
                 </Text>
               </View>
@@ -85,7 +87,7 @@ export default function BoboHouseScreen() {
                     <Text style={styles.itemDay}>{isAz ? `G${item.unlockDay}` : `Д${item.unlockDay}`}</Text>
                   </>
                 ) : (
-                  <Icon name="lock" size={18} color={colors.textMuted} />
+                  <Icon name="lock" size={18} color={c.textMuted} />
                 )}
               </View>
             );
@@ -100,7 +102,7 @@ export default function BoboHouseScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   scroll: { paddingTop: spacing[2], paddingBottom: spacing[10] },
   flex: { flex: 1, minWidth: 0 },
   hero: { flexDirection: 'row', alignItems: 'center', gap: spacing[4] },
@@ -115,8 +117,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
   },
-  itemOpen: { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
-  itemLocked: { backgroundColor: colors.bgDeep, borderColor: colors.bgDeep },
+  itemOpen: { backgroundColor: t.c.surface, borderColor: t.c.surfaceBorder },
+  itemLocked: { backgroundColor: t.c.bgDeep, borderColor: t.c.bgDeep },
   itemEmoji: { fontSize: scaleFont(24), lineHeight: scaleFont(30) },
-  itemDay: { fontFamily: fontFamily.bodyBold, fontSize: fontSize['3xs'], color: colors.inkSoft },
-});
+  itemDay: { fontFamily: fontFamily.bodyBold, fontSize: fontSize['3xs'], color: t.c.inkSoft },
+}));

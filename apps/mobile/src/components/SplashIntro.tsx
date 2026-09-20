@@ -24,9 +24,13 @@ import { PaperBackground } from '@/components/PaperBackground';
 import { Text } from '@/components/Text';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, scaleFont } from '@/theme';
+import { fontFamily, fontSize, scaleFont } from '@/theme';
+import { makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 export function SplashIntro({ onDone }: { onDone: () => void }) {
+  const { mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const reduced = useReducedMotion();
   const petHue = useSettings((s) => s.petHue) ?? 55;
 
@@ -83,10 +87,10 @@ export function SplashIntro({ onDone }: { onDone: () => void }) {
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   abs: { zIndex: 100, elevation: 100 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   wordWrap: { position: 'absolute', bottom: 96, left: 0, right: 0, alignItems: 'center' },
-  word: { fontFamily: fontFamily.display, fontSize: scaleFont(56), color: colors.primary, letterSpacing: -1 },
-  tag: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize.sm, color: colors.inkSoft, marginTop: 4 },
-});
+  word: { fontFamily: fontFamily.display, fontSize: scaleFont(56), color: t.c.primary, letterSpacing: -1 },
+  tag: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize.sm, color: t.c.inkSoft, marginTop: 4 },
+}));

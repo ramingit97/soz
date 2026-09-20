@@ -9,6 +9,7 @@
 import type { ViewStyle } from 'react-native';
 
 import type { UIMode } from './mode';
+import { PALETTES, type Palette } from './palettes';
 import { radius, shadow, spacing } from './spacing';
 import { fontFamily, fontSize } from './typography';
 
@@ -19,6 +20,8 @@ type Shadow = Pick<
 
 export interface ModeTokens {
   mode: UIMode;
+  /** Палитра режима (`./palettes.ts`). Экраны берут цвета отсюда, а не из `colors`. */
+  c: Palette;
   font: {
     /** Крупные заголовки: `hero`, `title`. */
     display: string;
@@ -42,6 +45,7 @@ export interface ModeTokens {
 export const MODE_TOKENS: Record<UIMode, ModeTokens> = {
   kid: {
     mode: 'kid',
+    c: PALETTES.kid,
     font: {
       display: fontFamily.display,
       displaySemi: fontFamily.displaySemi,
@@ -58,6 +62,7 @@ export const MODE_TOKENS: Record<UIMode, ModeTokens> = {
   },
   teen: {
     mode: 'teen',
+    c: PALETTES.teen,
     font: {
       display: fontFamily.teenDisplay,
       displaySemi: fontFamily.teenDisplaySemi,
@@ -84,3 +89,10 @@ export const MODE_TOKENS: Record<UIMode, ModeTokens> = {
 export function makeModeStyles<T>(build: (t: ModeTokens) => T): Record<UIMode, T> {
   return { kid: build(MODE_TOKENS.kid), teen: build(MODE_TOKENS.teen) };
 }
+
+/**
+ * То же, что `makeModeStyles`, но для любых значений, зависящих от режима:
+ * карт цветов, градиентов, наборов конфетти. Оба варианта строятся один раз при
+ * загрузке модуля, компонент выбирает нужный по `useTheme().mode`.
+ */
+export const byMode = makeModeStyles;

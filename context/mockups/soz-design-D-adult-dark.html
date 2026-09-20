@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Söz — вариант D, для взрослых</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --night:#121A3A; --n2:#1C2752; --n3:#2A3870; --n4:#3A4A8C;
+    --text:#fff; --t2:#DCE2FA; --t3:#8F9BCB; --t4:#6473A8;
+    --mint:#3DE0D0; --mint-soft:rgba(61,224,208,.14);
+    --sun:#FFC93C; --sun-d:#DB9B00; --amber:#FFB84D;
+  }
+  *{box-sizing:border-box;margin:0}
+  body{background:#E9ECF5;color:#1B2550;font-family:Onest,system-ui,sans-serif;padding:40px 24px 64px}
+  header{max-width:1320px;margin:0 auto 32px}
+  header a{font-size:14px;color:#5A648C;text-decoration:none;font-weight:600}
+  header h1{font-weight:700;font-size:31px;letter-spacing:-.7px;line-height:1.15;margin-top:8px}
+  header p{margin-top:8px;color:#5A648C;font-size:16.5px;max-width:64ch;line-height:1.5}
+  .row{max-width:1320px;margin:0 auto;display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}
+  figure{width:308px}
+  figcaption{margin-top:14px;font-size:14.5px;line-height:1.5;color:#5A648C}
+  figcaption b{display:block;color:#1B2550;font-weight:700;font-size:16px;margin-bottom:3px}
+  .phone{width:308px;height:650px;border-radius:44px;border:9px solid #0A0F26;background:var(--night);color:var(--text);position:relative;overflow:hidden;box-shadow:0 24px 50px -18px rgba(18,26,58,.6)}
+  .abs{position:absolute} svg{display:block}
+  .card{background:var(--n2);border-radius:22px;padding:16px}
+  .lbl{font-size:13.5px;color:var(--mint);font-weight:600}
+  .mut{font-size:13.5px;color:var(--t3);font-weight:500}
+  .btn{display:flex;align-items:center;justify-content:center;gap:10px;height:54px;border-radius:16px;font-weight:700;font-size:17px;color:var(--night);background:var(--sun);background-image:linear-gradient(rgba(255,255,255,.35),rgba(255,255,255,0) 58%);box-shadow:0 4px 0 var(--sun-d)}
+  .pill{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px 0 9px;border-radius:18px;background:var(--n2);font-weight:600;font-size:15px}
+  .tabs{left:0;right:0;bottom:0;height:78px;background:var(--n2);display:flex;justify-content:space-around;align-items:flex-start;padding-top:10px}
+  .tab{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11.5px;font-weight:500;color:#7783B5;width:70px}
+  .tab i{width:48px;height:32px;border-radius:16px;display:grid;place-items:center}
+  .tab.on{color:var(--mint)} .tab.on i{background:var(--mint-soft)}
+  .week{display:flex;justify-content:space-between;margin-top:12px}
+  .week div{width:32px;text-align:center;font-size:11.5px;color:var(--t3);font-weight:500}
+  .week i{display:grid;place-items:center;width:32px;height:32px;border-radius:16px;background:var(--n3);margin-bottom:6px;font-style:normal;color:var(--night)}
+  .week .d i{background:var(--sun)}
+  .week .t i{background:transparent;border:2px solid var(--mint);color:var(--mint);font-size:18px;line-height:1}
+  .li{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13.5px;font-weight:500;color:var(--t2);white-space:nowrap}
+  .li+.li{border-top:1px solid var(--n3)}
+  .li em{margin-left:auto;font-style:normal;color:var(--t3);font-size:13px}
+  .ic{width:32px;height:32px;border-radius:11px;background:var(--n3);display:grid;place-items:center;flex:none}
+  .bar{height:5px;border-radius:3px;background:var(--n3);overflow:hidden}.bar span{display:block;height:100%;border-radius:3px;background:var(--mint)}
+  .opt{height:54px;border-radius:16px;background:var(--n2);border:1.5px solid var(--n3);display:flex;align-items:center;justify-content:center;gap:8px;font-weight:600;font-size:17px;color:var(--t2)}
+  .opt.ok{background:var(--mint-soft);border-color:var(--mint);color:var(--mint)}
+  .gap{display:inline-block;min-width:44px;text-align:center;color:var(--mint);border-bottom:2px solid var(--mint);padding:0 6px;line-height:1.15}
+  .ghost{width:50px;height:50px;border-radius:25px;background:var(--n2);display:grid;place-items:center;color:var(--t2)}
+  .stat3{display:flex}.stat3 div{flex:1;text-align:center}.stat3 div+div{border-left:1px solid var(--n3)}
+  .stat3 b{font-weight:700;font-size:24px;letter-spacing:-.5px;display:block}.stat3 span{font-size:12.5px;color:var(--t3)}
+  .ls{display:flex;align-items:center;gap:12px;height:52px;font-size:14.5px;font-weight:500;color:var(--t2);white-space:nowrap}
+  .ls+.ls{border-top:1px solid var(--n3)}
+  .ls .n{width:26px;height:26px;border-radius:13px;display:grid;place-items:center;flex:none;font-size:12px;font-weight:600;border:1.5px solid var(--n4);color:var(--t3)}
+  .ls .n.ok{background:var(--mint);border-color:var(--mint);color:var(--night)}
+  .ls .n.cur{border-color:var(--sun);color:var(--sun)}
+  .ls.lock{color:var(--t4)}
+  .ls em{margin-left:auto;font-style:normal;font-size:12.5px;color:var(--t3)}
+  .go{margin-left:auto;height:32px;border-radius:12px;background:var(--sun);color:var(--night);font-weight:700;font-size:13px;padding:0 12px;display:grid;place-items:center}
+  @keyframes blink{0%,92%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+  @keyframes eq{0%,100%{transform:scaleY(.25)}50%{transform:scaleY(1)}}
+  @keyframes halo{0%{box-shadow:0 0 0 0 rgba(61,224,208,.55),0 0 0 0 rgba(61,224,208,.3)}100%{box-shadow:0 0 0 18px rgba(61,224,208,0),0 0 0 36px rgba(61,224,208,0)}}
+  @keyframes draw{from{stroke-dashoffset:290}to{stroke-dashoffset:0}}
+  @keyframes tick{from{stroke-dashoffset:60}to{stroke-dashoffset:0}}
+  .r-eyes{transform-origin:100px 82px;animation:blink 5s infinite}
+  .voice{animation:halo 2s ease-out infinite}
+  .line s{display:block;width:3px;border-radius:2px;background:var(--mint);transform-origin:center;animation:eq 1.1s ease-in-out infinite}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs>
+  <symbol id="robo" viewBox="0 0 200 200">
+    <line x1="100" y1="14" x2="100" y2="40" stroke="#C9D5FF" stroke-width="6" stroke-linecap="round"/><circle cx="100" cy="14" r="9" fill="#FFC93C"/>
+    <rect x="34" y="36" width="132" height="98" rx="34" fill="#E4EAFF"/>
+    <rect x="52" y="54" width="96" height="60" rx="22" fill="#121A3A"/>
+    <g class="r-eyes"><rect x="72" y="70" width="15" height="24" rx="7.5" fill="#3DE0D0"/><rect x="113" y="70" width="15" height="24" rx="7.5" fill="#3DE0D0"/></g>
+    <rect x="22" y="70" width="14" height="32" rx="7" fill="#C9D5FF"/><rect x="164" y="70" width="14" height="32" rx="7" fill="#C9D5FF"/>
+    <rect x="58" y="142" width="84" height="54" rx="22" fill="#C9D5FF"/><circle cx="100" cy="168" r="10" fill="#FFC93C"/>
+  </symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-7l-5 4v-4H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-map" viewBox="0 0 24 24"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2zM9 4v14M15 6v14" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M4 21c1-5 4-7 8-7s7 2 8 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5h6a2 2 0 0 1 2 2v12a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v12a2 2 0 0 1 2-2h6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-puzzle" viewBox="0 0 24 24"><path d="M9 4h6v3a2 2 0 1 0 4 0h1v6h-2a2 2 0 1 0 0 4h2v3H4v-6h2a2 2 0 1 0 0-4H4V7h5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15a1 1 0 0 0 1.5.9l12-7.5a1 1 0 0 0 0-1.8l-12-7.5A1 1 0 0 0 7 4.5z" fill="currentColor"/></symbol>
+  <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 2c1 4 6 6 6 12a6 6 0 0 1-12 0c0-3 2-4 2.5-7C10 8 11.5 5 12 2z" fill="#FF7A2F"/><path d="M12 12c.6 2 3 3 3 5.2a3 3 0 0 1-6 0c0-2 2-3 3-5.2z" fill="#FFC93C"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9.5v5h4l5 4v-13l-5 4zM16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M9 6v12M15 6v12" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></symbol>
+  <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.3 1 2.1h5c0-.8.4-1.6 1-2.1A6 6 0 0 0 12 3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="3" fill="currentColor"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+  <symbol id="i-redo" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.6-5.900M4 4v5h5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</defs></svg>
+
+<header>
+  <a href="index.html">Все варианты</a>
+  <h1>Вариант D: для взрослых и 11+</h1>
+  <p>Развитие тёмного экрана, который тебе понравился: глубокий синий фон, спокойные карточки, один жёлтый акцент для главного действия и мятный для прогресса. Никаких сцен и мультяшности: время на каждый шаг, точность, исправления, программа по уровням.</p>
+</header>
+
+<div class="row">
+
+<!-- D1 HOME -->
+<figure>
+<div class="phone">
+  <div class="abs" style="left:20px;right:20px;top:20px;display:flex;align-items:center;gap:12px">
+    <span style="width:46px;height:46px;border-radius:16px;background:var(--n2);display:grid;place-items:center"><svg width="38" height="38"><use href="#robo"/></svg></span>
+    <div style="flex:1;font-weight:700;font-size:20px;letter-spacing:-.4px;white-space:nowrap">Привет, Тимур</div>
+    <span class="pill"><svg width="18" height="18"><use href="#i-flame"/></svg>12</span>
+  </div>
+  <div class="abs card" style="left:16px;right:16px;top:80px;padding:14px 16px">
+    <div style="display:flex;justify-content:space-between" class="mut"><span>Английский, B1</span><span>12 дней подряд</span></div>
+    <div class="week"><div class="d"><i><svg width="16" height="16"><use href="#i-check"/></svg></i>пн</div><div class="d"><i><svg width="16" height="16"><use href="#i-check"/></svg></i>вт</div><div class="d"><i><svg width="16" height="16"><use href="#i-check"/></svg></i>ср</div><div class="t"><i>•</i>чт</div><div><i></i>пт</div><div><i></i>сб</div><div><i></i>вс</div></div>
+  </div>
+  <div class="abs card" style="left:16px;right:16px;top:204px">
+    <div class="lbl">Урок 14, около 15 минут</div>
+    <div style="font-size:22px;font-weight:700;letter-spacing:-.4px;margin:4px 0 8px">Planning a trip</div>
+    <div class="li"><span class="ic"><svg width="18" height="18" style="color:var(--t2)"><use href="#i-book"/></svg></span>Чтение: письмо другу<em>5 мин</em></div>
+    <div class="li"><span class="ic"><svg width="18" height="18" style="color:var(--t2)"><use href="#i-puzzle"/></svg></span>Грамматика: going to<em>4 мин</em></div>
+    <div class="li"><span class="ic"><svg width="18" height="18" style="color:var(--t2)"><use href="#i-chat"/></svg></span>Разговор: аэропорт<em>6 мин</em></div>
+    <div class="btn" style="margin-top:12px"><svg width="18" height="18"><use href="#i-play"/></svg>Продолжить</div>
+  </div>
+  <div class="abs card" style="left:16px;right:16px;top:500px;padding:0 14px;height:46px;display:flex;align-items:center;gap:12px;font-size:14.5px;font-weight:500;color:var(--t2)"><svg width="20" height="20" style="color:var(--mint)"><use href="#i-chat"/></svg>Свободный разговор<svg width="18" height="18" style="margin-left:auto;color:var(--t3)"><use href="#i-chev"/></svg></div>
+  <div class="abs tabs">
+    <div class="tab on"><i><svg width="22" height="22"><use href="#i-home"/></svg></i>Учиться</div>
+    <div class="tab"><i><svg width="22" height="22"><use href="#i-chat"/></svg></i>Говорить</div>
+    <div class="tab"><i><svg width="22" height="22"><use href="#i-map"/></svg></i>Путь</div>
+    <div class="tab"><i><svg width="22" height="22"><use href="#i-user"/></svg></i>Профиль</div>
+  </div>
+</div>
+<figcaption><b>Главный</b>Тот самый экран, без изменений по сути: неделя серии, урок с тремя шагами и временем на каждый, одна жёлтая кнопка.</figcaption>
+</figure>
+
+<!-- D2 LESSON -->
+<figure>
+<div class="phone">
+  <div class="abs" style="left:18px;right:20px;top:24px;display:flex;align-items:center;gap:14px">
+    <svg width="24" height="24" style="color:var(--t3)"><use href="#i-x"/></svg>
+    <span class="bar" style="flex:1"><span style="width:45%"></span></span>
+    <span class="mut" style="font-size:13px">4 из 9</span>
+  </div>
+  <div class="abs" style="left:20px;right:20px;top:68px;display:flex;justify-content:space-between;align-items:center">
+    <div><div class="lbl">Грамматика: going to</div><div style="font-weight:700;font-size:19px;letter-spacing:-.4px;margin-top:4px;white-space:nowrap">Вставь пропущенное слово</div></div>
+  </div>
+  <div class="abs card" style="left:16px;right:16px;top:128px;padding:16px 18px">
+    <div style="font-size:21px;font-weight:600;line-height:1.5;letter-spacing:-.3px">I <span class="gap">am</span> going to visit Baku next week.</div>
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-top:14px;padding-top:12px;border-top:1px solid var(--n3)">
+      <span style="width:32px;height:32px;border-radius:16px;background:var(--n3);display:grid;place-items:center;flex:none;color:var(--mint)"><svg width="17" height="17"><use href="#i-sound"/></svg></span>
+      <span class="mut" style="line-height:1.4">Я собираюсь поехать в Баку на следующей неделе.</span>
+    </div>
+  </div>
+  <div class="abs" style="left:16px;right:16px;top:332px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <div class="opt ok">am<svg width="17" height="17"><use href="#i-check"/></svg></div><div class="opt">is</div><div class="opt">are</div><div class="opt">be</div>
+  </div>
+  <div class="abs" style="left:0;right:0;bottom:0;background:var(--n2);border-radius:26px 26px 0 0;padding:18px 16px 20px">
+    <div style="display:flex;align-items:center;gap:10px;margin:0 4px 6px">
+      <span style="width:26px;height:26px;border-radius:13px;background:var(--mint);color:var(--night);display:grid;place-items:center"><svg width="15" height="15"><use href="#i-check"/></svg></span>
+      <span style="font-weight:700;font-size:16px">Верно</span>
+    </div>
+    <div class="mut" style="margin:0 4px 14px;line-height:1.4">С местоимением I всегда am: I am going to.</div>
+    <div class="btn">Дальше</div>
+  </div>
+</div>
+<figcaption><b>Урок</b>Взрослому нужна фраза из жизни, а не картинка. Пропуск в предложении, перевод и озвучка под ним, после ответа короткое правило в одну строку.</figcaption>
+</figure>
+
+<!-- D3 TALK -->
+<figure>
+<div class="phone">
+  <div class="abs" style="left:18px;right:20px;top:22px;display:flex;align-items:center;justify-content:space-between">
+    <svg width="24" height="24" style="color:var(--t3)"><use href="#i-x"/></svg>
+    <div style="text-align:center"><div style="font-weight:600;font-size:15px">В аэропорту</div><div class="mut" style="font-size:12.5px">живой разговор, 3:40</div></div>
+    <span class="mut" style="font-size:13px">2 из 3</span>
+  </div>
+
+  <div class="abs voice" style="left:83px;top:84px;width:124px;height:124px;border-radius:62px;background:var(--n2);border:2px solid var(--mint);display:grid;place-items:center"><svg width="92" height="92"><use href="#robo"/></svg></div>
+
+  <div class="abs card" style="left:16px;right:44px;top:236px;padding:14px 16px;border-radius:20px 20px 20px 6px">
+    <div style="font-size:16.5px;font-weight:600;line-height:1.35">Good afternoon. Where are you flying today?</div>
+    <div style="font-size:13px;color:var(--mint);font-weight:500;margin-top:8px">Показать перевод</div>
+  </div>
+  <div class="abs" style="left:64px;right:16px;top:346px;background:var(--mint-soft);border:1px solid rgba(61,224,208,.35);border-radius:20px 20px 6px 20px;padding:12px 16px;font-size:15.5px;font-weight:500;line-height:1.35;color:#CFFBF6">I'm flying to London. I have one bag to<span style="opacity:.5"> …</span></div>
+
+  <div class="abs" style="left:16px;right:16px;top:440px;border-radius:16px;background:rgba(255,184,77,.12);border:1px solid rgba(255,184,77,.35);padding:10px 14px;display:flex;gap:10px;align-items:center">
+    <svg width="20" height="20" style="color:var(--amber);flex:none"><use href="#i-bulb"/></svg>
+    <span style="font-size:13.5px;line-height:1.35;color:#FFE1B0"><b style="font-weight:600;color:#fff">to check in</b> значит сдать в багаж</span>
+  </div>
+
+  <div class="abs" style="left:18px;right:18px;bottom:26px;display:flex;align-items:center;justify-content:space-between">
+    <span class="ghost"><svg width="22" height="22"><use href="#i-bulb"/></svg></span>
+    <div style="text-align:center">
+      <div class="line" style="display:flex;align-items:center;gap:4px;height:34px;justify-content:center"><s style="height:10px"></s><s style="height:22px;animation-delay:.1s"></s><s style="height:30px;animation-delay:.2s"></s><s style="height:16px;animation-delay:.3s"></s><s style="height:34px;animation-delay:.15s"></s><s style="height:24px;animation-delay:.25s"></s><s style="height:12px;animation-delay:.35s"></s><s style="height:28px;animation-delay:.05s"></s><s style="height:18px;animation-delay:.4s"></s><s style="height:8px;animation-delay:.32s"></s></div>
+      <div class="mut" style="font-size:13px;margin-top:6px">Слушаю, говорите</div>
+    </div>
+    <span class="ghost"><svg width="22" height="22"><use href="#i-pause"/></svg></span>
+  </div>
+</div>
+<figcaption><b>Разговор</b>Жизненная сцена вместо болтовни: аэропорт, собеседование, врач. Микрофон работает сам. Нужное слово всплывает подсказкой прямо во время речи, перевод скрыт, пока не попросишь.</figcaption>
+</figure>
+
+<!-- D4 DONE -->
+<figure>
+<div class="phone">
+  <svg class="abs" style="left:101px;top:52px" width="88" height="88" viewBox="0 0 100 100">
+    <circle cx="50" cy="50" r="45" fill="none" stroke="#2A3870" stroke-width="6"/>
+    <circle cx="50" cy="50" r="45" fill="none" stroke="#3DE0D0" stroke-width="6" stroke-linecap="round" stroke-dasharray="290" transform="rotate(-90 50 50)" style="animation:draw .9s ease-out both"/>
+    <path d="m32 52 12 12 25-27" fill="none" stroke="#3DE0D0" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="60" style="animation:tick .4s .8s ease-out both"/>
+  </svg>
+  <div class="abs" style="left:0;right:0;top:158px;text-align:center">
+    <div style="font-weight:700;font-size:24px;letter-spacing:-.5px">Урок пройден</div>
+    <div class="mut" style="margin-top:4px">Planning a trip, 14 минут</div>
+  </div>
+  <div class="abs card stat3" style="left:16px;right:16px;top:232px;padding:14px 0"><div><b>92%</b><span>точность</span></div><div><b>8</b><span>новых слов</span></div><div><b style="color:var(--sun)">+20</b><span>очков</span></div></div>
+  <div class="abs card" style="left:16px;right:16px;top:326px;padding:14px 16px">
+    <div style="display:flex;justify-content:space-between" class="mut"><span style="color:#fff;font-weight:600">13 дней подряд</span><span>рекорд 21</span></div>
+    <div class="week"><div class="d"><i><svg width="16" height="16"><use href="#i-check"/></svg></i>пн</div><div class="d"><i><svg width="16" height="16"><use href="#i-check"/></svg></i>вт</div><div class="d"><i><svg width="16" height="16"><use href="#i-check"/></svg></i>ср</div><div class="d"><i style="box-shadow:0 0 0 4px rgba(255,201,60,.25)"><svg width="16" height="16"><use href="#i-check"/></svg></i>чт</div><div><i></i>пт</div><div><i></i>сб</div><div><i></i>вс</div></div>
+  </div>
+  <div class="abs card" style="left:16px;right:16px;top:450px;padding:0 14px;height:52px;display:flex;align-items:center;gap:12px;font-size:14.5px;font-weight:500;color:var(--t2)"><svg width="20" height="20" style="color:var(--mint)"><use href="#i-redo"/></svg>Повторить 2 ошибки<svg width="18" height="18" style="margin-left:auto;color:var(--t3)"><use href="#i-chev"/></svg></div>
+  <div class="abs" style="left:16px;right:16px;bottom:24px"><div class="btn">Дальше</div></div>
+</div>
+<figcaption><b>Урок пройден</b>Без конфетти: кольцо замыкается, три цифры, серия. Строка про ошибки показывает, что приложение помнит слабые места и вернётся к ним.</figcaption>
+</figure>
+
+<!-- D5 PATH -->
+<figure>
+<div class="phone">
+  <div class="abs" style="left:20px;right:20px;top:22px;font-weight:700;font-size:23px;letter-spacing:-.5px">Программа</div>
+  <div class="abs card" style="left:16px;right:16px;top:66px;padding:14px 16px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-weight:700;font-size:17px;white-space:nowrap">Уровень B1</span><span class="mut" style="font-size:13px;white-space:nowrap">до B2: 38 уроков</span></div>
+    <div class="bar" style="margin-top:12px"><span style="width:36%"></span></div>
+  </div>
+  <div class="abs" style="left:20px;right:20px;top:160px;display:flex;justify-content:space-between;align-items:baseline"><span style="font-weight:600;font-size:15px">Неделя 3: путешествия</span><span class="mut" style="font-size:13px">2 из 5</span></div>
+  <div class="abs card" style="left:16px;right:16px;top:190px;padding:6px 14px">
+    <div class="ls"><span class="n ok"><svg width="13" height="13"><use href="#i-check"/></svg></span>Booking a hotel<em>94%</em></div>
+    <div class="ls"><span class="n ok"><svg width="13" height="13"><use href="#i-check"/></svg></span>Asking the way<em>88%</em></div>
+    <div class="ls" style="color:#fff"><span class="n cur">3</span>Planning a trip<span class="go">Начать</span></div>
+    <div class="ls lock"><span class="n">4</span>At the restaurant<em style="color:var(--t4)">15 мин</em></div>
+    <div class="ls lock"><span class="n">5</span>Проверка недели<em style="color:var(--t4)">разговор</em></div>
+  </div>
+  <div class="abs card" style="left:16px;right:16px;top:476px;padding:0 14px;height:52px;display:flex;align-items:center;gap:12px;font-size:14.5px;font-weight:500;color:var(--t3)"><svg width="18" height="18" style="color:var(--t4)"><use href="#i-lock"/></svg>Неделя 4: работа<svg width="18" height="18" style="margin-left:auto;color:var(--t4)"><use href="#i-chev"/></svg></div>
+  <div class="abs tabs">
+    <div class="tab"><i><svg width="22" height="22"><use href="#i-home"/></svg></i>Учиться</div>
+    <div class="tab"><i><svg width="22" height="22"><use href="#i-chat"/></svg></i>Говорить</div>
+    <div class="tab on"><i><svg width="22" height="22"><use href="#i-map"/></svg></i>Путь</div>
+    <div class="tab"><i><svg width="22" height="22"><use href="#i-user"/></svg></i>Профиль</div>
+  </div>
+</div>
+<figcaption><b>Программа</b>Вместо карты понятный план: уровень и сколько осталось до следующего, неделя с темой, точность по каждому пройденному уроку.</figcaption>
+</figure>
+
+</div>
+</body>
+</html>

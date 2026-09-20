@@ -6,9 +6,13 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/Text';
 import { useAccent } from '@/hooks/useAccent';
-import { colors, radius, spacing } from '@/theme';
+import { radius, spacing } from '@/theme';
+import { makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 export function AuthTabs({ active, az }: { active: 'login' | 'register'; az: boolean }) {
+  const { c, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const router = useRouter();
   const accent = useAccent();
   const tabs = [
@@ -26,9 +30,9 @@ export function AuthTabs({ active, az }: { active: 'login' | 'register'; az: boo
             accessibilityState={{ selected: on }}
             disabled={on}
             onPress={() => router.replace(t.route as never)}
-            style={[styles.tab, on && { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
+            style={[styles.tab, on && { backgroundColor: c.surface, borderColor: c.surfaceBorder }]}
           >
-            <Text variant="bodyBold" style={{ color: on ? accent.ink : colors.inkSoft }}>
+            <Text variant="bodyBold" style={{ color: on ? accent.ink : c.inkSoft }}>
               {t.label}
             </Text>
           </Pressable>
@@ -38,10 +42,10 @@ export function AuthTabs({ active, az }: { active: 'login' | 'register'; az: boo
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   row: {
     flexDirection: 'row',
-    backgroundColor: colors.bgDeep,
+    backgroundColor: t.c.bgDeep,
     borderRadius: radius.full,
     padding: 4,
     gap: 4,
@@ -54,4 +58,4 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'transparent',
   },
-});
+}));

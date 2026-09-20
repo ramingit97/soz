@@ -11,7 +11,9 @@ import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, type ViewStyle } from 'react-native';
 
 import { Icon, type IconName } from '@/components/Icon';
-import { colors, radius, shadow, spacing } from '@/theme';
+import { radius, shadow, spacing } from '@/theme';
+import { makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 interface Props {
   /** Defaults to router.back(). */
@@ -35,6 +37,8 @@ export function HBBackButton({
   accessibilityLabel = 'Back',
   style,
 }: Props) {
+  const { c, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const router = useRouter();
   const handle = () => {
     Haptics.selectionAsync().catch(() => {});
@@ -56,21 +60,21 @@ export function HBBackButton({
         style,
       ]}
     >
-      <Icon name={icon} size={22} color={colors.ink} strokeWidth={2.5} />
+      <Icon name={icon} size={22} color={c.ink} strokeWidth={2.5} />
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   btn: {
     width: 40,
     height: 40,
     borderRadius: radius.full,
-    backgroundColor: colors.surface,
+    backgroundColor: t.c.surface,
     borderWidth: 1,
-    borderColor: colors.surfaceBorder,
+    borderColor: t.c.surfaceBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
   pressed: { transform: [{ scale: 0.92 }], opacity: 0.9 },
-});
+}));

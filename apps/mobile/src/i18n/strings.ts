@@ -39,7 +39,6 @@ export interface Strings {
     onlyRussianDesc: string;
     both: string;
     bothDesc: string;
-    bothBadge: string;
   };
 }
 
@@ -59,8 +58,8 @@ const az: Strings = {
     ruLabel: 'Rus dili',
   },
   welcome: {
-    title: 'Övladınız oyun zamanı\niki dil öyrənir',
-    subtitle: 'AI-dostu Bobo ilə ingilis və rus dilləri.\nGündə 15 dəqiqə. Repetitordan 5 dəfə ucuz.',
+    title: 'Övladınız oyun zamanı\ningiliscə danışır',
+    subtitle: 'AI-dostu Bobo ilə ingilis dili.\nGündə 15 dəqiqə. Repetitordan 5 dəfə ucuz.',
     cta: 'Başlayaq',
     haveAccount: 'Artıq hesabım var',
   },
@@ -74,15 +73,14 @@ const az: Strings = {
     cta: 'Davam et',
   },
   learningLanguages: {
-    title: 'Hansı dilləri öyrənəcək?',
-    subtitle: 'Sonra dəyişə bilərsiniz',
-    onlyEnglish: 'Yalnız ingilis',
+    title: 'Hansı dili öyrənəcək?',
+    subtitle: 'Bir dil — daha sürətli nəticə. Sonra dəyişə bilərsiniz',
+    onlyEnglish: 'İngilis dili',
     onlyEnglishDesc: 'Gələcək karyera və təhsil üçün',
-    onlyRussian: 'Yalnız rus',
+    onlyRussian: 'Rus dili',
     onlyRussianDesc: 'Regional ünsiyyət və qohumlar üçün',
-    both: 'Hər iki dil',
-    bothDesc: 'Bir tətbiqdə paralel iki dil',
-    bothBadge: 'Tövsiyə olunur',
+    both: 'Hər ikisi birdən',
+    bothDesc: 'İki kurs paralel: yük iki dəfə çoxdur',
   },
 };
 
@@ -102,8 +100,8 @@ const ru: Strings = {
     ruLabel: 'Русский',
   },
   welcome: {
-    title: 'Ваш ребёнок учит\nдва языка в игре',
-    subtitle: 'Английский и русский с AI-другом Бобо.\n15 минут в день. В 5 раз дешевле репетитора.',
+    title: 'Ваш ребёнок заговорит\nпо-английски',
+    subtitle: 'Английский с AI-другом Бобо.\n15 минут в день. В 5 раз дешевле репетитора.',
     cta: 'Начнём',
     haveAccount: 'У меня уже есть аккаунт',
   },
@@ -117,15 +115,14 @@ const ru: Strings = {
     cta: 'Дальше',
   },
   learningLanguages: {
-    title: 'Какие языки будем учить?',
-    subtitle: 'Можно изменить позже',
-    onlyEnglish: 'Только английский',
+    title: 'Какой язык будем учить?',
+    subtitle: 'Один язык — быстрее результат. Можно изменить позже',
+    onlyEnglish: 'Английский',
     onlyEnglishDesc: 'Для будущей карьеры и образования',
-    onlyRussian: 'Только русский',
+    onlyRussian: 'Русский',
     onlyRussianDesc: 'Для общения с роднёй и регионом',
-    both: 'Оба языка',
-    bothDesc: 'Параллельные дорожки в одном приложении',
-    bothBadge: 'Рекомендуется',
+    both: 'Оба сразу',
+    bothDesc: 'Два курса параллельно: нагрузка вдвое больше',
   },
 };
 

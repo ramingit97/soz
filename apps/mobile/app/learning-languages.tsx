@@ -1,5 +1,10 @@
 /**
- * Онбординг, шаг 3 — какие языки учим. По умолчанию оба: это отличие продукта.
+ * Онбординг, шаг 3 — какой язык учим.
+ *
+ * По умолчанию английский, один язык на курс (решение владельца 2026-09-20).
+ * До этого по умолчанию стояли оба, и это была главная претензия: ребёнок учил
+ * английский и русский одновременно и путался. Два языка остались третьим
+ * выбором для тех, кто сознательно берёт двойную нагрузку.
  */
 
 import * as Haptics from 'expo-haptics';
@@ -27,7 +32,7 @@ export default function LearningLanguagesScreen() {
   const setLearningLanguages = useSettings((s) => s.setLearningLanguages);
   const t = getStrings(lang);
 
-  const [selected, setSelected] = useState<Choice>('both');
+  const [selected, setSelected] = useState<Choice>('en_only');
 
   const handleContinue = () => {
     setLearningLanguages(LANGS[selected]);
@@ -43,13 +48,6 @@ export default function LearningLanguagesScreen() {
       footer={<HBButton full label={t.common.continue} onPress={handleContinue} />}
     >
       <ChoiceCard
-        icon="globe"
-        title={t.learningLanguages.both}
-        subtitle={t.learningLanguages.bothBadge}
-        selected={selected === 'both'}
-        onPress={() => setSelected('both')}
-      />
-      <ChoiceCard
         mark="EN"
         title={t.learningLanguages.onlyEnglish}
         subtitle={t.learningLanguages.onlyEnglishDesc}
@@ -62,6 +60,13 @@ export default function LearningLanguagesScreen() {
         subtitle={t.learningLanguages.onlyRussianDesc}
         selected={selected === 'ru_only'}
         onPress={() => setSelected('ru_only')}
+      />
+      <ChoiceCard
+        icon="globe"
+        title={t.learningLanguages.both}
+        subtitle={t.learningLanguages.bothDesc}
+        selected={selected === 'both'}
+        onPress={() => setSelected('both')}
       />
     </OnboardingStep>
   );

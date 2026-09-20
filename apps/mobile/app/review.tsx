@@ -20,7 +20,8 @@ import { getLesson } from '@/data/lessons';
 import { useTheme } from '@/hooks/useTheme';
 import { getReviewItems, type ReviewItem } from '@/services/api';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, spacing } from '@/theme';
+import { fontFamily, fontSize, radius, spacing } from '@/theme';
+import { makeModeStyles } from '@/theme/modeTokens';
 
 interface Question {
   prompt: string;
@@ -37,7 +38,8 @@ export default function ReviewScreen() {
   const learningLanguages = useSettings((s) => s.learningLanguages);
   const addStars = useSettings((s) => s.addStars);
   const isAz = lang === 'az';
-  const { t } = useTheme();
+  const { c: palette, mode: uiMode, t } = useTheme();
+  const styles = stylesByMode[uiMode];
   const learningLang = learningLanguages[0] ?? 'en';
 
   const [items, setItems] = useState<ReviewItem[]>([]);
@@ -140,7 +142,7 @@ export default function ReviewScreen() {
               <Text style={styles.scoreText}>
                 {correctCount} / {questions.length}
               </Text>
-              <Icon name="star" size={28} color={colors.butterDeep} fill={colors.butter} strokeWidth={2} />
+              <Icon name="star" size={28} color={palette.butterDeep} fill={palette.butter} strokeWidth={2} />
             </View>
           ) : null}
           <Text variant="body" tone="secondary" align="center">
@@ -179,7 +181,7 @@ export default function ReviewScreen() {
                 accessibilityRole="button"
                 style={[styles.option, isRight && styles.optionRight, isWrong && styles.optionWrong]}
               >
-                <Text style={[styles.optionText, isRight && { color: colors.accentDeep }, isWrong && { color: colors.berryDeep }]}>
+                <Text style={[styles.optionText, isRight && { color: palette.accentDeep }, isWrong && { color: palette.berryDeep }]}>
                   {opt}
                 </Text>
               </Pressable>
@@ -195,13 +197,13 @@ export default function ReviewScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   body: { paddingTop: spacing[4], paddingBottom: spacing[10], gap: spacing[5] },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing[3] },
   score: { flexDirection: 'row', alignItems: 'center', gap: spacing[2] },
-  scoreText: { fontFamily: fontFamily.display, fontSize: fontSize['3xl'], color: colors.ink },
+  scoreText: { fontFamily: fontFamily.display, fontSize: fontSize['3xl'], color: t.c.ink },
   question: { alignItems: 'center', gap: spacing[2] },
-  prompt: { fontFamily: fontFamily.display, fontSize: fontSize['4xl'], color: colors.ink },
+  prompt: { fontFamily: fontFamily.display, fontSize: fontSize['4xl'], color: t.c.ink },
   options: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: spacing[3] },
   option: {
     width: '48.5%',
@@ -210,11 +212,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: radius.xl,
     borderWidth: 1.5,
-    borderColor: colors.surfaceBorder,
-    backgroundColor: colors.surface,
+    borderColor: t.c.surfaceBorder,
+    backgroundColor: t.c.surface,
     paddingHorizontal: spacing[3],
   },
   optionRight: { backgroundColor: '#E3F7EF', borderColor: '#7AC9B5' },
   optionWrong: { backgroundColor: '#FDE3E8', borderColor: '#F5A3B2' },
-  optionText: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize.lg, color: colors.ink },
-});
+  optionText: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize.lg, color: t.c.ink },
+}));

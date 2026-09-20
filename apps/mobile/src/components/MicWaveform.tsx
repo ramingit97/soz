@@ -9,7 +9,9 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 
-import { colors, radius } from '@/theme';
+import { radius } from '@/theme';
+import { makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 /** Symmetric bar heights — tallest in the middle. */
 const PHASES = [0.55, 0.75, 0.9, 1, 0.9, 0.75, 0.55];
@@ -28,6 +30,8 @@ function Bar({
   dead,
   wobble,
 }: MicWaveformProps & { index: number; wobble: SharedValue<number> }) {
+  const { mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const style = useAnimatedStyle(() => {
     // Per-bar phase-shifted wobble so the bars feel organic, not synchronized
     const w = 0.5 + 0.5 * Math.sin(wobble.value * Math.PI * 2 + index * 1.1);
@@ -40,6 +44,8 @@ function Bar({
 
 /** Live voice-level bars shown while the child is recording. */
 export function MicWaveform({ level, dead }: MicWaveformProps) {
+  const { mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const wobble = useSharedValue(0);
 
   useEffect(() => {
@@ -55,7 +61,7 @@ export function MicWaveform({ level, dead }: MicWaveformProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -66,6 +72,6 @@ const styles = StyleSheet.create({
   bar: {
     width: 5,
     borderRadius: radius.full,
-    backgroundColor: colors.accentPink,
+    backgroundColor: t.c.accentPink,
   },
-});
+}));

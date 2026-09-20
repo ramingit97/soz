@@ -18,11 +18,15 @@ import { Text } from '@/components/Text';
 import { useAccent } from '@/hooks/useAccent';
 import { updateChild } from '@/services/api';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, spacing } from '@/theme';
+import { fontFamily, fontSize, radius, spacing } from '@/theme';
 import { PET_COLOR_NAMES, PET_HUES, petPaletteFor } from '@/theme/petPalette';
 import { useCompanionName } from '@/utils/companion';
+import { makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 export function PetMeetCard() {
+  const { c, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const isAz = useSettings((s) => s.parentUILanguage) === 'az';
   const petHue = useSettings((s) => s.petHue);
   const setPetHue = useSettings((s) => s.setPetHue);
@@ -53,9 +57,9 @@ export function PetMeetCard() {
           value={name}
           onChangeText={setName}
           placeholder={bot}
-          placeholderTextColor={colors.textMuted}
+          placeholderTextColor={c.textMuted}
           maxLength={20}
-          style={[styles.input, { borderColor: name ? accent.bottom : colors.surfaceBorder }]}
+          style={[styles.input, { borderColor: name ? accent.bottom : c.surfaceBorder }]}
           accessibilityLabel={isAz ? 'Dostun adı' : 'Имя друга'}
           returnKeyType="done"
         />
@@ -76,10 +80,10 @@ export function PetMeetCard() {
                 style={[
                   styles.swatch,
                   { backgroundColor: petPaletteFor(h).body },
-                  selected && { borderColor: colors.ink },
+                  selected && { borderColor: c.ink },
                 ]}
               >
-                {selected ? <Icon name="check" size={16} color={colors.white} strokeWidth={3} /> : null}
+                {selected ? <Icon name="check" size={16} color={c.white} strokeWidth={3} /> : null}
               </Pressable>
             );
           })}
@@ -91,17 +95,17 @@ export function PetMeetCard() {
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   card: { gap: spacing[3] },
   input: {
     minHeight: 52,
     borderWidth: 1.5,
     borderRadius: radius.lg,
     paddingHorizontal: spacing[4],
-    backgroundColor: colors.surface,
+    backgroundColor: t.c.surface,
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize.base,
-    color: colors.ink,
+    color: t.c.ink,
   },
   swatches: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] },
   swatch: {
@@ -109,8 +113,8 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 18,
     borderWidth: 3,
-    borderColor: colors.surface,
+    borderColor: t.c.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
-});
+}));

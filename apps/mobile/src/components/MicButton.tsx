@@ -13,7 +13,9 @@ import Animated, {
 import { Icon } from '@/components/Icon';
 import { TypingDots } from '@/components/TypingDots';
 import { useAccent } from '@/hooks/useAccent';
-import { colors, radius } from '@/theme';
+import { radius } from '@/theme';
+import { makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 interface MicButtonProps {
   state: 'idle' | 'recording' | 'thinking' | 'playing';
@@ -34,6 +36,8 @@ interface MicButtonProps {
  * «нажми». Пока персонаж думает или говорит, кнопка бледнеет и не нажимается.
  */
 export function MicButton({ state, onPress, disabled, accessibilityLabel }: MicButtonProps) {
+  const { c, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const accent = useAccent();
   const scale = useSharedValue(1);
   const pulse = useSharedValue(0);
@@ -70,8 +74,8 @@ export function MicButton({ state, onPress, disabled, accessibilityLabel }: MicB
   }));
 
   const busy = state === 'thinking' || state === 'playing';
-  const fill = state === 'recording' ? colors.berry : busy ? accent.soft : accent.bottom;
-  const ink = state === 'recording' ? colors.white : busy ? accent.ink : accent.text;
+  const fill = state === 'recording' ? c.berry : busy ? accent.soft : accent.bottom;
+  const ink = state === 'recording' ? c.white : busy ? accent.ink : accent.text;
 
   return (
     <View style={styles.wrapper}>
@@ -82,7 +86,7 @@ export function MicButton({ state, onPress, disabled, accessibilityLabel }: MicB
         style={[
           aStyle,
           styles.glow,
-          { shadowColor: state === 'recording' ? colors.berry : accent.bottom },
+          { shadowColor: state === 'recording' ? c.berry : accent.bottom },
         ]}
       >
         <Pressable
@@ -109,7 +113,7 @@ export function MicButton({ state, onPress, disabled, accessibilityLabel }: MicB
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   wrapper: {
     // Кольца пульса шире (до ~186) и выходят за блок — места под них не держим,
     // иначе на низком экране микрофон упирается во вкладки.
@@ -139,4 +143,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   disabled: { opacity: 0.45 },
-});
+}));

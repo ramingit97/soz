@@ -64,7 +64,14 @@ export const radius = {
 } as const;
 
 /**
- * Honeybear Pro shadows — three honest depth levels (instead of one heavy pillow):
+ * Тени — четыре честных уровня глубины.
+ *
+ * Цвет тени один на оба режима: тёмно-фиолетовый. На светлых лавандовых листах
+ * детского режима он читается как мягкая опора, на тёмно-синем фоне взрослого
+ * почти не виден — так и нужно: в тёмном интерфейсе глубину даёт не тень, а
+ * разница поверхностей (`bg` → `surface` → `card`).
+ *
+ * Уровни:
  * - sm   contact shadow (sits low + crisp)
  * - md   raised surface (cards, buttons)
  * - lg   lifted card
@@ -76,42 +83,42 @@ export const shadow = {
   // Обычная карточка: белая поверхность и рамка уже отделяют её от фона, тени
   // остаётся только намекнуть на подъём.
   card: {
-    shadowColor: '#5A3F1C',
+    shadowColor: '#241A4D',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 2,
   },
   sm: {
-    shadowColor: '#5A3F1C',
+    shadowColor: '#241A4D',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.12,
     shadowRadius: 8,
     elevation: 3,
   },
   md: {
-    shadowColor: '#5A3F1C',
+    shadowColor: '#241A4D',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.12,
     shadowRadius: 18,
     elevation: 6,
   },
   lg: {
-    shadowColor: '#5A3F1C',
+    shadowColor: '#241A4D',
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.14,
     shadowRadius: 24,
     elevation: 10,
   },
   deep: {
-    shadowColor: '#5A3F1C',
+    shadowColor: '#241A4D',
     shadowOffset: { width: 0, height: 16 },
     shadowOpacity: 0.16,
     shadowRadius: 26,
     elevation: 14,
   },
   glow: {
-    shadowColor: '#E8945A',
+    shadowColor: '#6C4DF2',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.18,
     shadowRadius: 24,
@@ -124,7 +131,7 @@ export const shadow = {
  * a universal brown umber. A key "2026" cue. Use as `shadowColor`.
  */
 export const shadowTint = {
-  ink: '#5A3F1C',
+  ink: '#241A4D',
   primary: '#C97339',
   sage: '#3C8674',
   berry: '#B73E55',

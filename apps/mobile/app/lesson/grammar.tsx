@@ -28,7 +28,8 @@ import { STATIC_GRAMMAR } from '@/data/grammar';
 import { getLesson } from '@/data/lessons';
 import { useTheme } from '@/hooks/useTheme';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, spacing } from '@/theme';
+import { fontFamily, fontSize, radius, spacing } from '@/theme';
+import { byMode, makeModeStyles } from '@/theme/modeTokens';
 
 interface GrammarExercise {
   kind: 'fill_blank' | 'order_words';
@@ -39,8 +40,8 @@ interface GrammarExercise {
 
 type ExerciseState = 'idle' | 'correct' | 'wrong' | 'reveal';
 
-const RIGHT = { bg: '#E3F7EF', border: '#7AC9B5', ink: colors.accentDeep };
-const WRONG = { bg: '#FDE3E8', border: '#F5A3B2', ink: colors.berryDeep };
+const RIGHT_BY_MODE = byMode((t) => ({ bg: '#E3F7EF', border: '#7AC9B5', ink: t.c.accentDeep }));
+const WRONG_BY_MODE = byMode((t) => ({ bg: '#FDE3E8', border: '#F5A3B2', ink: t.c.berryDeep }));
 const WORD_SEPARATOR = String.fromCharCode(1);
 
 const shuffled = (words: string[]) => [...words].sort(() => Math.random() - 0.5);
@@ -80,7 +81,10 @@ export default function GrammarScreen() {
   const childId = useSettings((s) => s.childId);
   const markLessonStep = useSettings((s) => s.markLessonStep);
   const az = useSettings((s) => s.parentUILanguage) === 'az';
-  const { t, accent } = useTheme();
+  const { c, mode: uiMode, t, accent } = useTheme();
+  const styles = stylesByMode[uiMode];
+  const WRONG = WRONG_BY_MODE[uiMode];
+  const RIGHT = RIGHT_BY_MODE[uiMode];
 
   const exercise = exercises[exerciseIndex];
   const isOrderWords = exercise?.kind === 'order_words';
@@ -230,7 +234,7 @@ export default function GrammarScreen() {
                         key={`${i}-${w}`}
                         onPress={() => handleRemoveWord(w, i)}
                         accessibilityRole="button"
-                        style={[styles.wordTile, { backgroundColor: colors.surface, borderColor: accent.bottom }]}
+                        style={[styles.wordTile, { backgroundColor: c.surface, borderColor: accent.bottom }]}
                       >
                         <Text style={[styles.wordTileText, { color: accent.ink }]}>{w}</Text>
                       </Pressable>
@@ -297,7 +301,7 @@ export default function GrammarScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   scroll: { paddingTop: spacing[2], paddingBottom: spacing[8] },
 
   promptCard: { gap: spacing[3], minHeight: 120, justifyContent: 'center' },
@@ -322,8 +326,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     borderWidth: 1.5,
   },
-  wordTileBank: { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
-  wordTileText: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.base, color: colors.ink },
+  wordTileBank: { backgroundColor: t.c.surface, borderColor: t.c.surfaceBorder },
+  wordTileText: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.base, color: t.c.ink },
 
   optionsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: spacing[3] },
   optionBtn: {
@@ -333,12 +337,12 @@ const styles = StyleSheet.create({
     paddingVertical: spacing[3],
     borderRadius: radius.xl,
     borderWidth: 1.5,
-    borderColor: colors.surfaceBorder,
-    backgroundColor: colors.surface,
+    borderColor: t.c.surfaceBorder,
+    backgroundColor: t.c.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  optionText: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize.lg, color: colors.ink },
+  optionText: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize.lg, color: t.c.ink },
 
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing[4], padding: spacing[6] },
-});
+}));

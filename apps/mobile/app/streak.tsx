@@ -18,8 +18,10 @@ import { Text } from '@/components/Text';
 import { useAccent } from '@/hooks/useAccent';
 import { getProgress } from '@/services/api';
 import { todayISO, useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
+import { fontFamily, fontSize, radius, scaleFont, shadow, spacing } from '@/theme';
 import { useCompanionName } from '@/utils/companion';
+import { byMode, makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 const MONTH_NAMES_RU = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 const MONTH_NAMES_AZ = ['Yanvar','Fevral','Mart','Aprel','May','İyun','İyul','Avqust','Sentyabr','Oktyabr','Noyabr','Dekabr'];
@@ -62,15 +64,18 @@ function dayStatus(date: string | null, doneDates: Set<string>, today: string): 
   return doneDates.has(date) ? 'done' : 'missed';
 }
 
-const STATUS_STYLE: Record<DayStatus, { bg: string; text: string; border?: string }> = {
-  done:   { bg: colors.primary,    text: colors.white },
-  today:  { bg: colors.card,       text: colors.primary, border: colors.primary },
-  missed: { bg: colors.bgDeep,     text: colors.inkSoft },
-  future: { bg: 'transparent',     text: colors.inkSoft },
+const STATUS_STYLE_BY_MODE = byMode<Record<DayStatus, { bg: string; text: string; border?: string }>>((t) => ({
+  done:   { bg: t.c.primary,    text: t.c.white },
+  today:  { bg: t.c.card,       text: t.c.primary, border: t.c.primary },
+  missed: { bg: t.c.bgDeep,     text: t.c.inkSoft },
+  future: { bg: 'transparent',     text: t.c.inkSoft },
   empty:  { bg: 'transparent',     text: 'transparent' },
-};
+}));
 
 export default function StreakScreen() {
+  const { c, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
+  const STATUS_STYLE = STATUS_STYLE_BY_MODE[uiMode];
   const router = useRouter();
   const lang = useSettings((s) => s.parentUILanguage) ?? 'ru';
   const childId = useSettings((s) => s.childId);
@@ -166,7 +171,7 @@ export default function StreakScreen() {
               <View style={styles.heroPetWrap}>
                 <HBPet size={80} hue={storedHue} mood="happy" />
               </View>
-              <Icon name="flame" size={fireSize} color={colors.primaryDeep} fill={colors.butter} strokeWidth={1.75} />
+              <Icon name="flame" size={fireSize} color={c.primaryDeep} fill={c.butter} strokeWidth={1.75} />
               <Text style={styles.streakNumber}>{streak}</Text>
               <Text style={styles.streakLabel}>
                 {isAz ? 'gün ardıcıl' : 'дней подряд'}
@@ -213,7 +218,7 @@ export default function StreakScreen() {
                 accessibilityRole="button"
                 accessibilityLabel={isAz ? 'Əvvəlki ay' : 'Предыдущий месяц'}
               >
-                <Icon name="chevron-left" size={20} color={colors.ink} />
+                <Icon name="chevron-left" size={20} color={c.ink} />
               </Pressable>
               <Text style={styles.monthTitle}>{monthName} {viewYear}</Text>
               <Pressable
@@ -223,7 +228,7 @@ export default function StreakScreen() {
                 accessibilityRole="button"
                 accessibilityLabel={isAz ? 'Növbəti ay' : 'Следующий месяц'}
               >
-                <Icon name="chevron-right" size={20} color={colors.ink} />
+                <Icon name="chevron-right" size={20} color={c.ink} />
               </Pressable>
             </View>
 
@@ -268,9 +273,9 @@ export default function StreakScreen() {
 
             {/* Legend */}
             <View style={styles.legend}>
-              <LegendItem color={colors.primary} label={isAz ? 'Tamamlandı' : 'Урок пройден'} />
-              <LegendItem color={colors.bgDeep} label={isAz ? 'Buraxıldı' : 'Пропущено'} textColor={colors.inkSoft} />
-              <LegendItem color="transparent" label={isAz ? 'Gözlənir' : 'Впереди'} border={colors.inkSoft} textColor={colors.inkSoft} />
+              <LegendItem color={c.primary} label={isAz ? 'Tamamlandı' : 'Урок пройден'} />
+              <LegendItem color={c.bgDeep} label={isAz ? 'Buraxıldı' : 'Пропущено'} textColor={c.inkSoft} />
+              <LegendItem color="transparent" label={isAz ? 'Gözlənir' : 'Впереди'} border={c.inkSoft} textColor={c.inkSoft} />
             </View>
           </HBCard>
         </Animated.View>
@@ -302,7 +307,7 @@ export default function StreakScreen() {
 
         {/* Freeze tip */}
         <Animated.View entering={FadeIn.duration(400).delay(320)} style={styles.freezeTip}>
-          <Icon name="snowflake" size={16} color={colors.english} />
+          <Icon name="snowflake" size={16} color={c.english} />
           <Text style={styles.freezeTipText}>
             {isAz
               ? `Bir gün buraxsan, narahat olma — ${bot} seriyanı özü saxlayacaq`
@@ -318,6 +323,8 @@ export default function StreakScreen() {
 function LegendItem({ color, label, border, textColor }: {
   color: string; label: string; border?: string; textColor?: string;
 }) {
+  const { mode: uiMode } = useTheme();
+  const legend = legendByMode[uiMode];
   return (
     <View style={legend.row}>
       <View style={[legend.dot, { backgroundColor: color }, border && { borderWidth: 1.5, borderColor: border }]} />
@@ -326,16 +333,16 @@ function LegendItem({ color, label, border, textColor }: {
   );
 }
 
-const legend = StyleSheet.create({
+const legendByMode = makeModeStyles((t) => StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   dot: { width: 12, height: 12, borderRadius: 6 },
-  label: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize['3xs'], color: colors.white },
-});
+  label: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize['3xs'], color: t.c.white },
+}));
 
 const CELL_SIZE = 38;
 const CELL_GAP = 4;
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
 
   scroll: { paddingHorizontal: spacing[5], paddingTop: spacing[2], paddingBottom: spacing[8], gap: spacing[4] },
 
@@ -344,26 +351,26 @@ const styles = StyleSheet.create({
   streakNumber: {
     fontFamily: fontFamily.display,
     fontSize: scaleFont(72),
-    color: colors.ink,
+    color: t.c.ink,
     lineHeight: 76,
     letterSpacing: -2,
   },
-  streakLabel: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.base, color: colors.inkSoft },
+  streakLabel: { fontFamily: fontFamily.bodyBold, fontSize: fontSize.base, color: t.c.inkSoft },
 
   statRow: { flexDirection: 'row', gap: spacing[3] },
   statCard: { flex: 1, alignItems: 'center', gap: spacing[1], paddingVertical: spacing[4] },
-  statValue: { fontFamily: fontFamily.display, fontSize: fontSize['2xl'], color: colors.ink },
-  statLabel: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize['3xs'], color: colors.inkSoft, textAlign: 'center' },
+  statValue: { fontFamily: fontFamily.display, fontSize: fontSize['2xl'], color: t.c.ink },
+  statLabel: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize['3xs'], color: t.c.inkSoft, textAlign: 'center' },
 
   calCard: { gap: spacing[4] },
   monthNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   navBtn: { padding: spacing[2] },
-  monthTitle: { fontFamily: fontFamily.display, fontSize: fontSize.lg, color: colors.ink },
+  monthTitle: { fontFamily: fontFamily.display, fontSize: fontSize.lg, color: t.c.ink },
 
   weekRow: { flexDirection: 'row', justifyContent: 'space-between' },
   dayHeader: {
     width: CELL_SIZE, textAlign: 'center',
-    fontFamily: fontFamily.bodyBold, fontSize: fontSize['3xs'], color: colors.inkSoft,
+    fontFamily: fontFamily.bodyBold, fontSize: fontSize['3xs'], color: t.c.inkSoft,
   },
 
   grid: {
@@ -383,12 +390,12 @@ const styles = StyleSheet.create({
   legend: { flexDirection: 'row', gap: spacing[4], justifyContent: 'center', flexWrap: 'wrap' },
 
   motivCard: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
-  motivTitle: { fontFamily: fontFamily.display, fontSize: fontSize.base, color: colors.ink },
-  motivSub: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize.xs, color: colors.inkSoft, marginTop: 2 },
+  motivTitle: { fontFamily: fontFamily.display, fontSize: fontSize.base, color: t.c.ink },
+  motivSub: { fontFamily: fontFamily.bodyMedium, fontSize: fontSize.xs, color: t.c.inkSoft, marginTop: 2 },
 
   freezeTip: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing[2], paddingHorizontal: spacing[2] },
   freezeTipText: {
-    fontFamily: fontFamily.bodyMedium, fontSize: fontSize.xs, color: colors.inkSoft,
+    fontFamily: fontFamily.bodyMedium, fontSize: fontSize.xs, color: t.c.inkSoft,
     lineHeight: 18, flexShrink: 1,
   },
 
@@ -396,14 +403,14 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontFamily: fontFamily.display,
     fontSize: fontSize['2xl'],
-    color: colors.ink,
+    color: t.c.ink,
     textAlign: 'center',
     letterSpacing: -0.3,
   },
   emptyBody: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.sm,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
     textAlign: 'center',
     lineHeight: 20,
     maxWidth: 260,
@@ -419,16 +426,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: colors.surface,
+    backgroundColor: t.c.surface,
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[2],
     borderRadius: radius.full,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: t.c.border,
   },
   exampleText: {
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize.sm,
-    color: colors.inkSoft,
+    color: t.c.inkSoft,
   },
-});
+}));

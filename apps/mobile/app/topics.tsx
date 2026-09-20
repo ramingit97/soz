@@ -24,8 +24,9 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { Text } from '@/components/Text';
 import { useTheme } from '@/hooks/useTheme';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, spacing } from '@/theme';
+import { fontFamily, fontSize, radius, spacing } from '@/theme';
 import { useCompanionName } from '@/utils/companion';
+import { makeModeStyles } from '@/theme/modeTokens';
 
 export interface TopicGoal {
   ru: string; // learner-facing label (RU UI)
@@ -91,7 +92,8 @@ export default function TopicsScreen() {
   const learningLanguages = useSettings((s) => s.learningLanguages);
   const isAz = lang === 'az';
   const bot = useCompanionName();
-  const { t, accent } = useTheme();
+  const { c, mode: uiMode, t, accent } = useTheme();
+  const styles = stylesByMode[uiMode];
   const learnLang = learningLanguages[0] ?? 'en';
 
   const [custom, setCustom] = useState('');
@@ -140,7 +142,7 @@ export default function TopicsScreen() {
             value={custom}
             onChangeText={setCustom}
             placeholder={isAz ? 'Öz mövzun...' : 'Своя тема...'}
-            placeholderTextColor={colors.textMuted}
+            placeholderTextColor={c.textMuted}
             style={styles.customInput}
             maxLength={60}
             returnKeyType="go"
@@ -193,7 +195,7 @@ export default function TopicsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   scroll: { paddingTop: spacing[2], paddingBottom: spacing[10] },
 
   intro: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
@@ -203,14 +205,14 @@ const styles = StyleSheet.create({
   customInput: {
     flex: 1,
     minHeight: 52,
-    backgroundColor: colors.surface,
+    backgroundColor: t.c.surface,
     borderRadius: radius.lg,
     paddingHorizontal: spacing[4],
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize.base,
-    color: colors.ink,
+    color: t.c.ink,
     borderWidth: 1.5,
-    borderColor: colors.surfaceBorder,
+    borderColor: t.c.surfaceBorder,
   },
   customBtn: {
     width: 52,
@@ -224,5 +226,5 @@ const styles = StyleSheet.create({
   gridItem: { width: '48.5%' },
   pressed: { transform: [{ scale: 0.97 }] },
   topicCard: { gap: spacing[2], minHeight: 104 },
-  topicText: { color: colors.ink },
-});
+  topicText: { color: t.c.ink },
+}));

@@ -14,7 +14,9 @@ import { type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, spacing } from '@/theme';
+import { spacing } from '@/theme';
+import { makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 interface ScreenProps {
   children: ReactNode;
@@ -42,6 +44,8 @@ export function Screen({
   contentStyle,
   decoration = 'none',
 }: ScreenProps) {
+  const { c, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const Container = scroll ? ScrollView : View;
 
   return (
@@ -49,7 +53,7 @@ export function Screen({
       <StatusBar style="dark" />
       {gradient ? (
         <LinearGradient
-          colors={['#FCE9CC', colors.bg, colors.bgDeep]}
+          colors={['#FCE9CC', c.bg, c.bgDeep]}
           locations={[0, 0.55, 1]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -59,7 +63,7 @@ export function Screen({
 
       {decoration === 'bobo' ? (
         <>
-          <View style={[styles.blob, styles.blobTop, { backgroundColor: colors.primarySoft }]} />
+          <View style={[styles.blob, styles.blobTop, { backgroundColor: c.primarySoft }]} />
           <View style={[styles.blob, styles.blobBottom, { backgroundColor: '#DDF1EA' }]} />
         </>
       ) : null}
@@ -69,7 +73,7 @@ export function Screen({
             style={[
               styles.blob,
               styles.blobTop,
-              { backgroundColor: colors.butter, opacity: 0.35 },
+              { backgroundColor: c.butter, opacity: 0.35 },
             ]}
           />
           <View
@@ -100,8 +104,8 @@ export function Screen({
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.bg },
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
+  root: { flex: 1, backgroundColor: t.c.bg },
   safe: { flex: 1 },
   container: {
     flex: 1,
@@ -121,4 +125,4 @@ const styles = StyleSheet.create({
   },
   blobTop: { top: -160, right: -120 },
   blobBottom: { bottom: -180, left: -140 },
-});
+}));

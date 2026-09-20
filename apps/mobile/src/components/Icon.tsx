@@ -98,7 +98,7 @@ import X from 'lucide-react-native/icons/x';
 import Zap from 'lucide-react-native/icons/zap';
 
 import { useUIMode } from '@/hooks/useUIMode';
-import { colors } from '@/theme';
+
 import { MODE_TOKENS } from '@/theme/modeTokens';
 
 const ICONS = {
@@ -207,17 +207,19 @@ interface IconProps {
 export function Icon({
   name,
   size = 24,
-  color = colors.ink,
+  color,
   strokeWidth,
   fill = 'none',
   accessibilityLabel,
 }: IconProps) {
   const mode = useUIMode();
+  // Цвет по умолчанию — из палитры режима, поэтому не в параметрах.
+  const ink = color ?? MODE_TOKENS[mode].c.ink;
   const Glyph = ICONS[name];
   return (
     <Glyph
       size={size}
-      color={color}
+      color={ink}
       fill={fill}
       strokeWidth={strokeWidth ?? MODE_TOKENS[mode].iconStroke}
       accessibilityLabel={accessibilityLabel}

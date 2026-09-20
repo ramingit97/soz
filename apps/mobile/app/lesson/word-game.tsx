@@ -30,12 +30,13 @@ import { getLesson } from '@/data/lessons';
 import { useTheme } from '@/hooks/useTheme';
 import { buildWordGameWithReviews, pickReviewRounds } from '@/services/spacedRepetition';
 import { useSettings } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, scaleFont, spacing } from '@/theme';
+import { fontFamily, fontSize, radius, scaleFont, spacing } from '@/theme';
+import { byMode, makeModeStyles } from '@/theme/modeTokens';
 
 type AnswerState = 'idle' | 'correct' | 'wrong';
 
-const RIGHT = { bg: '#E3F7EF', border: '#7AC9B5', ink: colors.accentDeep };
-const WRONG = { bg: '#FDE3E8', border: '#F5A3B2', ink: colors.berryDeep };
+const RIGHT_BY_MODE = byMode((t) => ({ bg: '#E3F7EF', border: '#7AC9B5', ink: t.c.accentDeep }));
+const WRONG_BY_MODE = byMode((t) => ({ bg: '#FDE3E8', border: '#F5A3B2', ink: t.c.berryDeep }));
 
 export default function WordGameScreen() {
   const router = useRouter();
@@ -54,7 +55,10 @@ export default function WordGameScreen() {
   const childId = useSettings((s) => s.childId);
   const markLessonStep = useSettings((s) => s.markLessonStep);
   const az = useSettings((s) => s.parentUILanguage) === 'az';
-  const { t } = useTheme();
+  const { c: palette, mode: uiMode, t } = useTheme();
+  const styles = stylesByMode[uiMode];
+  const WRONG = WRONG_BY_MODE[uiMode];
+  const RIGHT = RIGHT_BY_MODE[uiMode];
 
   const shakeX = useSharedValue(0);
   const cardScale = useSharedValue(1);
@@ -140,7 +144,7 @@ export default function WordGameScreen() {
         total={rounds.length}
         right={
           <View style={styles.scorePill}>
-            <Icon name="star" size={16} color={colors.butterDeep} fill={colors.butter} strokeWidth={2} />
+            <Icon name="star" size={16} color={palette.butterDeep} fill={palette.butter} strokeWidth={2} />
             <Text style={styles.scoreText}>{correctCount * 4}</Text>
           </View>
         }
@@ -163,7 +167,7 @@ export default function WordGameScreen() {
                   entering={FadeIn.duration(200)}
                   style={[styles.badge, { backgroundColor: answerState === 'correct' ? RIGHT.ink : WRONG.ink }]}
                 >
-                  <Icon name={answerState === 'correct' ? 'check' : 'x'} size={18} color={colors.white} strokeWidth={3} />
+                  <Icon name={answerState === 'correct' ? 'check' : 'x'} size={18} color={palette.white} strokeWidth={3} />
                 </Animated.View>
               ) : null}
             </HBCard>
@@ -217,6 +221,10 @@ function OptionButton({
   onPress: () => void;
   disabled: boolean;
 }) {
+  const { mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
+  const WRONG = WRONG_BY_MODE[uiMode];
+  const RIGHT = RIGHT_BY_MODE[uiMode];
   const scale = useSharedValue(1);
   const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
   const look = state === 'correct' ? RIGHT : state === 'wrong' ? WRONG : null;
@@ -240,21 +248,21 @@ function OptionButton({
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   scroll: { paddingTop: spacing[2], paddingBottom: spacing[8], gap: spacing[4] },
 
   scorePill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: colors.surface,
+    backgroundColor: t.c.surface,
     borderWidth: 1,
-    borderColor: colors.surfaceBorder,
+    borderColor: t.c.surfaceBorder,
     paddingHorizontal: spacing[2],
     paddingVertical: 4,
     borderRadius: radius.full,
   },
-  scoreText: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize.sm, color: colors.ink },
+  scoreText: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize.sm, color: t.c.ink },
 
   emojiArea: { alignItems: 'center' },
   emojiCard: {
@@ -288,15 +296,15 @@ const styles = StyleSheet.create({
     paddingVertical: spacing[4],
     borderRadius: radius.xl,
     borderWidth: 1.5,
-    borderColor: colors.surfaceBorder,
-    backgroundColor: colors.surface,
+    borderColor: t.c.surfaceBorder,
+    backgroundColor: t.c.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  optionText: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize.xl, color: colors.ink },
+  optionText: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize.xl, color: t.c.ink },
 
   feedbackArea: { minHeight: 32, justifyContent: 'center' },
   feedbackRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing[2] },
 
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing[4], padding: spacing[6] },
-});
+}));

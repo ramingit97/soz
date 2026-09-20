@@ -17,8 +17,10 @@ import { PaperBackground } from '@/components/PaperBackground';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { Text } from '@/components/Text';
 import { useSettings } from '@/store/settings';
-import { colors, radius, spacing } from '@/theme';
+import { radius, spacing } from '@/theme';
 import { PET_HUES, petPaletteFor } from '@/theme/petPalette';
+import { makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 const MOOD_LABEL: Record<PetMood, string> = {
   happy: 'радуется',
@@ -33,6 +35,8 @@ const MOOD_LABEL: Record<PetMood, string> = {
 const SIZES = [24, 32, 48, 96, 200];
 
 export default function MascotScreen() {
+  const { mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const profileKind = useCompanionKind();
   const storedHue = useSettings((s) => s.petHue);
   const [kind, setKind] = useState<CompanionKind>(profileKind);
@@ -136,6 +140,8 @@ export default function MascotScreen() {
 }
 
 function Toggle({ label, on, onPress }: { label: string; on: boolean; onPress: () => void }) {
+  const { c, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   return (
     <Pressable
       onPress={onPress}
@@ -143,14 +149,14 @@ function Toggle({ label, on, onPress }: { label: string; on: boolean; onPress: (
       accessibilityState={{ selected: on }}
       style={[styles.toggle, on && styles.toggleOn]}
     >
-      <Text variant="bodyBold" style={{ color: on ? colors.white : colors.ink }}>
+      <Text variant="bodyBold" style={{ color: on ? c.white : c.ink }}>
         {label}
       </Text>
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   scroll: { paddingHorizontal: spacing[4], paddingBottom: spacing[10], gap: spacing[3] },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2], alignItems: 'center' },
   bottom: { alignItems: 'flex-end' },
@@ -161,11 +167,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[2],
     borderRadius: radius.full,
-    backgroundColor: colors.surface,
+    backgroundColor: t.c.surface,
     borderWidth: 1,
-    borderColor: colors.surfaceBorder,
+    borderColor: t.c.surfaceBorder,
   },
-  toggleOn: { backgroundColor: colors.ink, borderColor: colors.ink },
-  swatch: { width: 32, height: 32, borderRadius: 16, borderWidth: 3, borderColor: colors.surface },
-  swatchOn: { borderColor: colors.ink },
-});
+  toggleOn: { backgroundColor: t.c.ink, borderColor: t.c.ink },
+  swatch: { width: 32, height: 32, borderRadius: 16, borderWidth: 3, borderColor: t.c.surface },
+  swatchOn: { borderColor: t.c.ink },
+}));

@@ -17,8 +17,10 @@ import { OnboardingStep } from '@/components/OnboardingStep';
 import { Text } from '@/components/Text';
 import { useAccent } from '@/hooks/useAccent';
 import { AGE_RANGE_META, useSettings, type AgeRange } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, spacing } from '@/theme';
+import { fontFamily, fontSize, radius, spacing } from '@/theme';
 import { useCompanionName } from '@/utils/companion';
+import { makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 const KID_RANGES: { key: AgeRange; ru: string; az: string }[] = [
   { key: '5-7', ru: 'до школы, 1 класс', az: 'məktəbə qədər, 1-ci sinif' },
@@ -28,6 +30,8 @@ const KID_RANGES: { key: AgeRange; ru: string; az: string }[] = [
 ];
 
 export default function SetupNameScreen() {
+  const { c, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const router = useRouter();
   const isAz = useSettings((s) => s.parentUILanguage) === 'az';
   const isAdult = useSettings((s) => s.profileType) === 'adult';
@@ -87,7 +91,7 @@ export default function SetupNameScreen() {
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           placeholder={isAz ? 'Məsələn: Əli' : 'Например: Алия'}
-          placeholderTextColor={colors.textMuted}
+          placeholderTextColor={c.textMuted}
           style={styles.input}
           autoCapitalize="words"
           autoCorrect={false}
@@ -125,19 +129,19 @@ export default function SetupNameScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   inputBox: {
-    backgroundColor: colors.surface,
+    backgroundColor: t.c.surface,
     borderRadius: radius.md,
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[3],
     borderWidth: 2,
-    borderColor: colors.surfaceBorder,
+    borderColor: t.c.surfaceBorder,
   },
   input: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.xl,
-    color: colors.ink,
+    color: t.c.ink,
     textAlign: 'left',
     // Android иначе режет высокие буквы и подчёркивает поле своим стилем.
     padding: 0,
@@ -145,4 +149,4 @@ const styles = StyleSheet.create({
   ageLabel: { marginTop: spacing[3] },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] },
   gridItem: { width: '48.5%', flexGrow: 1 },
-});
+}));

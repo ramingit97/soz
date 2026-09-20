@@ -41,9 +41,9 @@ import {
 import { flushProgressQueue } from '@/services/progressQueue';
 import { initPurchases, checkPremium, identifyPurchaser } from '@/services/subscriptions';
 import { useSettings } from '@/store/settings';
-import { colors } from '@/theme';
 import { companionKindFor } from '@/theme/mode';
 import { installWebAlert } from '@/utils/webAlert';
+import { useTheme } from '@/hooks/useTheme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 installWebAlert();
@@ -58,6 +58,7 @@ if (Platform.OS === 'android') {
 }
 
 export default function RootLayout() {
+  const { c } = useTheme();
   const userId = useSettings((s) => s.userId);
   const childId = useSettings((s) => s.childId);
   const setIsPremium = useSettings((s) => s.setIsPremium);
@@ -174,7 +175,7 @@ export default function RootLayout() {
           <Stack
             screenOptions={{
               headerShown: false,
-              contentStyle: { backgroundColor: colors.bg },
+              contentStyle: { backgroundColor: c.bg },
               animation: 'slide_from_right',
             }}
           />

@@ -21,8 +21,8 @@ import { deleteChild, getChildren, getMe, getTalkQuota, sendVerification, type C
 import { fetchFullCurriculum } from '@/services/curriculum';
 import { cancelAllReminders } from '@/services/notifications';
 import { useSettings, todayISO } from '@/store/settings';
-import { colors, fontFamily, fontSize, radius, semantic, spacing, tints } from '@/theme';
-import { MODE_TOKENS } from '@/theme/modeTokens';
+import { fontFamily, fontSize, radius, spacing } from '@/theme';
+import { MODE_TOKENS, makeModeStyles } from '@/theme/modeTokens';
 import { useCompanionName } from '@/utils/companion';
 import { LEVEL_INFO } from '@/utils/levels';
 
@@ -51,6 +51,8 @@ function buildWeekActivity(lastCompletedDate: string | null, streak: number) {
 }
 
 export default function ParentScreen() {
+  const { c: palette, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const router = useRouter();
   const parentalGate = useParentalGate();
   const lang = useSettings((s) => s.parentUILanguage) ?? 'ru';
@@ -252,7 +254,7 @@ export default function ParentScreen() {
                         <Text variant="caption" tone="secondary">
                           {isAz ? `Gün ${c.currentDay}` : `День ${c.currentDay}`}
                         </Text>
-                        <Icon name="star" size={12} color={colors.butterDeep} fill={colors.butter} strokeWidth={2} />
+                        <Icon name="star" size={12} color={palette.butterDeep} fill={palette.butter} strokeWidth={2} />
                         <Text variant="caption" tone="secondary">{c.totalStars}</Text>
                       </View>
                     </Pressable>
@@ -263,7 +265,7 @@ export default function ParentScreen() {
                   accessibilityRole="button"
                   style={[styles.childPill, styles.childAdd]}
                 >
-                  <Icon name="plus" size={20} color={colors.inkSoft} />
+                  <Icon name="plus" size={20} color={palette.inkSoft} />
                   <Text variant="caption" tone="secondary">{isAz ? 'Əlavə et' : 'Добавить'}</Text>
                 </Pressable>
               </ScrollView>
@@ -304,10 +306,10 @@ export default function ParentScreen() {
           <Animated.View entering={FadeInUp.duration(450).delay(140)}>
             <Pressable onPress={() => router.push('/parent-summary' as any)} accessibilityRole="button">
               <HBCard bg={accent.soft} style={styles.row}>
-                <HBIconBox icon="brain" tint={colors.surface} iconColor={accent.ink} size={44} />
+                <HBIconBox icon="brain" tint={palette.surface} iconColor={accent.ink} size={44} />
                 <View style={styles.flex}>
                   <Text variant="bodyBold">{isAz ? 'Hesabat və plan' : 'Отчёт и план'}</Text>
-                  <Text variant="caption" style={{ color: colors.ink }}>
+                  <Text variant="caption" style={{ color: palette.ink }}>
                     {currentDay >= 8
                       ? isAz ? `${bot} tərəqqini təhlil etdi` : `${bot} разобрал прогресс`
                       : isAz ? `Keçilən dərslər və ${bot} yaddaşı` : `Пройденные уроки и память ${bot}`}
@@ -320,9 +322,9 @@ export default function ParentScreen() {
 
           {/* Цифры */}
           <Animated.View entering={FadeInUp.duration(450).delay(180)} style={styles.statsRow}>
-            <Stat icon="flame" color={colors.primaryDeep} value={streak} label={isAz ? 'Seriya' : 'Серия'} />
-            <Stat icon="star" color={colors.butterDeep} fill={colors.butter} value={totalStars} label={isAz ? 'Ulduz' : 'Звёзд'} />
-            <Stat icon="book-open" color={colors.accentDeep} value={vocabEstimate} label={isAz ? 'Söz' : 'Слов'} />
+            <Stat icon="flame" color={palette.primaryDeep} value={streak} label={isAz ? 'Seriya' : 'Серия'} />
+            <Stat icon="star" color={palette.butterDeep} fill={palette.butter} value={totalStars} label={isAz ? 'Ulduz' : 'Звёзд'} />
+            <Stat icon="book-open" color={palette.accentDeep} value={vocabEstimate} label={isAz ? 'Söz' : 'Слов'} />
           </Animated.View>
 
           {/* Неделя */}
@@ -386,11 +388,11 @@ export default function ParentScreen() {
               </View>
               <View style={styles.chipsRow}>
                 <View style={styles.chip}>
-                  <Icon name="clock" size={14} color={colors.inkSoft} />
+                  <Icon name="clock" size={14} color={palette.inkSoft} />
                   <Text variant="caption">{scheduleTimeStr}</Text>
                 </View>
                 <View style={styles.chip}>
-                  <Icon name="target" size={14} color={colors.inkSoft} />
+                  <Icon name="target" size={14} color={palette.inkSoft} />
                   <Text variant="caption">{scheduleMinutes} {isAz ? 'dəq' : 'мин'}</Text>
                 </View>
               </View>
@@ -406,8 +408,8 @@ export default function ParentScreen() {
               ) : null}
 
               {isPremium ? (
-                <View style={[styles.premiumRow, { backgroundColor: tints.butter }]}>
-                  <Icon name="crown" size={18} color={colors.butterDeep} fill={colors.butter} strokeWidth={2} />
+                <View style={[styles.premiumRow, { backgroundColor: palette.tints.butter }]}>
+                  <Icon name="crown" size={18} color={palette.butterDeep} fill={palette.butter} strokeWidth={2} />
                   <Text variant="bodyBold" style={{ color: '#7F6628' }}>
                     {isAz ? 'Söz Premium aktivdir' : 'Söz Premium активен'}
                   </Text>
@@ -455,7 +457,8 @@ export default function ParentScreen() {
 }
 
 function LinkRow({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
-  const { accent } = useTheme();
+  const { c: palette, mode: uiMode, accent } = useTheme();
+  const styles = stylesByMode[uiMode];
   return (
     <Pressable onPress={onPress} accessibilityRole="button">
       <HBCard style={styles.row}>
@@ -463,7 +466,7 @@ function LinkRow({ icon, label, onPress }: { icon: IconName; label: string; onPr
         <Text variant="bodyBold" style={styles.flex} numberOfLines={1}>
           {label}
         </Text>
-        <Icon name="chevron-right" size={20} color={colors.inkSoft} />
+        <Icon name="chevron-right" size={20} color={palette.inkSoft} />
       </HBCard>
     </Pressable>
   );
@@ -482,6 +485,8 @@ function Stat({
   value: number;
   label: string;
 }) {
+  const { mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   return (
     <HBCard style={styles.statCard}>
       <Icon name={icon} size={20} color={color} fill={fill} strokeWidth={2.25} />
@@ -502,7 +507,9 @@ function TextLink({
   onPress: () => void;
   danger?: boolean;
 }) {
-  const color = danger ? semantic.danger : colors.inkSoft;
+  const { c: palette, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
+  const color = danger ? palette.semantic.danger : palette.inkSoft;
   return (
     <Pressable onPress={onPress} accessibilityRole="button" style={styles.textLink} hitSlop={6}>
       <Icon name={icon} size={16} color={color} />
@@ -513,7 +520,7 @@ function TextLink({
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   scroll: { paddingTop: spacing[2], paddingBottom: spacing[10], gap: spacing[3] },
 
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
@@ -530,9 +537,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[2],
     borderRadius: radius.lg,
-    backgroundColor: colors.surface,
+    backgroundColor: t.c.surface,
     borderWidth: 1,
-    borderColor: colors.surfaceBorder,
+    borderColor: t.c.surfaceBorder,
   },
   pillMeta: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   childAdd: { minWidth: 96, alignItems: 'center', justifyContent: 'center' },
@@ -549,8 +556,8 @@ const styles = StyleSheet.create({
     height: 28,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: colors.surfaceBorder,
-    backgroundColor: colors.surface,
+    borderColor: t.c.surfaceBorder,
+    backgroundColor: t.c.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -563,9 +570,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[2],
     paddingVertical: 5,
     borderRadius: radius.full,
-    backgroundColor: colors.bg,
+    backgroundColor: t.c.bg,
     borderWidth: 1,
-    borderColor: colors.surfaceBorder,
+    borderColor: t.c.surfaceBorder,
   },
 
   premiumRow: {
@@ -578,4 +585,4 @@ const styles = StyleSheet.create({
   },
   accountLinks: { gap: spacing[2], marginTop: spacing[1] },
   textLink: { flexDirection: 'row', alignItems: 'center', gap: spacing[2], paddingVertical: 2 },
-});
+}));

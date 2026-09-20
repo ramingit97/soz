@@ -34,13 +34,15 @@ import { Text } from '@/components/Text';
 import { getLesson } from '@/data/lessons';
 import { useSettings } from '@/store/settings';
 import { afterReadingRoute, isMatureLearner } from '@/utils/lessonFlow';
-import { colors, fontFamily, fontSize, radius, shadow, spacing, tints } from '@/theme';
+import { fontFamily, fontSize, radius, shadow, spacing } from '@/theme';
+import { byMode, makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
 // Per-scene background tints — cycles softly
-const SCENE_TINTS = [tints.primary, tints.sage, tints.butter, colors.englishLight, tints.berry];
-const SCENE_RING = [colors.primary, colors.accent, colors.butterDeep, colors.english, colors.berryDeep];
+const SCENE_TINTS_BY_MODE = byMode((t) => ([t.c.tints.primary, t.c.tints.sage, t.c.tints.butter, t.c.englishLight, t.c.tints.berry]));
+const SCENE_RING_BY_MODE = byMode((t) => ([t.c.primary, t.c.accent, t.c.butterDeep, t.c.english, t.c.berryDeep]));
 
 // Highlight vocabulary words inside story text
 function HighlightedText({
@@ -52,6 +54,8 @@ function HighlightedText({
   vocab: string[];
   style?: object;
 }) {
+  const { mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   if (vocab.length === 0) {
     return <Text style={style}>{text}</Text>;
   }
@@ -73,6 +77,10 @@ function HighlightedText({
 }
 
 export default function ReadScreen() {
+  const { c, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
+  const SCENE_RING = SCENE_RING_BY_MODE[uiMode];
+  const SCENE_TINTS = SCENE_TINTS_BY_MODE[uiMode];
   const router = useRouter();
   const params = useLocalSearchParams<{ lang?: string; day?: string }>();
   const lang = params.lang ?? 'en';
@@ -191,7 +199,7 @@ export default function ReadScreen() {
             accessibilityRole="button"
             accessibilityLabel={isAz ? 'Geri' : 'Назад'}
           >
-            <Icon name="chevron-left" size={22} color={colors.ink} strokeWidth={2.5} />
+            <Icon name="chevron-left" size={22} color={c.ink} strokeWidth={2.5} />
           </Pressable>
 
           {/* Center: pet or start lesson */}
@@ -223,7 +231,7 @@ export default function ReadScreen() {
               accessibilityRole="button"
               accessibilityLabel={isAz ? 'İrəli' : 'Вперёд'}
             >
-              <Icon name="chevron-right" size={22} color={colors.ink} strokeWidth={2.5} />
+              <Icon name="chevron-right" size={22} color={c.ink} strokeWidth={2.5} />
             </Pressable>
           ) : (
             <View style={{ width: 44 }} />
@@ -252,7 +260,7 @@ export default function ReadScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   // Story area
   storyArea: {
     flex: 1,
@@ -284,7 +292,7 @@ const styles = StyleSheet.create({
   storyText: {
     fontFamily: fontFamily.bodyMedium,
     fontSize: fontSize.lg,
-    color: colors.ink,
+    color: t.c.ink,
     textAlign: 'center',
     lineHeight: 28,
     paddingHorizontal: spacing[2],
@@ -292,8 +300,8 @@ const styles = StyleSheet.create({
   },
   highlightWord: {
     fontFamily: fontFamily.bodyBlack,
-    color: colors.primary,
-    backgroundColor: colors.primarySoft,
+    color: t.c.primary,
+    backgroundColor: t.c.primarySoft,
     borderRadius: 4,
   },
 
@@ -312,7 +320,7 @@ const styles = StyleSheet.create({
   vocabChipText: {
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize.sm,
-    color: colors.ink,
+    color: t.c.ink,
   },
 
   // Nav row
@@ -325,9 +333,9 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.surface,
+    backgroundColor: t.c.surface,
     borderWidth: 1,
-    borderColor: colors.surfaceBorder,
+    borderColor: t.c.surfaceBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -344,7 +352,7 @@ const styles = StyleSheet.create({
   petBubbleText: {
     fontFamily: fontFamily.bodyBold,
     fontSize: fontSize.sm,
-    color: colors.ink,
+    color: t.c.ink,
     lineHeight: 19,
   },
-});
+}));

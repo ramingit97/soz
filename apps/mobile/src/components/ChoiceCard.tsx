@@ -13,7 +13,9 @@ import { HBIconBox } from './HBIconBox';
 import { type IconName } from './Icon';
 import { Text } from './Text';
 import { useAccent } from '@/hooks/useAccent';
-import { colors, fontFamily, fontSize, spacing } from '@/theme';
+import { fontFamily, fontSize, spacing } from '@/theme';
+import { makeModeStyles } from '@/theme/modeTokens';
+import { useTheme } from '@/hooks/useTheme';
 
 interface Props {
   title: string;
@@ -28,6 +30,8 @@ interface Props {
 }
 
 export function ChoiceCard({ title, subtitle, icon, mark, selected, onPress, compact, style }: Props) {
+  const { c, mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
   const accent = useAccent();
   return (
     <Pressable
@@ -47,11 +51,11 @@ export function ChoiceCard({ title, subtitle, icon, mark, selected, onPress, com
         {!compact && (icon || mark) ? (
           <HBIconBox
             icon={icon}
-            tint={selected ? accent.soft : colors.bg}
-            iconColor={selected ? accent.ink : colors.inkSoft}
+            tint={selected ? accent.soft : c.bg}
+            iconColor={selected ? accent.ink : c.inkSoft}
             size={44}
           >
-            {mark ? <Text style={[styles.mark, { color: selected ? accent.ink : colors.inkSoft }]}>{mark}</Text> : undefined}
+            {mark ? <Text style={[styles.mark, { color: selected ? accent.ink : c.inkSoft }]}>{mark}</Text> : undefined}
           </HBIconBox>
         ) : null}
         <View style={styles.text}>
@@ -76,7 +80,7 @@ export function ChoiceCard({ title, subtitle, icon, mark, selected, onPress, com
 // прыгал бы на полтора пикселя при выборе.
 const RING_DELTA = 1.5;
 
-const styles = StyleSheet.create({
+const stylesByMode = makeModeStyles((t) => StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -85,7 +89,7 @@ const styles = StyleSheet.create({
   unselectedPad: { margin: RING_DELTA },
   cardCompact: { flexDirection: 'column', alignItems: 'flex-start', gap: 0, minHeight: 76 },
   text: { flex: 1, minWidth: 0 },
-  title: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize.lg, color: colors.ink },
+  title: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize.lg, color: t.c.ink },
   titleCompact: { fontSize: fontSize.xl },
   subtitle: { marginTop: 2 },
   mark: { fontFamily: fontFamily.bodyBlack, fontSize: fontSize.sm },
@@ -94,9 +98,9 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: colors.borderStrong,
+    borderColor: t.c.borderStrong,
     alignItems: 'center',
     justifyContent: 'center',
   },
   radioDot: { width: 8, height: 8, borderRadius: 4 },
-});
+}));
