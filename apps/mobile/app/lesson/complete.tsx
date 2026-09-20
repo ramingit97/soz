@@ -35,6 +35,7 @@ import { HBCard } from '@/components/HBCard';
 import { HBIconBox } from '@/components/HBIconBox';
 import { HBPet } from '@/components/HBPet';
 import { Icon, type IconName } from '@/components/Icon';
+import { Rays } from '@/components/scene/Rays';
 import { PaperBackground } from '@/components/PaperBackground';
 import { Text } from '@/components/Text';
 
@@ -112,6 +113,15 @@ function Confetti({ x, delay, color, rotation, size }: ConfettiProps) {
       pointerEvents="none"
     />
   );
+}
+
+/** Русское склонение после числа: 1 слово, 2 слова, 5 слов. */
+function plural(n: number, one: string, few: string, many: string): string {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return one;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return few;
+  return many;
 }
 
 export default function LessonCompleteScreen() {
@@ -291,6 +301,9 @@ export default function LessonCompleteScreen() {
 
   return (
     <PaperBackground>
+      {/* Лучи за героем — главный праздничный приём детского экрана. */}
+      {uiMode === 'kid' ? <Rays size={440} /> : null}
+
       {/* конфетти */}
       <View style={StyleSheet.absoluteFill} pointerEvents="none">
         {confetti.map((c) => (
@@ -378,6 +391,27 @@ export default function LessonCompleteScreen() {
                   <Text variant="bodyBold">{az ? 'Yeni nişan!' : 'Новый значок!'}</Text>
                   <Text variant="caption" tone="secondary">
                     {az ? collectible.nameAz : collectible.nameRu}
+                  </Text>
+                </View>
+                <Icon name="chevron-right" size={20} color={palette.inkSoft} />
+              </HBCard>
+            </Pressable>
+          </Animated.View>
+        ) : null}
+
+        {currentLessonErrors.length > 0 ? (
+          <Animated.View entering={FadeInUp.duration(450).delay(750)}>
+            <Pressable onPress={() => router.push('/review' as any)} accessibilityRole="button">
+              <HBCard style={styles.row}>
+                <HBIconBox icon="refresh-cw" tint={palette.tints.berry} iconColor={palette.berryDeep} size={40} />
+                <View style={styles.flex}>
+                  <Text variant="bodyBold">
+                    {az
+                      ? `${currentLessonErrors.length} sözü təkrarlayaq`
+                      : `Повторить ${currentLessonErrors.length} ${plural(currentLessonErrors.length, 'слово', 'слова', 'слов')}`}
+                  </Text>
+                  <Text variant="caption" tone="secondary">
+                    {az ? 'Bu gün çətin gələnlər' : 'Те, что сегодня дались тяжело'}
                   </Text>
                 </View>
                 <Icon name="chevron-right" size={20} color={palette.inkSoft} />

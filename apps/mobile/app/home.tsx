@@ -24,6 +24,7 @@ import { HBPet } from '@/components/HBPet';
 import { Icon } from '@/components/Icon';
 import { HomeHeader } from '@/components/home/HomeHeader';
 import { HomeScene } from '@/components/scene/HomeScene';
+import { WeekStrip } from '@/components/home/WeekStrip';
 import { HomeHero } from '@/components/home/HomeHero';
 import { PaperBackground } from '@/components/PaperBackground';
 import { ParentalGateModal, useParentalGate } from '@/components/ParentalGate';
@@ -208,6 +209,8 @@ export default function HomeScreen() {
   const childId = useSettings((s) => s.childId);
   const profileType = useSettings((s) => s.profileType);
   const lessonStepsDone = useSettings((s) => s.lessonStepsDone);
+  const lastCompletedDate = useSettings((s) => s.lastCompletedDate);
+  const childLevel = useSettings((s) => s.childLevel);
   const reset = useSettings((s) => s.reset);
   const bot = useCompanionName();
   const data = useHomeData();
@@ -295,6 +298,20 @@ export default function HomeScreen() {
             onTap={() => router.push('/pet-room' as never)}
           />
         </Animated.View>
+        ) : null}
+
+        {uiMode === 'teen' ? (
+          <Animated.View entering={FadeInDown.duration(450).delay(60)}>
+            <WeekStrip
+              streak={streak}
+              lastCompletedDate={lastCompletedDate}
+              courseLabel={[
+                firstLang === 'ru' ? (isAz ? 'Rus dili' : 'Русский') : (isAz ? 'İngilis dili' : 'Английский'),
+                childLevel,
+              ].filter(Boolean).join(', ')}
+              isAz={isAz}
+            />
+          </Animated.View>
         ) : null}
 
         {thread ? (

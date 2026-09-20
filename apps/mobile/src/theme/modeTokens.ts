@@ -75,7 +75,8 @@ export const MODE_TOKENS: Record<UIMode, ModeTokens> = {
     density: { padX: spacing[4], cardPad: spacing[3], gap: spacing[2] },
     vignette: false,
     iconStroke: 1.75,
-    confetti: 10,
+    // У взрослых праздник тихий: кольцо и цифры вместо конфетти (макет D).
+    confetti: 0,
   },
 };
 
