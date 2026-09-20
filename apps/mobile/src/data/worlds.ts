@@ -17,6 +17,14 @@ export interface World {
   /** Accent + soft tint colors */
   color: string;
   tint: string;
+  /**
+   * Место Азербайджана, к которому ведёт неделя: на карте «Пути» это остров-веха
+   * в конце отрезка. Своя география — то, чего нет ни у одного конкурента.
+   */
+  landmarkRu: string;
+  landmarkAz: string;
+  /** Какую картинку рисовать на острове-вехе (`components/scene/Landmark`). */
+  landmark: 'tower' | 'rocks' | 'roof' | 'flames';
 }
 
 export const WORLDS: World[] = [
@@ -30,6 +38,9 @@ export const WORLDS: World[] = [
     endDay: 7,
     color: '#6C4DF2',
     tint: '#EDE7FF',
+    landmarkRu: 'Девичья башня',
+    landmarkAz: 'Qız qalası',
+    landmark: 'tower',
   },
   {
     id: 'nature',
@@ -41,6 +52,9 @@ export const WORLDS: World[] = [
     endDay: 14,
     color: '#38D6E8',
     tint: '#D9F7F3',
+    landmarkRu: 'Гобустан',
+    landmarkAz: 'Qobustan',
+    landmark: 'rocks',
   },
   {
     id: 'school',
@@ -52,6 +66,9 @@ export const WORLDS: World[] = [
     endDay: 21,
     color: '#6B54E0',
     tint: '#EAE6FF',
+    landmarkRu: 'Шеки',
+    landmarkAz: 'Şəki',
+    landmark: 'roof',
   },
   {
     id: 'city',
@@ -63,6 +80,9 @@ export const WORLDS: World[] = [
     endDay: 30,
     color: '#B8930A',
     tint: '#FFF8D6',
+    landmarkRu: 'Пламенные башни',
+    landmarkAz: 'Alov qüllələri',
+    landmark: 'flames',
   },
 ];
 

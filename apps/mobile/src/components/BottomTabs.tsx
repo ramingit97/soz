@@ -37,7 +37,9 @@ interface Tab {
 const TABS: Tab[] = [
   { key: 'home',     icon: 'house',          route: '/home',     labelRu: 'Учиться',  labelAz: 'Öyrən' },
   { key: 'talk',     icon: 'message-circle', route: '/talk',     labelRu: 'Говорить', labelAz: 'Danış' },
-  { key: 'progress', icon: 'chart-column',   route: '/progress', labelRu: 'Прогресс', labelAz: 'Tərəqqi' },
+  // «Путь» вместо «Прогресса»: вкладка показывает карту пути у детей и
+  // программу по уровням у взрослых, а не набор цифр (макеты C и D).
+  { key: 'progress', icon: 'map',            route: '/progress', labelRu: 'Путь',     labelAz: 'Yol' },
   { key: 'profile',  icon: 'user',           route: '/profile',  labelRu: 'Профиль',  labelAz: 'Profil' },
 ];
 

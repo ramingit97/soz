@@ -4,16 +4,19 @@
  */
 
 import { useRouter } from 'expo-router';
+import { useRef } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomTabs, BottomTabsSpacer } from '@/components/BottomTabs';
+import { PathMap, pathScrollOffset } from '@/components/path/PathMap';
+import { ProgramList } from '@/components/path/ProgramList';
 import { HBCard } from '@/components/HBCard';
 import { HBPet } from '@/components/HBPet';
 import { PaperBackground } from '@/components/PaperBackground';
 import { HBIconBox } from '@/components/HBIconBox';
-import { Icon } from '@/components/Icon';
+import { Icon, type IconName } from '@/components/Icon';
 import { Text } from '@/components/Text';
 import { getLesson, STATIC_MAX_DAY } from '@/data/lessons';
 import { useSettings } from '@/store/settings';
@@ -65,6 +68,28 @@ export default function ProgressScreen() {
   const extraCount = uniqueWords.length - PREVIEW_COUNT;
 
   const lessonsCompleted = currentDay - 1;
+  const childLevel = useSettings((s) => s.childLevel);
+  const kid = uiMode === 'kid';
+
+  // Карта прокручивается вместе с экраном, поэтому её открывает на текущем дне
+  // сам экран: своя прокрутка внутри чужой ломает жест.
+  const scrollRef = useRef<ScrollView>(null);
+  const scrolledRef = useRef(false);
+  const openAtToday = (mapY: number) => {
+    // Прокручивать нужно только карту: у взрослых на её месте короткий список,
+    // и экран уезжал бы в самый низ.
+    if (!kid || scrolledRef.current) return;
+    scrolledRef.current = true;
+    scrollRef.current?.scrollTo({
+      y: mapY + pathScrollOffset(currentDay, STATIC_MAX_DAY),
+      animated: false,
+    });
+  };
+
+  /** Тема урока по номеру дня — для списка «Программы». */
+  const themeForDay = (day: number) => getLesson(firstLang, day)?.theme ?? null;
+  /** Нажатие по дню ведёт на главный: там урок стартует со всеми проверками. */
+  const openDay = () => router.push('/home' as never);
 
   // Mood: happy if streak≥3, curious if streak≥1, sleepy otherwise
   const mood = streak >= 3 ? 'happy' : streak >= 1 ? 'curious' : 'sleepy';
@@ -72,67 +97,45 @@ export default function ProgressScreen() {
   return (
     <PaperBackground>
       <ScrollView
+        ref={scrollRef}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scroll, { paddingTop: insets.top + spacing[4] }]}
       >
 
-        {/* ── HEADER ── */}
-        <Animated.View entering={FadeInDown.duration(500)} style={styles.header}>
-          <View style={[styles.petHalo, { backgroundColor: accent.soft }]}>
-            <HBPet size={72} hue={storedHue} mood={mood} />
+        {/* ── ШАПКА: название вкладки и четыре цифры одной строкой ── */}
+        <Animated.View entering={FadeInDown.duration(450)} style={styles.pageHead}>
+          <Text variant="title">
+            {kid ? (isAz ? 'Yol' : 'Путь') : (isAz ? 'Proqram' : 'Программа')}
+          </Text>
+          <View style={styles.numbers}>
+            <Num icon="flame" value={streak} label={isAz ? 'gün' : 'дней'} color={c.warning} />
+            <Num icon="star" value={totalStars} label={isAz ? 'ulduz' : 'звёзд'} color={c.gold} />
+            <Num icon="book-open" value={uniqueWords.length} label={isAz ? 'söz' : 'слов'} color={c.accentDeep} />
+            <Num icon="calendar" value={lessonsCompleted} label={isAz ? 'dərs' : 'уроков'} color={accent.ink} />
           </View>
-          <Text style={styles.headerTitle}>
-            {isAz ? 'Tərəqqi' : 'Прогресс'}
-          </Text>
-          <Text style={styles.headerSub}>
-            {streak >= 3
-              ? (isAz ? `Möhtəşəmsən, ${childName}!` : `Молодец, ${childName}!`)
-              : (isAz ? `Hər gün gəl, ${childName}!` : `Приходи каждый день, ${childName}!`)}
-          </Text>
         </Animated.View>
 
-        {/* ── STAT GRID ── */}
-        <Animated.View entering={FadeInUp.duration(500).delay(100)} style={styles.statsGrid}>
-          {/* Streak */}
-          <HBCard
-            depth="md"
-            ringColor={streak >= 3 ? accent.bottom : undefined}
-            style={[styles.statCard, styles.statCardWide]}
-          >
-            <Icon name="flame" size={26} color={c.primaryDeep} fill={c.butter} strokeWidth={2} />
-            <Text style={styles.statValue}>{streak}</Text>
-            <Text style={styles.statLabel}>
-              {isAz ? 'gün ardıcıl' : 'дней подряд'}
-            </Text>
-          </HBCard>
-
-          {/* Stars */}
-          <HBCard depth="sm" style={styles.statCard}>
-            <Icon name="star" size={26} color={c.butterDeep} fill={c.butter} strokeWidth={2} />
-            <Text style={styles.statValue}>{totalStars}</Text>
-            <Text style={styles.statLabel}>
-              {isAz ? 'ulduz' : 'звёзд'}
-            </Text>
-          </HBCard>
-
-          {/* Words */}
-          <HBCard depth="sm" style={styles.statCard}>
-            <Icon name="book-open" size={26} color={c.accentDeep} strokeWidth={2} />
-            <Text style={styles.statValue}>{uniqueWords.length}</Text>
-            <Text style={styles.statLabel}>
-              {isAz ? 'söz' : 'слов'}
-            </Text>
-          </HBCard>
-
-          {/* Lessons */}
-          <HBCard depth="sm" style={[styles.statCard, styles.statCardWide]}>
-            <Icon name="calendar" size={26} color={accent.ink} strokeWidth={2} />
-            <Text style={styles.statValue}>{lessonsCompleted}</Text>
-            <Text style={styles.statLabel}>
-              {isAz ? 'dərs bitirdim' : 'уроков пройдено'}
-            </Text>
-          </HBCard>
-        </Animated.View>
+        {/* ── КАРТА «ПУТИ» У ДЕТЕЙ, ПРОГРАММА У ВЗРОСЛЫХ ── */}
+        <View onLayout={(e) => openAtToday(e.nativeEvent.layout.y)}>
+          {kid ? (
+            <PathMap
+              currentDay={currentDay}
+              maxDay={STATIC_MAX_DAY}
+              isAz={isAz}
+              todayTheme={getLesson(firstLang, currentDay)?.theme ?? null}
+              onPressDay={openDay}
+            />
+          ) : (
+            <ProgramList
+              currentDay={currentDay}
+              maxDay={STATIC_MAX_DAY}
+              level={childLevel}
+              isAz={isAz}
+              themeForDay={themeForDay}
+              onPressDay={openDay}
+            />
+          )}
+        </View>
 
         {/* ── QUICK LINKS ── */}
         <Animated.View entering={FadeInUp.duration(450).delay(180)} style={styles.quickRow}>
@@ -168,23 +171,6 @@ export default function ProgressScreen() {
             </HBCard>
           </Pressable>
         </Animated.View>
-
-        {/* ── COURSE PROGRESS (moved from home: the path is progress, not today's action) ── */}
-        {currentDay <= STATIC_MAX_DAY && (
-          <Animated.View entering={FadeInUp.duration(450).delay(195)}>
-            <HBCard depth="sm" style={styles.courseCard}>
-              <View style={styles.courseHead}>
-                <Text variant="bodyBold">{isAz ? 'Kurs' : 'Курс'}</Text>
-                <Text variant="caption" tone="secondary">
-                  {isAz ? `Gün ${currentDay} / ${STATIC_MAX_DAY}` : `День ${currentDay} из ${STATIC_MAX_DAY}`}
-                </Text>
-              </View>
-              <View style={styles.courseTrack}>
-                <View style={[styles.courseFill, { width: `${Math.round(((currentDay - 1) / STATIC_MAX_DAY) * 100)}%` }]} />
-              </View>
-            </HBCard>
-          </Animated.View>
-        )}
 
         {/* ── MEMORY LINK (moved from home) ── */}
         <Animated.View entering={FadeInUp.duration(450).delay(205)}>
@@ -305,7 +291,30 @@ export default function ProgressScreen() {
   );
 }
 
+/** Одна цифра в полосе под заголовком. */
+function Num({ icon, value, label, color }: { icon: IconName; value: number; label: string; color: string }) {
+  const { mode: uiMode } = useTheme();
+  const styles = stylesByMode[uiMode];
+  return (
+    <View style={styles.num}>
+      <Icon name={icon} size={18} color={color} strokeWidth={2} />
+      <Text variant="bodyBold">{value}</Text>
+      <Text variant="caption" tone="secondary" numberOfLines={1}>{label}</Text>
+    </View>
+  );
+}
+
 const stylesByMode = makeModeStyles((t) => StyleSheet.create({
+  pageHead: { gap: spacing[3] },
+  numbers: { flexDirection: 'row', gap: spacing[2] },
+  num: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 2,
+    paddingVertical: spacing[2],
+    borderRadius: t.card.radius,
+    backgroundColor: t.c.surface,
+  },
   scroll: {
     paddingHorizontal: spacing[5],
     paddingBottom: spacing[6],
